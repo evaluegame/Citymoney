@@ -1,0 +1,37 @@
+CITYMONEY — OPEN AND PLAY
+
+You need Roblox Studio on a Windows PC or Mac.
+Install Studio from https://create.roblox.com/ if you do not have it.
+
+1. If you downloaded Citymoney-Studio.zip, extract the ZIP first.
+2. Open Roblox Studio and sign in to your Roblox account.
+3. Choose File > Open from File (Ctrl+O on Windows / Cmd+O on Mac).
+4. Select Citymoney.rbxlx. In the ZIP it is inside Citymoney/build/.
+5. The miniature city should appear in the editor.
+6. Click Play in Studio's toolbar, or press F5.
+7. Dismiss the quick guide with "Got it — let's play".
+8. Click "Start the city" to play alone against City Bot.
+
+The menus, dice, and lobby appear during Play, rather than in the editor.
+Use Play so that Studio starts the client and its interface.
+
+YOUR FIRST TURN
+Click Roll the dice. Buy the property or click Pass, then End turn.
+Collect both properties in a colored district to unlock building.
+Click a board tile or one of Your City deeds to inspect it.
+Use Build to increase rent. Selling a deed asks you to confirm first.
+
+WITH FRIENDS
+Use Studio's Server & Clients test with 2–6 players. The first player
+to connect is the host and starts the match.
+
+TO PUBLISH
+Use File > Publish to Roblox from your own Studio account. Set the
+experience's server capacity to 6. This download is not published for you.
+
+IF THE DOWNLOAD SHOWS TEXT IN YOUR BROWSER
+Save the file to your computer, keeping the .rbxlx extension, then open
+that saved file in Studio. Or download and extract the ZIP instead.
+
+MORE DETAILS
+README.md includes rules, controls, source locations, and build commands.

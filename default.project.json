@@ -1,0 +1,14 @@
+{
+  "name": "Citymoney",
+  "tree": {
+    "$className": "DataModel",
+    "ReplicatedStorage": { "Citymoney": { "$path": "src/shared" } },
+    "ServerScriptService": { "CitymoneyServer": { "$path": "src/server" } },
+    "StarterPlayer": {
+      "StarterPlayerScripts": { "CitymoneyClient": { "$path": "src/client" } }
+    },
+    "Workspace": { "$properties": { "Gravity": 196.2, "StreamingEnabled": false } },
+    "Lighting": { "$properties": { "ClockTime": 14, "Brightness": 2, "Ambient": [0.55, 0.6, 0.7], "OutdoorAmbient": [0.6, 0.65, 0.75] } },
+    "SoundService": { "$properties": { "RespectFilteringEnabled": true } }
+  }
+}
