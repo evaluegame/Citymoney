@@ -23,4 +23,22 @@ encode = function(value: any): string
     end
     error("Unsupported scene data: " .. type(value))
 end
-print(encode(Board.generate(Config)))
+local mode = ...
+local scene = Board.generate(Config)
+if mode == "showcase" or mode == "home" then
+    local Architecture = require("../src/shared/Architecture")
+    local showcase = { [2] = { "Avery", "D2A982", 0 }, [8] = { "Riley", "92B6BE", 1 }, [14] = { "Jamie", "B3C3A6", 2 }, [23] = { "Morgan", "C5B387", 3 } }
+    local entries = {}
+    if mode == "showcase" then
+        for _, entry in ipairs(scene) do
+            if not (entry.tileIndex and showcase[entry.tileIndex] and entry.name ~= "Tile"..entry.tileIndex and entry.name ~= "DistrictInlay") then table.insert(entries, entry) end
+        end
+    end
+    for index, owner in pairs(showcase) do
+        if mode == "showcase" or index == 2 then
+            for _, entry in ipairs(Architecture.property(Config,index,owner[1],owner[2],owner[3],0)) do table.insert(entries,entry) end
+        end
+    end
+    scene = entries
+end
+print(encode(scene))

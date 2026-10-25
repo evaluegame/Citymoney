@@ -9,7 +9,7 @@ for index = 1, #Config.tiles do
     positions[key] = true
     local nextPosition = Board.position(index % #Config.tiles + 1)
     local dx, dz = position[1] - nextPosition[1], position[3] - nextPosition[3]
-    check(dx * dx + dz * dz == 144, "Board path must close with uniformly spaced neighbors")
+    check(dx * dx + dz * dz == Board.spacing*Board.spacing, "Board path must close with uniformly spaced neighbors")
 end
 local scene, repeatScene = Board.generate(Config), Board.generate(Config)
 check(#scene == #repeatScene and #scene >= 100, "Scene generation is incomplete or nonrepeatable")

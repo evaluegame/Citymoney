@@ -274,6 +274,50 @@ test("board has complete district pairs and valid economics", function()
         equal(count, 2)
     end
 end)
+test("owners can visit their home while another resident takes a turn", function()
+    local engine = gameWith()
+    engine.state.properties[2].ownerId = 2
+    expect(engine:canVisit(2, 2))
+    equal(engine:current().id, 1)
+    equal(engine:player(2).position, 1)
+    equal(engine:player(2).cash, 1500)
+end)
+test("visit access rejects other owners, spectators and malformed targets", function()
+    local engine = gameWith()
+    engine.state.properties[2].ownerId = 1
+    expect(not engine:canVisit(2, 2))
+    expect(not engine:canVisit(99, 2))
+    for _, index in ipairs({ -1, 0, 25, 1.5, "2", 0/0, math.huge }) do expect(not engine:canVisit(1, index)) end
+    expect(not engine:canVisit(1, nil))
+    engine:player(1).alive = false
+    expect(not engine:canVisit(1, 2))
+    engine.state.status = "finished"
+    expect(not engine:canVisit(1, 2))
+end)
+test("repainting changes only an owned home's appearance", function()
+    local engine = gameWith()
+    engine.state.properties[2].ownerId = 1
+    local originalRent = engine:rent(2)
+    expect(not engine:act(2, "Paint", 2))
+    expect(not engine:act(1, "Paint", 3))
+    for index = 1, 4 do
+        expect(engine:act(1, "Paint", 2))
+        equal(engine.state.properties[2].paint, index%4)
+        equal(engine:rent(2), originalRent)
+        equal(engine:player(1).cash, 1500)
+    end
+end)
+test("sold and abandoned houses reset their exterior selection", function()
+    local engine = gameWith(nil, 3)
+    engine.state.properties[2].ownerId = 1
+    engine:act(1, "Paint", 2)
+    engine:act(1, "Sell", 2)
+    equal(engine.state.properties[2].paint, 0)
+    engine.state.properties[3].ownerId,engine.state.properties[3].paint = 1,3
+    engine:remove(1)
+    equal(engine.state.properties[3].paint, 0)
+    expect(not engine:canVisit(1, 3))
+end)
 test("200 full seeded matches preserve economy and terminate", function()
     math.randomseed(20261024)
     for match = 1, 200 do

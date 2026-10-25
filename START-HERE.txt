@@ -1,37 +1,42 @@
-CITYMONEY — OPEN AND PLAY
+CITYMONEY — THE WATERFRONT CLUB
 
-You need Roblox Studio on a Windows PC or Mac.
-Install Studio from https://create.roblox.com/ if you do not have it.
+OPEN THE UPDATED GAME
+1. Extract Citymoney-Waterfront.zip.
+2. Open Roblox Studio on a Windows PC or Mac and sign in.
+3. Choose File > Open from File (Ctrl+O / Cmd+O).
+4. Open Citymoney/build/Citymoney.rbxlx from the extracted ZIP.
+5. Press Play (F5), then Start the neighborhood.
 
-1. If you downloaded Citymoney-Studio.zip, extract the ZIP first.
-2. Open Roblox Studio and sign in to your Roblox account.
-3. Choose File > Open from File (Ctrl+O on Windows / Cmd+O on Mac).
-4. Select Citymoney.rbxlx. In the ZIP it is inside Citymoney/build/.
-5. The miniature city should appear in the editor.
-6. Click Play in Studio's toolbar, or press F5.
-7. Dismiss the quick guide with "Got it — let's play".
-8. Click "Start the city" to play alone against City Bot.
+Solo games include City Bot. The game interface appears during Play.
+Studio download: https://create.roblox.com/
 
-The menus, dice, and lobby appear during Play, rather than in the editor.
-Use Play so that Studio starts the client and its interface.
+YOUR FIRST HOME
+Roll the dice. When you land on an unowned property, choose Buy cottage.
+A real furnished house with your name, garden and mailbox appears on that
+lot immediately. Collect both properties in its district to upgrade it.
 
-YOUR FIRST TURN
-Click Roll the dice. Buy the property or click Pass, then End turn.
-Collect both properties in a colored district to unlock building.
-Click a board tile or one of Your City deeds to inspect it.
-Use Build to increase rent. Selling a deed asks you to confirm first.
+WALK THROUGH YOUR HOME
+Click your house (or open Your homes) and select Walk through your home.
+Use normal Roblox walking controls. The front-door prompt uses E to open
+and close the door. Upgraded houses have stairs and upstairs bedrooms.
+Press B or Back to board to return. Other players keep taking turns.
+
+DURING YOUR TURN
+Use Upgrade, Repaint or Sell on a home you own. Repainting is free.
+The Close-up button gives you a closer architectural view.
+Roll/end-turn automatically returns your avatar to the board.
+
+CAMERA
+Use Overview, rotation arrows and + / - to move the board camera.
+The desktop header lets you switch between golden hour and night.
 
 WITH FRIENDS
-Use Studio's Server & Clients test with 2–6 players. The first player
-to connect is the host and starts the match.
+Use Studio's Server & Clients test with 2-6 players. The first connected
+player hosts and starts the game. Late arrivals play the next match.
 
-TO PUBLISH
-Use File > Publish to Roblox from your own Studio account. Set the
-experience's server capacity to 6. This download is not published for you.
+PUBLISHING
+Use File > Publish to Roblox in your own account. Set server capacity to 6.
+Publishing to Roblox is separate from downloading the Studio place.
 
-IF THE DOWNLOAD SHOWS TEXT IN YOUR BROWSER
-Save the file to your computer, keeping the .rbxlx extension, then open
-that saved file in Studio. Or download and extract the ZIP instead.
-
-MORE DETAILS
-README.md includes rules, controls, source locations, and build commands.
+If your browser displays XML, save the file with the .rbxlx extension,
+or download the ZIP instead. README.md contains full rules and controls.

@@ -27,11 +27,12 @@ resolve_paths(project["tree"])
 board = {"$className": "Folder"}
 for index, entry in enumerate(scene):
     properties = {
-        "Name": entry["name"], "Size": entry["size"], "CFrame": entry["position"] + [1, 0, 0, 0, 1, 0, 0, 0, 1],
+        "Name": entry["name"], "Size": entry["size"], "CFrame": entry["position"] + entry.get("rotation", [1, 0, 0, 0, 1, 0, 0, 0, 1]),
         "Color": rgb(entry["color"]), "Anchored": True,
         "Material": entry.get("material", "SmoothPlastic"),
         "TopSurface": "Smooth", "BottomSurface": "Smooth",
         "Transparency": entry.get("transparency", 0),
+        "Reflectance": entry.get("reflectance", 0), "CanCollide": entry.get("canCollide", True),
     }
     if "shape" in entry:
         properties["Shape"] = entry["shape"]
@@ -45,25 +46,27 @@ for index, entry in enumerate(scene):
     if "text" in entry:
         node["TileLabel"] = {
             "$className": "SurfaceGui",
-            "$properties": {"Face": "Top", "SizingMode": "PixelsPerStud", "PixelsPerStud": 48},
+            "$properties": {"Face": entry.get("textFace", "Top"), "SizingMode": "PixelsPerStud", "PixelsPerStud": 40, "LightInfluence": 0.25},
             "Caption": {"$className": "TextLabel", "$properties": {
                 "Size": {"UDim2": [[1, 0], [1, 0]]}, "BackgroundTransparency": 1,
                 "Text": entry["text"], "TextColor3": rgb(entry["textColor"]),
-                "TextSize": entry["textSize"], "Font": "GothamBold", "TextWrapped": True,
-            }},
+                "TextSize": entry["textSize"], "Font": "GothamBold", "TextWrapped": True, "TextScaled": True,
+            }, "Limit": {"$className": "UITextSizeConstraint", "$properties": {"MaxTextSize": entry["textSize"], "MinTextSize": 8}}},
         }
     board[entry["name"] if entry["name"].startswith("Tile") else f"{entry['name']}_{index:04}"] = node
 project["tree"]["Workspace"]["CitymoneyBoard"] = board
 # Camera basis uses right/up/back columns, matching Roblox CFrame.lookAt.
-position = [87, 110, 90]
-length = math.sqrt(sum(value * value for value in position))
-back = [value / length for value in position]
+position = [172, 200, 172]
+target = [0, 3, 6]
+direction = [a-b for a,b in zip(position,target)]
+length = math.sqrt(sum(value * value for value in direction))
+back = [value / length for value in direction]
 horizontal = math.hypot(back[0], back[2])
 right = [back[2] / horizontal, 0, -back[0] / horizontal]
 up = [back[1] * right[2] - back[2] * right[1], back[2] * right[0] - back[0] * right[2], back[0] * right[1] - back[1] * right[0]]
 rotation = [component for row in zip(right, up, back) for component in row]
 project["tree"]["Workspace"]["CityPreviewCamera"] = {"$className": "Camera", "$properties": {
-    "CFrame": position + rotation, "FieldOfView": 45, "CameraType": "Scriptable",
+    "CFrame": position + rotation, "FieldOfView": 38, "CameraType": "Scriptable",
 }}
 destination = ROOT / "build/Citymoney.project.json"
 destination.write_text(json.dumps(project, indent=2))

@@ -9,7 +9,7 @@ function Engine.new(config, randomInteger)
     self.state = { status = "lobby", players = {}, properties = {}, logs = {}, turn = 0,
         turnCount = 0, phase = "roll", pendingTile = false, dice = { 0, 0 }, winnerId = false }
     for i = 1, #config.tiles do
-        self.state.properties[i] = { ownerId = false, level = 0 }
+        self.state.properties[i] = { ownerId = false, level = 0, paint = 0 }
     end
     return self
 end
@@ -45,7 +45,7 @@ function Engine:start(roster)
             cash = self.config.startingCash, position = 1, alive = true, detained = false, colorIndex = index })
     end
     for _, property in ipairs(self.state.properties) do
-        property.ownerId, property.level = false, 0
+        property.ownerId, property.level, property.paint = false, 0, 0
     end
     self.state.status, self.state.turn, self.state.turnCount = "playing", 1, 1
     self.state.phase, self.state.pendingTile, self.state.winnerId = "roll", false, false
@@ -103,7 +103,7 @@ end
 function Engine:liquidate(player, index)
     local property, tile = self.state.properties[index], self.config.tiles[index]
     local value = math.floor((tile.price + property.level * tile.upgrade) / 2)
-    property.ownerId, property.level = false, 0
+    property.ownerId, property.level, property.paint = false, 0, 0
     player.cash = player.cash + value
     self:log(player.name .. " sold " .. tile.name .. " for $" .. value .. ".")
 end
@@ -181,10 +181,20 @@ function Engine:remove(id)
     if not player or not player.alive or self.state.status ~= "playing" then return end
     player.alive, player.cash = false, 0
     for _, property in ipairs(self.state.properties) do
-        if property.ownerId == id then property.ownerId, property.level = false, 0 end
+        if property.ownerId == id then property.ownerId, property.level, property.paint = false, 0, 0 end
     end
     self:log(player.name .. " left the match. Their deeds return to the city.")
     if not self:checkWinner() and self:current().id == id then self:nextTurn() end
+end
+
+function Engine:canVisit(id, tileIndex: any)
+    if self.state.status ~= "playing" then return false, "Start a match first." end
+    local player = self:player(id)
+    if not player or not player.alive then return false, "Only active residents can visit a home." end
+    if type(tileIndex) ~= "number" or tileIndex ~= math.floor(tileIndex) then return false, "Select a property." end
+    local property = self.state.properties[tileIndex]
+    if not property or property.ownerId ~= id then return false, "You can walk through homes you own." end
+    return true
 end
 
 function Engine:act(id, action, tileIndex: any)
@@ -221,11 +231,14 @@ function Engine:act(id, action, tileIndex: any)
         self:log(player.name .. " passed on the property.")
     elseif action == "End" and phase == "end" then
         self:nextTurn()
-    elseif action == "Upgrade" or action == "Sell" then
+    elseif action == "Upgrade" or action == "Sell" or action == "Paint" then
         if type(tileIndex) ~= "number" or tileIndex ~= math.floor(tileIndex) then return false, "Select a property." end
         local tile, property = self.config.tiles[tileIndex], self.state.properties[tileIndex]
         if not tile or tile.kind ~= "property" or not property or property.ownerId ~= id then return false, "You don't own this property." end
-        if action == "Sell" then
+        if action == "Paint" then
+            property.paint = ((property.paint or 0) + 1) % 4
+            self:log(player.name .. " refreshed the exterior of " .. tile.name .. ".")
+        elseif action == "Sell" then
             self:liquidate(player, tileIndex)
         else
             if not self:ownsGroup(id, tile.group) then return false, "Own both properties in this district to build." end

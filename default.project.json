@@ -2,13 +2,101 @@
   "name": "Citymoney",
   "tree": {
     "$className": "DataModel",
-    "ReplicatedStorage": { "Citymoney": { "$path": "src/shared" } },
-    "ServerScriptService": { "CitymoneyServer": { "$path": "src/server" } },
-    "StarterPlayer": {
-      "StarterPlayerScripts": { "CitymoneyClient": { "$path": "src/client" } }
+    "ReplicatedStorage": {
+      "Citymoney": {
+        "$path": "src/shared"
+      }
     },
-    "Workspace": { "$properties": { "Gravity": 196.2, "StreamingEnabled": false } },
-    "Lighting": { "$properties": { "ClockTime": 14, "Brightness": 2, "Ambient": [0.55, 0.6, 0.7], "OutdoorAmbient": [0.6, 0.65, 0.75] } },
-    "SoundService": { "$properties": { "RespectFilteringEnabled": true } }
+    "ServerScriptService": {
+      "CitymoneyServer": {
+        "$path": "src/server"
+      }
+    },
+    "StarterPlayer": {
+      "StarterPlayerScripts": {
+        "CitymoneyClient": {
+          "$path": "src/client"
+        }
+      }
+    },
+    "Workspace": {
+      "$properties": {
+        "Gravity": 196.2,
+        "StreamingEnabled": false
+      }
+    },
+    "Lighting": {
+      "$properties": {
+        "ClockTime": 16.2,
+        "Brightness": 2.4,
+        "GlobalShadows": true,
+        "Ambient": [
+          0.43,
+          0.45,
+          0.41
+        ],
+        "OutdoorAmbient": [
+          0.62,
+          0.63,
+          0.57
+        ],
+        "EnvironmentDiffuseScale": 0.6,
+        "EnvironmentSpecularScale": 0.65,
+        "ExposureCompensation": 0.1,
+        "Technology": "ShadowMap"
+      },
+      "WarmAir": {
+        "$className": "Atmosphere",
+        "$properties": {
+          "Density": 0.22,
+          "Offset": 0.15,
+          "Color": [
+            0.85,
+            0.87,
+            0.81
+          ],
+          "Decay": [
+            0.72,
+            0.77,
+            0.76
+          ],
+          "Glare": 0.15,
+          "Haze": 0.7
+        }
+      },
+      "ColorGrade": {
+        "$className": "ColorCorrectionEffect",
+        "$properties": {
+          "Brightness": 0.015,
+          "Contrast": 0.08,
+          "Saturation": 0.06,
+          "TintColor": [
+            1,
+            0.97,
+            0.91
+          ]
+        }
+      },
+      "SoftGlow": {
+        "$className": "BloomEffect",
+        "$properties": {
+          "Intensity": 0.12,
+          "Size": 18,
+          "Threshold": 1.7
+        }
+      },
+      "AfternoonSun": {
+        "$className": "SunRaysEffect",
+        "$properties": {
+          "Intensity": 0.035,
+          "Spread": 0.75
+        }
+      }
+    },
+    "SoundService": {
+      "$properties": {
+        "RespectFilteringEnabled": true
+      }
+    }
   }
 }

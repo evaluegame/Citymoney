@@ -1,58 +1,68 @@
-# Citymoney
+# Citymoney · The Waterfront Club
 
-An original Roblox property-trading board game. Roll through a miniature city, buy districts, collect rent, and turn your deeds into a skyline. Play with **2–6 people**, or **start alone against City Bot**. All money is fictional match currency.
+A Roblox property game set in a landscaped island neighborhood. Buy a lot and a **physical, furnished cottage** appears immediately—with its garden, porch, mailbox, and your name on the owner sign. Collect districts, upgrade into bigger homes, and walk through the properties you own.
 
-**[Download the game ZIP](https://github.com/evaluegame/Citymoney/raw/refs/heads/main/Citymoney-Studio.zip)** · **[Open the Studio file on GitHub](https://github.com/evaluegame/Citymoney/blob/main/Citymoney.rbxlx)**
+**[Download the Waterfront game](https://github.com/evaluegame/Citymoney/raw/refs/heads/main/Citymoney-Waterfront.zip)** · **[Studio place file](https://github.com/evaluegame/Citymoney/blob/main/Citymoney-Waterfront.rbxlx)**
 
-The ready-to-open `Citymoney.rbxlx` and `Citymoney-Studio.zip` are included at the repository root. On a file's GitHub page, use **Download raw file** (the download-arrow button) to save it to your computer. For the entire project, use **Code → Download ZIP**.
+The ready-to-open downloads are at the repository root. On GitHub's file page, click **Download raw file** (the download-arrow button). For the full repository, use **Code → Download ZIP**.
 
-## Play in Roblox Studio
+![A purchased cottage with its owner sign, porch, flower boxes and garden](docs/House-preview.png)
 
-Roblox Studio runs on a **Windows PC or Mac**. Install it from [Roblox Creator Hub](https://create.roblox.com/), then sign in to your Roblox account. The download includes a plain-text **START-HERE.txt** guide.
+*A render of the same house geometry used by the game. This is a model preview, not a Roblox Studio screenshot.*
 
-1. Download **`build/Citymoney.rbxlx`**. Alternatively, download and extract **`build/Citymoney-Studio.zip`**, which includes the place and all editable source.
-2. In Roblox Studio, select **File → Open from File** (or **Ctrl+O / Cmd+O**). Choose **Citymoney.rbxlx** from your Downloads folder. In the ZIP it is inside **Citymoney/build/**.
-3. The city is already visible in the editor. Press **Play (F5)** to start the game and display its interface.
-4. Click **Got it — let's play**, then **Start the city** to play against the bot. Roll, buy or pass, then end your turn.
-5. To test friends locally, use Studio's **Server & Clients** playtest with 2–6 clients. The first connected player is the host and starts the match. Later arrivals spectate until the next match.
-6. To release your game, use **File → Publish to Roblox** in your own account. Set server capacity to **6** in the experience/place settings. This repository does not publish automatically.
+## Open and play
 
-The built place includes every script; no plugins, paid assets, API keys, or HTTP access are required to play. If your browser displays XML, save the file with the **.rbxlx** extension, or use the ZIP. The HUD runs during **Play**; an editing viewport only displays the city preview.
+1. Use **Roblox Studio on Windows or macOS**. Install it from [Roblox Creator Hub](https://create.roblox.com/) and sign in.
+2. Download and extract **Citymoney-Waterfront.zip**.
+3. In Studio, choose **File → Open from File** (Ctrl+O / Cmd+O) and open **Citymoney/build/Citymoney.rbxlx**.
+4. Press **Play (F5)**, then click **Start the neighborhood**. Solo games automatically include City Bot.
+5. For friends, use Studio's **Server & Clients** test with 2–6 players. The first connected player hosts the table. Late arrivals join the next match.
 
-For development, rebuild the place using the commands below; generated files go into the ignored `build/` directory. The root-level downloads are release copies and are refreshed separately when publishing an update. If you prefer manual Studio setup, create a `Citymoney` Folder in ReplicatedStorage containing ModuleScripts named `Config`, `Engine`, and `Board`; paste in the matching shared files. Add a `CitymoneyServer` Script in ServerScriptService using `src/server/init.server.lua`, with a `World` ModuleScript as its child. Add a `CitymoneyClient` LocalScript in StarterPlayer → StarterPlayerScripts using `src/client/init.client.lua`. The server rebuilds the board and network remotes when Play starts, using the same scene definition as the baked editor preview.
+The editor includes the neighborhood preview; menus appear during Play. The place is self-contained: no plugins, paid assets, API keys, or HTTP access are needed. Use **File → Publish to Roblox** in your own account when you want to release it, with server capacity set to **6**.
 
-## Improvements in this version
+## What changed
 
-- A city preview with 273 scene parts, readable tile captions, and a saved editor camera.
-- A fountain, roof gardens, street lamps, and taller buildings at maximum property level.
-- A first-game guide, animated dice, turn prompts, cash-change notifications, and a countdown bar.
-- Click/tap board tiles to highlight and inspect properties; the portfolio marks complete districts.
-- Net worth and district totals, clear build requirements, and a confirmation before selling a deed.
-- A final standings screen with confetti and a host replay button.
+- A larger waterfront neighborhood with park paths, a tiered fountain, flower gardens, trees, street lamps, jetties, and boats.
+- Warm afternoon lighting, soft shadows, a cream-and-sage HUD, compact player cards, and property cards with live 3D home previews.
+- The HUD fits the actual safe screen area. Roblox chat and player-list overlays are hidden during play, and the action bar stays inside the window.
+- Every purchase immediately builds a house. Homes have real doorway openings, owner signs, mailboxes, furniture, and landscaped plots.
+- Upgrades change the architecture: cottage → townhouse → garden villa → grand villa, with balconies, rooftop pergolas, upstairs bedrooms, and staircases.
+- Actual player avatars move around the board. You can switch to walking mode at your own properties, open the front door, and explore.
+- Free exterior repainting during your turn, close-up camera views, a day/night switch, a home portfolio, confirmation before selling, and end-of-match standings.
 
 ## Controls
 
-- Click/tap the bottom action button to roll, buy, and end your turn. **R** rolls; **Space** performs the current main action.
-- **Pass** declines the property you just landed on.
-- Click/tap a **board tile** or one of **Your City** deeds to inspect it. During your turn, use **Build** or **Sell** on that deed. Selling asks for confirmation. You can sell deeds while deciding whether to buy another one.
-- **Rotate view**, **+ / −**, and the mouse wheel control the board camera.
-- **How to play** opens the rules. Button controls support touch; landscape gives the board more room.
+| Action | Control |
+| --- | --- |
+| Roll / buy / end turn | Bottom action button; **R** rolls; **Space** performs the current action while in board view |
+| Inspect a property | Click/tap its plot or house, or open **Your homes** |
+| Buy a home | Land on an unowned property and choose **Buy cottage** |
+| Upgrade / repaint / sell | Select a home you own during your turn; upgrades require its district pair |
+| Visit a home | Select your home and click **Walk through your home**, including during another player's turn |
+| Walk and look around | Normal Roblox WASD / touch controls and camera in walking mode |
+| Open/close the front door | Use the door prompt, **E** on keyboard; only the owner operates it |
+| Return to the board | **B** or **Back to board**; rolling or ending your turn also returns you |
+| View a home's architecture | **Close-up** on its property card |
+| Board camera | Overview, rotate arrows, + / −, mouse wheel |
+| Day/night lighting | **Golden hour / Night stroll** in the desktop header |
+
+Visits do not change your token's game position, money, or turn. The match continues while you explore. Selling a visited home returns you to the board. Repainting or upgrading while visiting puts you safely back on its front path.
 
 ## Rules
 
-Start with **$1,500**. Roll two six-sided dice and move clockwise. Passing or landing on City Gate earns **$200**. Doubles do not grant an extra turn in Citymoney.
+Start with **$1,500** and roll two six-sided dice. Passing or landing on City Gate pays **$200**. Doubles do not grant another turn. Buy unowned properties on arrival, or pass. Buying includes the level-0 cottage; you do not need a district pair for that first house.
 
-Buy an unowned property when you land on it. Landing on another resident's property automatically pays rent. Own both properties in one colored district to double their base rent and unlock building. Each deed can reach level 3; upgraded rent is 3×, 6×, then 10× its original base rent. Building is permitted anywhere in your portfolio during your turn, provided you still own its entire district.
+Visitors to another resident's property pay rent. Own both deeds in a colored district to double their base rent and unlock upgrades. Upgraded rent is **3× / 6× / 10×** the original base rent. Each upgrade charges the deed's build cost. Repainting cycles four exterior palettes for free during your turn and does not change rent.
 
-City News draws a random cash or movement event. City Tax costs **$120**. Detention skips your next move; simply visiting detention is harmless. Central Park is a rest stop.
+City News draws a random event. City Tax costs **$120**. Detention skips your next move; merely visiting detention is harmless. Central Park is a rest stop. Each decision allows **55 seconds**, then the server automatically rolls, passes on a purchase, or ends the turn. Property visits and repainting do not extend that timer or delay the bot.
 
-Sell deeds to the city for half their purchase and building costs. If a bill exceeds your cash, deeds automatically sell in board order until you can pay. If your assets cannot cover the bill, you pay your remaining cash and are eliminated. Deeds return to the city when their owner leaves. Selling a district partner removes the base-rent bonus and prevents further building; existing upgrades on the remaining deed keep their rent.
+Sell a deed for half its purchase and upgrade costs. Cash shortfalls automatically sell deeds in board order to cover a bill; insolvency eliminates the resident. Sold, abandoned, or repossessed homes are removed from the physical neighborhood. A departing owner's deeds return to the city. Existing upgraded rent remains if a district partner is sold, but further upgrades require completing the pair again.
 
-The last surviving resident wins. At **120 total turns**, the resident with the highest cash plus full property/building cost wins; equal scores go to the earlier seat. Each decision has **35 seconds** before the server acts automatically: roll, decline a purchase, or end the turn. The bot buys with a reserve and upgrades completed districts. The host can start a fresh match after the results.
+The last resident standing wins. At **120 total turns**, the highest cash plus full property/upgrade cost wins; ties go to the earlier seat. The host can start another game. All money and progress belong to the current match; persistent profiles, player-to-player trading, and auctions are not included.
 
 ## Development
 
-The cloud bootstrap targets Linux x86_64 with Python 3 and Bash:
+Use the existing checkout; cloud tasks are already isolated and do not require a Git worktree.
 
 ```bash
 cd /workspace/Citymoney
@@ -61,28 +71,26 @@ bash scripts/test.sh
 bash scripts/build.sh
 ```
 
-`setup.py` downloads **Rojo 7.7.1** and **Luau 0.727** from their official GitHub releases, verifies the publisher's SHA-256 digests, and installs into ignored `.tools/`. No system package changes are needed. It can be rerun using its verified archive cache.
+The Linux x86_64 bootstrap installs **Rojo 7.7.1** and **Luau 0.727** into ignored `.tools/` using official release archives and verified publisher SHA-256 digests. It can be rerun safely. No system package changes are needed.
 
-On Windows/macOS, install the same Rojo version from [Rojo's releases](https://github.com/rojo-rbx/rojo/releases/tag/v7.7.1), then run:
+`build.sh` produces **build/Citymoney.rbxlx** and **build/Citymoney-Studio.zip**. The root-level download files are release copies, refreshed separately when publishing. Builds leave those tracked release copies alone.
 
-```bash
-rojo build default.project.json --output Citymoney.rbxlx
-```
-
-For live source editing on the same machine as Studio, run `rojo serve default.project.json --address 127.0.0.1 --port 34872` (or `.tools/rojo` in this Linux environment) and connect with the [official Rojo Studio plugin](https://rojo.space/docs/v7/getting-started/installation/). Cloud connectivity depends on your Studio/network configuration; the self-contained place file is the simplest way to play. Future cloud tasks should use the existing checkout; each task is already isolated and does not need a Git worktree.
-
-### Structure and validation
+For source editing on the same machine as Studio, use `rojo serve default.project.json --address 127.0.0.1 --port 34872` (or `.tools/rojo` here) and the [official Rojo Studio plugin](https://rojo.space/docs/v7/getting-started/installation/). A source-only Rojo build also works; the server creates the neighborhood when Play starts. The cloud CLI cannot run Roblox Studio.
 
 | Path | Purpose |
 | --- | --- |
-| `src/shared/Config.lua` | Original board, prices, colors, events, and balance settings |
-| `src/shared/Engine.lua` | Platform-independent turn and economy rules |
-| `src/shared/Board.lua` | Shared geometry for the Studio preview and running city |
-| `src/server/init.server.lua` | Server authority, lobby, bots, timeouts, and remotes |
-| `src/server/World.lua` | Procedural 3D board, city, animated tokens, and buildings |
-| `src/client/init.client.lua` | Responsive HUD, camera, keyboard, and touch controls |
-| `tests/Engine.spec.luau` | Rules, invalid actions, economy invariants, and 200 full simulated matches |
+| `src/shared/Architecture.lua` | Physical parcels, four home levels, interiors, rotations, and porch arrival positions |
+| `src/shared/Board.lua` | Neighborhood, park, landscaping, and closed board route |
+| `src/shared/Scene.lua` | Roblox model and 3D-preview construction from the shared geometry |
+| `src/shared/Layout.lua` | Screen-safe desktop and portrait HUD layout |
+| `src/shared/Engine.lua` | Server-owned turns, buying, rent, upgrades, repainting, and visit authorization |
+| `src/shared/Config.lua` | Economy, district colors, events, and match settings |
+| `src/server/World.lua` | House lifecycle, animated avatars, visits, and interactive doors |
+| `src/server/init.server.lua` | Lobby, validated remotes, bot, and turn deadlines |
+| `src/client/init.client.lua` | HUD, deed previews, overview/close-up/walking cameras, and input |
 
-`test.sh` runs 31 engine tests (including 200 simulated matches), validates the board's closed path and deterministic scene, analyzes the shared modules/tests, and compiles all game scripts with Luau. `build.sh` bakes the shared scene, frames the editor camera, and packages the source into a Studio place. It then runs `scripts/check_place.py` to validate the service/script hierarchy, all 24 labeled preview tiles, the camera reference, and embedded source against this checkout, before creating the ZIP.
+The checks include **35 engine tests with 200 complete simulated matches**, board-path/scene checks, all 16 home plots at all four levels, doorway/furniture/stair/rotation checks, and responsive-layout cases including the reported 1192×642 safe area. Shared modules are analyzed, all game scripts compile, and the built place is checked against the current source, all tile labels, camera reference, and serialized geometry transforms.
 
-Roblox Studio is not available in this Linux cloud environment. Automated checks validate rules and packaging; **actual rendering, input, replication, multiplayer play, and publication still need the Studio playtests above**. Money and progress reset with each match/server. Persistent profiles, trading, auctions, and cross-server matchmaking are outside this first version.
+`scripts/render_preview.py` optionally renders exported real scene geometry with Blender. These renders are **geometry previews, not Roblox Studio screenshots**. Blender is not needed to play or build the game.
+
+Actual rendering, avatar movement, input, door prompts, and multiplayer replication still need a Studio playtest. Automated cloud checks cannot verify those engine behaviors.

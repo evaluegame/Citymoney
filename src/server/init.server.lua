@@ -32,13 +32,13 @@ end
 local function payload()
     local lobby = roster()
     return { game = engine.state, lobby = lobby, hostId = lobby[1] and lobby[1].id or false,
-        deadline = deadline, serverTime = workspace:GetServerTimeNow(), revision = revision }
+        deadline = deadline, serverTime = workspace:GetServerTimeNow(), revision = revision, visitors = world:visitorList() }
 end
 
 local function publish(resetTimer)
     revision = revision + 1
     if resetTimer then deadline = workspace:GetServerTimeNow() + Config.turnSeconds end
-    botReadyAt = workspace:GetServerTimeNow() + 2.1
+    if resetTimer or botReadyAt == 0 then botReadyAt = workspace:GetServerTimeNow() + 2.1 end
     world:sync(engine.state)
     snapshot:FireAllClients(payload())
 end
@@ -48,33 +48,18 @@ local function perform(id, command, index)
     local previousPhase = engine.state.phase
     local ok, message = engine:act(id, command, index)
     if ok then
+        if command == "Roll" or command == "End" then world:endVisit(id) end
         local changedTurn = previousTurn ~= engine.state.turnCount
         publish(changedTurn or previousPhase ~= engine.state.phase)
     end
     return ok, message
 end
 
-local function hideAvatar(character)
-    local humanoid = character:WaitForChild("Humanoid", 10)
-    if humanoid then
-        humanoid.WalkSpeed, humanoid.JumpPower, humanoid.AutoRotate = 0, 0, false
-        humanoid.DisplayDistanceType = Enum.HumanoidDisplayDistanceType.None
-    end
-    local root = character:WaitForChild("HumanoidRootPart", 10)
-    if root then root.Anchored = true end
-    local function hide(object)
-        if object:IsA("BasePart") then object.Transparency, object.CanCollide = 1, false end
-        if object:IsA("Decal") then object.Transparency = 1 end
-    end
-    for _, object in ipairs(character:GetDescendants()) do hide(object) end
-    character.DescendantAdded:Connect(hide)
-end
-
 local function addPlayer(player)
     if table.find(joined, player) then return end
     table.insert(joined, player)
-    player.CharacterAdded:Connect(hideAvatar)
-    if player.Character then task.spawn(hideAvatar, player.Character) end
+    player.CharacterAdded:Connect(function(character) task.spawn(function() world:prepareCharacter(player, character) end) end)
+    if player.Character then task.spawn(function() world:prepareCharacter(player, player.Character) end) end
     publish(false)
 end
 Players.PlayerAdded:Connect(addPlayer)
@@ -97,16 +82,29 @@ action.OnServerEvent:Connect(function(player, command, index)
     if lastRequest[player] and now - lastRequest[player] < 0.18 then return end
     lastRequest[player] = now
     if command == "Sync" then snapshot:FireClient(player, payload()); return end
+    if command == "Return" then
+        if world.visiting[player.UserId] then world:endVisit(player.UserId); publish(false) end
+        return
+    end
     if command == "Start" then
         local lobby = roster()
         if not lobby[1] or lobby[1].id ~= player.UserId then feedback:FireClient(player, "Only the host can start a match."); return end
         if #lobby > Config.maxPlayers then feedback:FireClient(player, "Set your server capacity to 6 players or fewer."); return end
         if #lobby == 1 then table.insert(lobby, { id = Config.botId, name = "City Bot", bot = true }) end
         local ok, message = engine:start(lobby)
-        if ok then publish(true) else feedback:FireClient(player, message) end
+        if ok then
+            for id in pairs(world.visiting) do world:endVisit(id) end
+            publish(true)
+        else feedback:FireClient(player, message) end
         return
     end
     if index ~= nil and (type(index) ~= "number" or index ~= index or index % 1 ~= 0 or index < 1 or index > #Config.tiles) then return end
+    if command == "Visit" then
+        local ok, message = engine:canVisit(player.UserId, index)
+        if ok then ok, message = world:visit(player, index) end
+        if ok then publish(false) else feedback:FireClient(player, message) end
+        return
+    end
     local ok, message = perform(player.UserId, command, index)
     if not ok then feedback:FireClient(player, message) end
 end)

@@ -1,493 +1,495 @@
 local Players = game:GetService("Players")
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local RS = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
-local UserInputService = game:GetService("UserInputService")
-local TweenService = game:GetService("TweenService")
+local Input = game:GetService("UserInputService")
+local Lighting = game:GetService("Lighting")
+local StarterGui = game:GetService("StarterGui")
 local player = Players.LocalPlayer
-local shared = ReplicatedStorage:WaitForChild("Citymoney")
-local Config = require(shared:WaitForChild("Config"))
-local remotes = shared:WaitForChild("Remotes")
-local action = remotes:WaitForChild("Action")
-local snapshot = remotes:WaitForChild("Snapshot")
-local feedback = remotes:WaitForChild("Feedback")
-
-local C = {
-    ink = Color3.fromHex("17383E"), panel = Color3.fromHex("15333A"), cream = Color3.fromHex("FFF1D7"),
-    muted = Color3.fromHex("ABC3C1"), gold = Color3.fromHex("F6C66F"), green = Color3.fromHex("83DBBD"),
-    dark = Color3.fromHex("102A30"), line = Color3.fromHex("37565A"), red = Color3.fromHex("FF9E9E"),
-}
-local gui = Instance.new("ScreenGui")
-gui.Name, gui.ResetOnSpawn, gui.IgnoreGuiInset = "Citymoney", false, false
-gui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
-gui.Parent = player:WaitForChild("PlayerGui")
-local root = Instance.new("Frame")
-root.Name, root.Size, root.Position, root.AnchorPoint = "HUD", UDim2.fromOffset(1120, 740), UDim2.fromScale(0.5, 0.5), Vector2.new(0.5, 0.5)
-root.BackgroundTransparency, root.Parent = 1, gui
-local scale = Instance.new("UIScale")
-scale.Parent = root
-
-local function corner(object, radius)
-    local value = Instance.new("UICorner")
-    value.CornerRadius, value.Parent = UDim.new(0, radius or 14), object
-end
-local function panel(parent, x, y, width, height, tint)
-    local frame = Instance.new("Frame")
-    frame.Position, frame.Size = UDim2.fromOffset(x, y), UDim2.fromOffset(width, height)
-    frame.BackgroundColor3, frame.BorderSizePixel = tint or C.panel, 0
-    frame.Parent = parent
-    corner(frame)
-    local stroke = Instance.new("UIStroke")
-    stroke.Color, stroke.Transparency, stroke.Parent = C.line, 0.35, frame
-    return frame
-end
-local function label(parent, text, x, y, width, height, size, tint, bold)
-    local object = Instance.new("TextLabel")
-    object.Position, object.Size, object.BackgroundTransparency = UDim2.fromOffset(x, y), UDim2.fromOffset(width, height), 1
-    object.Text, object.TextSize, object.TextColor3 = text, size or 16, tint or C.cream
-    object.Font = bold and Enum.Font.GothamBold or Enum.Font.Gotham
-    object.TextXAlignment, object.TextYAlignment = Enum.TextXAlignment.Left, Enum.TextYAlignment.Center
-    object.TextWrapped, object.Parent = true, parent
-    return object
-end
-local function button(parent, text, x, y, width, height, tint, callback)
-    local object = Instance.new("TextButton")
-    object.Position, object.Size = UDim2.fromOffset(x, y), UDim2.fromOffset(width, height)
-    object.BackgroundColor3, object.BorderSizePixel, object.AutoButtonColor = tint or C.gold, 0, true
-    object.Font, object.TextSize, object.TextColor3, object.Text = Enum.Font.GothamBold, 15, C.ink, text
-    object.Parent = parent
-    corner(object, 10)
-    if callback then object.Activated:Connect(callback) end
-    return object
-end
-local data, selected, mainCommand, requestSale
-local rolling = false
-local clickLocked = false
-local function send(command, index)
-    if clickLocked or rolling then return end
-    clickLocked = true
-    action:FireServer(command, index)
-    task.delay(0.22, function() clickLocked = false end)
-end
-
-local header = panel(root, 20, 16, 1080, 84)
-label(header, "C I T Y M O N E Y", 24, 10, 360, 38, 28, C.cream, true)
-label(header, "A LITTLE CITY. A BIG OPPORTUNITY.", 25, 49, 420, 20, 11, C.muted, true)
-local roundLabel = label(header, "THE CITY IS OPEN", 440, 16, 250, 25, 14, C.gold, true)
-local timerLabel = label(header, "Waiting for a match", 440, 43, 250, 22, 12, C.muted)
-local wealthLabel = label(header, "$0 NET WORTH", 710, 16, 190, 25, 15, C.green, true)
-local portfolioLabel = label(header, "YOUR CITY STARTS HERE", 710, 44, 190, 20, 10, C.muted, true)
-local helpButton = button(header, "How to play", 910, 23, 146, 38, C.cream)
-
-local tablePanel = panel(root, 20, 118, 224, 358)
-label(tablePanel, "AT THE TABLE", 18, 14, 190, 24, 12, C.muted, true)
-local seats = Instance.new("Frame")
-seats.Position, seats.Size, seats.BackgroundTransparency, seats.Parent = UDim2.fromOffset(12, 48), UDim2.fromOffset(200, 300), 1, tablePanel
-
-local newsPanel = panel(root, 20, 490, 224, 228)
-label(newsPanel, "CITY BULLETIN", 18, 12, 188, 24, 12, C.muted, true)
-local newsText = label(newsPanel, "Welcome! The host can start a match.", 18, 45, 188, 168, 13, C.cream)
-newsText.TextYAlignment = Enum.TextYAlignment.Top
-
-local detail = panel(root, 856, 118, 244, 294)
-local districtStrip = panel(detail, 16, 16, 212, 6, C.gold)
-local districtName = label(detail, "CITY EXPLORER", 18, 34, 208, 20, 11, C.muted, true)
-local tileName = label(detail, "Your next big move", 18, 60, 208, 60, 23, C.cream, true)
-local tileInfo = label(detail, "Roll the dice to find a place in the city.", 18, 124, 208, 87, 14, C.muted)
-tileInfo.TextYAlignment = Enum.TextYAlignment.Top
-local upgradeButton = button(detail, "Build", 16, 226, 102, 44, C.green, function() if selected then send("Upgrade", selected) end end)
-local sellButton = button(detail, "Sell", 126, 226, 102, 44, C.cream, function() if selected and requestSale then requestSale(selected) end end)
-upgradeButton.Visible, sellButton.Visible = false, false
-
-local deedsPanel = panel(root, 856, 426, 244, 292)
-label(deedsPanel, "YOUR CITY", 18, 12, 160, 25, 12, C.muted, true)
-local deedsCount = label(deedsPanel, "0 deeds", 160, 12, 66, 25, 11, C.gold)
-local deeds = Instance.new("ScrollingFrame")
-deeds.Position, deeds.Size = UDim2.fromOffset(12, 47), UDim2.fromOffset(220, 230)
-deeds.BackgroundTransparency, deeds.BorderSizePixel, deeds.ScrollBarThickness = 1, 0, 3
-deeds.ScrollBarImageColor3, deeds.CanvasSize, deeds.Parent = C.gold, UDim2.fromOffset(0, 0), deedsPanel
-local noDeeds = label(deedsPanel, "Buy your first property.\nOwn a matching pair to build!", 22, 100, 200, 90, 14, C.muted)
-
-local statusPill = panel(root, 300, 118, 520, 48)
-local statusText = label(statusPill, "WELCOME TO YOUR NEXT EMPIRE", 18, 5, 484, 38, 14, C.cream, true)
-statusText.TextXAlignment = Enum.TextXAlignment.Center
-
-local control = panel(root, 268, 584, 564, 134)
-local turnTitle = label(control, "Welcome to Citymoney", 20, 14, 350, 28, 21, C.cream, true)
-local turnSubtitle = label(control, "Play with friends, or start solo against City Bot.", 20, 45, 516, 22, 13, C.muted)
-local mainButton = button(control, "Connecting…", 20, 78, 348, 40, C.gold, function() if mainCommand then send(mainCommand) end end)
-local skipButton = button(control, "Pass", 380, 78, 164, 40, C.cream, function() send("Skip") end)
-skipButton.Visible = false
-local diceA = label(control, "–", 426, 6, 50, 44, 32, C.gold, true)
-local diceB = label(control, "–", 484, 6, 50, 44, 32, C.gold, true)
-for _, die in ipairs({ diceA, diceB }) do
-    die.BackgroundTransparency, die.BackgroundColor3, die.TextColor3 = 0, C.cream, C.ink
-    die.Size, die.TextXAlignment = UDim2.fromOffset(44, 44), Enum.TextXAlignment.Center
-    corner(die, 10)
-end
-local timerTrack = panel(control, 20, 126, 524, 3, C.line)
-local timerFill = Instance.new("Frame")
-timerFill.Size, timerFill.BorderSizePixel, timerFill.BackgroundColor3, timerFill.Parent = UDim2.fromScale(1, 1), 0, C.green, timerTrack
-local viewButton = button(root, "Rotate view", 469, 524, 160, 36, C.cream)
-local zoomOut = button(root, "−", 429, 524, 32, 36, C.cream)
-local zoomIn = button(root, "+", 637, 524, 32, 36, C.cream)
-
-local toast = panel(root, 300, 181, 520, 58, C.ink)
-local toastText = label(toast, "", 16, 8, 488, 42, 15, C.gold, true)
-toast.Visible = false
-local toastVersion = 0
-local function notify(message)
-    toastVersion = toastVersion + 1
-    local version = toastVersion
-    toastText.Text, toast.Visible = message, true
-    task.delay(4, function() if toastVersion == version then toast.Visible = false end end)
-end
-
-local help = panel(root, 270, 152, 580, 422)
-help.ZIndex = 10
-for _, item in ipairs(help:GetChildren()) do if item:IsA("GuiObject") then item.ZIndex = 11 end end
-label(help, "Own a piece of the city.", 28, 22, 520, 42, 28, C.gold, true).ZIndex = 11
-local rules = label(help,
-    "1   Roll two dice and move around the city.\n\n2   Buy empty properties. Visitors pay you rent.\n\n3   Own both deeds in a district to double base rent.\n     Build up to 3 levels to increase rent further.\n\n4   Passing City Gate earns $200. City News can\n     help or hurt; detention costs your next move.\n\n5   Last player standing wins. After 120 turns,\n     the highest net worth wins (ties: first seat).",
-    28, 82, 520, 260, 16, C.cream)
-rules.ZIndex, rules.TextYAlignment = 11, Enum.TextYAlignment.Top
-local closeHelp = button(help, "Let's build a city", 28, 358, 524, 42, C.gold, function() help.Visible = false end)
-closeHelp.ZIndex = 11
-help.Visible = false
-helpButton.Activated:Connect(function() help.Visible = not help.Visible end)
-
-local function overlay(width, height)
-    local shade = Instance.new("Frame")
-    shade.Size, shade.BackgroundColor3, shade.BackgroundTransparency = UDim2.fromScale(1, 1), C.dark, 0.22
-    shade.Active, shade.ZIndex, shade.Visible, shade.Parent = true, 20, false, root
-    local card = panel(shade, (1120 - width) / 2, (740 - height) / 2, width, height)
-    card.ZIndex = 21
-    card.DescendantAdded:Connect(function(object) if object:IsA("GuiObject") then object.ZIndex = 22 end end)
-    return shade, card
-end
-local saleModal, saleCard = overlay(480, 270)
-label(saleCard, "Sell this property?", 28, 22, 424, 40, 25, C.cream, true)
-local saleDescription = label(saleCard, "", 28, 80, 424, 100, 16, C.muted)
-local saleIndex, saleTurn
-button(saleCard, "Keep it", 28, 196, 200, 44, C.cream, function() saleModal.Visible = false end)
-button(saleCard, "Confirm sale", 240, 196, 212, 44, C.gold, function()
-    saleModal.Visible = false
-    if data and data.game.status == "playing" and data.game.turnCount == saleTurn then send("Sell", saleIndex) end
-end)
-requestSale = function(index)
-    if not data then return end
-    local tile, property = Config.tiles[index], data.game.properties[index]
-    saleIndex, saleTurn = index, data.game.turnCount
-    saleDescription.Text = tile.name .. " returns to the city. You receive $" .. math.floor((tile.price + property.level * tile.upgrade) / 2)
-        .. ".\n\nSelling a district partner removes your matching-pair bonus."
-    saleModal.Visible = true
-end
-
-local resultModal, resultCard = overlay(560, 430)
-local resultTitle = label(resultCard, "A new city champion", 28, 22, 504, 42, 26, C.gold, true)
-local resultSubtitle = label(resultCard, "", 28, 69, 504, 28, 14, C.muted)
-local resultRows = Instance.new("Frame")
-resultRows.Position, resultRows.Size, resultRows.BackgroundTransparency = UDim2.fromOffset(28, 112), UDim2.fromOffset(504, 224), 1
-resultRows.ZIndex, resultRows.Parent = 22, resultCard
-local replayButton = button(resultCard, "Play again", 28, 357, 316, 44, C.gold, function() resultModal.Visible = false; send("Start") end)
-button(resultCard, "View board", 356, 357, 176, 44, C.cream, function() resultModal.Visible = false end)
-
-local welcomeModal, welcomeCard = overlay(560, 360)
-label(welcomeCard, "Your city starts here.", 28, 22, 504, 44, 29, C.gold, true)
-label(welcomeCard, "A quick guide for your first game", 28, 73, 504, 26, 15, C.muted)
-label(welcomeCard, "01   Roll, then buy the property you land on.\n\n02   Collect a matching pair, then build for more rent.\n\n03   Click any board tile to inspect it. Watch your cash!", 28, 120, 504, 147, 17, C.cream)
-button(welcomeCard, "Got it — let's play", 28, 288, 504, 44, C.gold, function() welcomeModal.Visible = false end)
-
-local tileHighlight = Instance.new("Highlight")
-tileHighlight.Name, tileHighlight.FillTransparency, tileHighlight.OutlineColor = "InspectedProperty", 0.88, C.gold
-tileHighlight.FillColor, tileHighlight.DepthMode, tileHighlight.Parent = C.gold, Enum.HighlightDepthMode.AlwaysOnTop, workspace
-
-local angle, distance, cameraAngle, cameraDistance = math.rad(44), 115, math.rad(44), 115
-local camera = workspace.CurrentCamera
-local function updateCamera(deltaTime)
-    camera = workspace.CurrentCamera
-    if not camera then return end
-    camera.CameraType, camera.FieldOfView = Enum.CameraType.Scriptable, 45
-    local smoothing = 1 - math.exp(-8 * math.min(deltaTime, 0.1))
-    cameraAngle = cameraAngle + (angle - cameraAngle) * smoothing
-    cameraDistance = cameraDistance + (distance - cameraDistance) * smoothing
-    local position = Vector3.new(math.sin(cameraAngle) * cameraDistance, cameraDistance * 1.12, math.cos(cameraAngle) * cameraDistance)
-    camera.CFrame = CFrame.lookAt(position, Vector3.new(0, 1, 0))
-    local viewport = camera.ViewportSize
-    scale.Scale = math.min(viewport.X / 1120, math.max(1, viewport.Y - 12) / 740)
-end
-viewButton.Activated:Connect(function() angle = angle + math.pi / 2 end)
-zoomOut.Activated:Connect(function() distance = math.min(150, distance + 10) end)
-zoomIn.Activated:Connect(function() distance = math.max(85, distance - 10) end)
-UserInputService.InputChanged:Connect(function(input, processed)
-    if not processed and input.UserInputType == Enum.UserInputType.MouseWheel then
-        distance = math.clamp(distance - input.Position.Z * 5, 85, 150)
+local shared = RS:WaitForChild("Citymoney")
+local Config, Architecture, Scene, Layout = require(shared.Config),require(shared.Architecture),require(shared.Scene),require(shared.Layout)
+local remotes=shared:WaitForChild("Remotes")
+local action,snapshot,feedback=remotes:WaitForChild("Action"),remotes:WaitForChild("Snapshot"),remotes:WaitForChild("Feedback")
+-- The default chat and player-list panels obscured the old game HUD.
+task.spawn(function()
+    for _=1,8 do
+        local ok=pcall(function()
+            for _, kind in ipairs({Enum.CoreGuiType.Chat,Enum.CoreGuiType.PlayerList,Enum.CoreGuiType.Backpack,Enum.CoreGuiType.Health}) do StarterGui:SetCoreGuiEnabled(kind,false) end
+        end)
+        if ok then break end
+        task.wait(0.5)
     end
 end)
-
-local function playerById(state, id)
-    for _, entry in ipairs(state.players) do if entry.id == id then return entry end end
+local C={ card=Color3.fromHex("FAF7EF"),paper=Color3.fromHex("EFEBDD"),ink=Color3.fromHex("2E443A"),muted=Color3.fromHex("798579"),
+    line=Color3.fromHex("DDDCCF"),green=Color3.fromHex("3E6C57"),gold=Color3.fromHex("DCC098"),mint=Color3.fromHex("DCE8DA"),red=Color3.fromHex("B66758"),white=Color3.new(1,1,1) }
+local gui=Instance.new("ScreenGui")
+gui.Name,gui.ResetOnSpawn,gui.IgnoreGuiInset,gui.ZIndexBehavior="Citymoney",false,false,Enum.ZIndexBehavior.Sibling
+gui.Parent=player:WaitForChild("PlayerGui")
+local safe=Instance.new("Frame")
+safe.Size,safe.BackgroundTransparency,safe.Parent=UDim2.fromScale(1,1),1,gui
+local root=Instance.new("Frame")
+root.BackgroundTransparency,root.Parent=1,safe
+local uiScale=Instance.new("UIScale"); uiScale.Parent=root
+local function round(object,radius)
+    local value=Instance.new("UICorner");value.CornerRadius,value.Parent=UDim.new(0,radius or 15),object
+end
+local function place(object,x,y,w,h) object.Position,object.Size=UDim2.fromOffset(x,y),UDim2.fromOffset(w,h) end
+local function frame(parent,x,y,w,h,tint)
+    local object=Instance.new("Frame");place(object,x,y,w,h)
+    object.BackgroundColor3,object.BorderSizePixel,object.Parent=tint or C.card,0,parent
+    round(object)
+    local stroke=Instance.new("UIStroke");stroke.Color,stroke.Transparency,stroke.Parent=C.line,0.2,object
+    return object
+end
+local function text(parent,value,x,y,w,h,size,tint,bold)
+    local object=Instance.new("TextLabel");place(object,x,y,w,h)
+    object.BackgroundTransparency,object.Text,object.TextColor3=1,value,tint or C.ink
+    object.TextSize,object.Font=size or 16,bold and Enum.Font.GothamBold or Enum.Font.Gotham
+    object.TextXAlignment,object.TextYAlignment,object.TextWrapped=Enum.TextXAlignment.Left,Enum.TextYAlignment.Center,true
+    object.Parent=parent;return object
+end
+local function button(parent,value,x,y,w,h,tint,callback)
+    local object=Instance.new("TextButton");place(object,x,y,w,h)
+    object.Text,object.TextSize,object.Font=value,14,Enum.Font.GothamBold
+    object.BackgroundColor3,object.TextColor3,object.BorderSizePixel=tint or C.green,tint==C.paper and C.ink or C.white,0
+    object.Parent=parent;round(object,11)
+    object.Activated:Connect(function() if object.Active then callback() end end)
+    return object
+end
+local function available(object,enabled,tint)
+    object.Active,object.AutoButtonColor=enabled,enabled
+    object.BackgroundColor3=enabled and tint or C.paper
+    object.TextColor3=enabled and (tint==C.paper and C.ink or C.white) or C.muted
+end
+local function truncate(object) object.TextWrapped,object.TextTruncate=false,Enum.TextTruncate.AtEnd end
+local data,selected,focusIndex,mainCommand,visitIndex,layout
+local inspectorOpen,portfolioOpen,rolling,locked=false,false,false,false
+local notify,render,requestSale
+local function send(command,index)
+    if locked or (rolling and command~="Return") then return end
+    locked=true;action:FireServer(command,index)
+    task.delay(0.22,function() locked=false end)
+end
+local header=frame(root,24,16,1200,68)
+local mark=frame(header,19,21,24,24,C.green);mark.Rotation=45
+local brand=text(header,"citymoney",60,7,210,32,27,C.ink,true)
+local strap=text(header,"T H E   W A T E R F R O N T   C L U B",62,40,240,15,8,C.muted,true)
+local cashLabel=text(header,"$1,500",360,8,190,30,23,C.ink,true)
+local worthLabel=text(header,"YOUR BALANCE",360,39,230,16,10,C.muted)
+local homesButton=button(header,"Your homes",800,14,142,40,C.green,function() portfolioOpen=not portfolioOpen;inspectorOpen=false;render() end)
+local night=false
+local dayButton=button(header,"Golden hour",960,14,110,40,C.paper,function()
+    night=not night;Lighting.ClockTime=night and 19.2 or 16.2
+end)
+local helpButton
+local roster=frame(root,24,114,188,164)
+text(roster,"AROUND THE NEIGHBORHOOD",14,12,160,25,9,C.muted,true)
+local seats=Instance.new("Frame");place(seats,10,44,168,290);seats.BackgroundTransparency,seats.Parent=1,roster
+local turnChip=frame(root,24,294,188,37,C.mint)
+local roundText=text(turnChip,"WELCOME HOME",12,5,165,27,10,C.green,true)
+local inspector=frame(root,970,114,258,462)
+local district=text(inspector,"THE NEIGHBORHOOD",18,13,204,19,10,C.muted,true)
+local propertyName=text(inspector,"Your next address",18,35,220,52,23,C.ink,true)
+button(inspector,"×",220,12,25,25,C.paper,function() inspectorOpen=false;focusIndex=nil;render() end)
+local viewport=Instance.new("ViewportFrame");place(viewport,14,94,230,134)
+viewport.BackgroundColor3,viewport.Ambient,viewport.LightColor=C.mint,Color3.fromRGB(180,180,165),Color3.fromRGB(255,235,206)
+viewport.LightDirection,viewport.BorderSizePixel,viewport.Parent=Vector3.new(-1,-2,-1),0,inspector;round(viewport,12)
+local viewWorld=Instance.new("WorldModel");viewWorld.Parent=viewport
+local viewCamera=Instance.new("Camera");viewCamera.FieldOfView,viewCamera.Parent=34,viewport;viewport.CurrentCamera=viewCamera
+local ownerText=text(inspector,"A place to call your own",18,237,222,20,12,C.muted)
+local rentText=text(inspector,"RENT  $0",18,263,110,28,18,C.ink,true)
+local levelText=text(inspector,"Cottage",139,263,103,28,13,C.green,true)
+local nextRent=text(inspector,"Buy this lot to build a furnished cottage.",18,296,222,34,12,C.muted)
+local upgradeButton=button(inspector,"Upgrade",16,340,146,38,C.green,function() if selected then send("Upgrade",selected) end end)
+local sellButton=button(inspector,"Sell",170,340,72,38,C.paper,function() if requestSale then requestSale(selected) end end)
+local visitButton=button(inspector,"Walk through your home",16,386,226,39,C.green,function() if selected then send("Visit",selected) end end)
+local paintButton=button(inspector,"Repaint",16,432,106,28,C.paper,function() if selected then send("Paint",selected) end end)
+paintButton.TextSize=11
+local focusButton=button(inspector,"Close-up",130,432,112,28,C.paper,function() focusIndex=selected end);focusButton.TextSize=11
+local portfolio=frame(root,920,114,308,440)
+text(portfolio,"Your collection",18,15,245,35,23,C.ink,true)
+text(portfolio,"Homes that work for you.",18,52,245,22,12,C.muted)
+button(portfolio,"×",264,15,26,26,C.paper,function() portfolioOpen=false;render() end)
+local homeList=Instance.new("ScrollingFrame");place(homeList,12,88,284,338)
+homeList.BackgroundTransparency,homeList.BorderSizePixel,homeList.ScrollBarThickness,homeList.Parent=1,0,3,portfolio
+homeList.ScrollBarImageColor3=C.green
+local emptyHomes=text(portfolio,"Your first address is waiting.\nLand on a property and buy it to\nsee your new home appear.",22,135,264,130,16,C.muted)
+local control=frame(root,235,670,810,112)
+local dieA=frame(control,16,18,48,48,C.paper)
+local dieB=frame(control,72,18,48,48,C.paper)
+local dieTextA=text(dieA,"·",0,0,48,48,28,C.ink,true);dieTextA.TextXAlignment=Enum.TextXAlignment.Center
+local dieTextB=text(dieB,"·",0,0,48,48,28,C.ink,true);dieTextB.TextXAlignment=Enum.TextXAlignment.Center
+local turnTitle=text(control,"A neighborhood of possibilities.",140,14,400,29,21,C.ink,true)
+local turnHint=text(control,"Start solo against City Bot, or invite your friends.",140,48,400,26,12,C.muted);truncate(turnHint)
+local actionButton=button(control,"Connecting…",574,17,220,54,C.green,function() if mainCommand then send(mainCommand) end end)
+local passButton=button(control,"Pass",500,79,75,26,C.paper,function() send("Skip") end)
+local timeText=text(control,"",16,81,400,18,10,C.muted)
+local timeTrack=frame(control,16,104,778,3,C.paper)
+local timeFill=Instance.new("Frame");timeFill.Size,timeFill.BackgroundColor3,timeFill.BorderSizePixel,timeFill.Parent=UDim2.fromScale(1,1),C.green,0,timeTrack
+local cameraBar=frame(root,470,610,340,42)
+button(cameraBar,"↶",5,5,34,32,C.paper,function() focusIndex=nil;root:SetAttribute("Rotate",(root:GetAttribute("Rotate") or 0)-1) end)
+button(cameraBar,"Overview",45,5,110,32,C.paper,function() focusIndex=nil;inspectorOpen=false;render() end)
+button(cameraBar,"↷",161,5,34,32,C.paper,function() focusIndex=nil;root:SetAttribute("Rotate",(root:GetAttribute("Rotate") or 0)+1) end)
+button(cameraBar,"−",205,5,34,32,C.paper,function() root:SetAttribute("Zoom",math.min(1.35,(root:GetAttribute("Zoom") or 1)+0.1)) end)
+button(cameraBar,"+",245,5,34,32,C.paper,function() root:SetAttribute("Zoom",math.max(0.65,(root:GetAttribute("Zoom") or 1)-0.1)) end)
+button(cameraBar,"News",285,5,50,32,C.paper,function() if data then notify(data.game.notice or "The neighborhood is open.") end end).TextSize=10
+local visitBanner=frame(root,420,110,440,58,C.green)
+local visitText=text(visitBanner,"Welcome home",16,8,270,38,16,C.white,true)
+button(visitBanner,"Back to board",292,10,134,38,C.paper,function() send("Return") end)
+visitBanner.Visible=false
+local toast=frame(root,440,105,400,45,C.card);toast.ZIndex=15;toast.Visible=false
+local toastText=text(toast,"",16,5,368,35,14,C.green,true);toastText.ZIndex=16
+local toastVersion=0
+notify=function(message)
+    toastVersion=toastVersion+1;local version=toastVersion
+    toastText.Text,toast.Visible=message,true
+    task.delay(4,function() if toastVersion==version then toast.Visible=false end end)
+end
+local function overlay(w,h)
+    local shade=Instance.new("Frame");shade.Size,shade.BackgroundColor3,shade.BackgroundTransparency=UDim2.fromScale(1,1),C.ink,0.35
+    shade.Active,shade.ZIndex,shade.Visible,shade.Parent=true,30,false,root
+    local card=frame(shade,0,0,w,h);card.AnchorPoint,card.Position,card.ZIndex=Vector2.new(0.5,0.5),UDim2.fromScale(0.5,0.5),31
+    card.DescendantAdded:Connect(function(object) if object:IsA("GuiObject") then object.ZIndex=32 end end)
+    return shade,card
+end
+local help,helpCard=overlay(510,420)
+text(helpCard,"Make yourself at home.",26,22,458,44,27,C.ink,true)
+text(helpCard,"01   BUY A HOME",26,91,458,25,13,C.green,true)
+text(helpCard,"Roll the dice. Buy a lot to instantly build a cottage\nwith a porch, furniture, garden and your name on it.",26,120,458,48,15,C.muted)
+text(helpCard,"02   GROW YOUR NEIGHBORHOOD",26,183,458,25,13,C.green,true)
+text(helpCard,"Complete a district pair to unlock bigger homes.\nVisitors pay rent. Pass City Gate to collect $200.",26,212,458,48,15,C.muted)
+text(helpCard,"03   STEP INSIDE",26,275,458,25,13,C.green,true)
+text(helpCard,"Select your home, then Walk through. Use WASD\nand open the front door with E. Press B to return.",26,304,458,48,15,C.muted)
+button(helpCard,"Let's build a neighborhood",26,365,458,36,C.green,function() help.Visible=false end)
+helpButton=button(header,"How to play",1080,14,124,40,C.paper,function() help.Visible=not help.Visible end)
+local sale,saleCard=overlay(470,260)
+text(saleCard,"Let this home go?",26,22,418,42,26,C.ink,true)
+local saleText=text(saleCard,"",26,82,418,82,16,C.muted)
+local saleIndex,saleTurn
+button(saleCard,"Keep my home",26,190,200,42,C.paper,function() sale.Visible=false end)
+button(saleCard,"Confirm sale",238,190,206,42,C.green,function()
+    sale.Visible=false
+    if data and data.game.status=="playing" and data.game.turnCount==saleTurn then send("Sell",saleIndex) end
+end)
+requestSale=function(index)
+    if not index or not data then return end
+    local tile,property=Config.tiles[index],data.game.properties[index]
+    saleIndex,saleTurn=index,data.game.turnCount
+    saleText.Text=tile.name.." returns to the city for $"..math.floor((tile.price+property.level*tile.upgrade)/2)..". Its house will be removed, and you may lose your district bonus."
+    sale.Visible=true
+end
+local results,resultCard=overlay(520,430)
+local resultTitle=text(resultCard,"A neighborhood well built.",26,22,468,44,26,C.ink,true)
+local resultSubtitle=text(resultCard,"",26,73,468,30,15,C.green)
+local resultRows=Instance.new("Frame");place(resultRows,26,121,468,212);resultRows.BackgroundTransparency,resultRows.Parent=1,resultCard
+local replay=button(resultCard,"Play again",26,360,292,44,C.green,function() results.Visible=false;send("Start") end)
+button(resultCard,"Keep looking",330,360,164,44,C.paper,function() results.Visible=false end)
+local highlight=Instance.new("Highlight")
+highlight.Name,highlight.FillColor,highlight.OutlineColor="SelectedAddress",C.gold,C.green
+highlight.FillTransparency,highlight.OutlineTransparency,highlight.Parent=0.94,0.1,workspace
+local function resident(state,id)
+    for _, value in ipairs(state.players) do if value.id==id then return value end end
     return nil
 end
-local function ownsGroup(state, id, group)
-    for index, tile in ipairs(Config.tiles) do
-        if tile.group == group and state.properties[index].ownerId ~= id then return false end
-    end
+local function pair(state,id,group)
+    for index,tile in ipairs(Config.tiles) do if tile.group==group and state.properties[index].ownerId~=id then return false end end
     return true
 end
-local function propertyRent(state, index)
-    local tile, property = Config.tiles[index], state.properties[index]
-    local amount = tile.rent * Config.rentMultipliers[property.level + 1]
-    if property.ownerId and property.level == 0 and ownsGroup(state, property.ownerId, tile.group) then amount = amount * 2 end
+local function rent(state,index)
+    local tile,property=Config.tiles[index],state.properties[index]
+    local amount=tile.rent*Config.rentMultipliers[property.level+1]
+    if property.ownerId and property.level==0 and pair(state,property.ownerId,tile.group) then amount=amount*2 end
     return amount
 end
-local function netWorth(state, resident)
-    local amount = resident.cash
-    for index, property in ipairs(state.properties) do
-        if property.ownerId == resident.id then
-            local tile = Config.tiles[index]
-            amount = amount + tile.price + property.level * tile.upgrade
-        end
+local function worth(state,person)
+    local total=person.cash
+    for index,property in ipairs(state.properties) do
+        if property.ownerId==person.id then local tile=Config.tiles[index];total=total+tile.price+property.level*tile.upgrade end
     end
-    return amount
+    return total
 end
-
-local function enabled(object, available, tint)
-    object.Active, object.AutoButtonColor = available, available
-    object.BackgroundColor3, object.TextColor3 = available and tint or C.line, available and C.ink or C.muted
+local previewKey
+local function propertyPreview(index,owner,property)
+    local key=index..":"..tostring(property.ownerId)..":"..property.level..":"..(property.paint or 0)
+    if previewKey==key then return end
+    previewKey=key;viewWorld:ClearAllChildren()
+    local model=Scene.model(Architecture.property(Config,index,owner and owner.name or "Your next home",owner and Config.playerColors[owner.colorIndex] or "D4AF84",property.level,property.paint or 0),"Preview",viewWorld,true)
+    local cf,size=model:GetBoundingBox()
+    local target=cf.Position+Vector3.new(0,1,0)
+    local _,yaw=Architecture.site(index)
+    local x,z=22,-29
+    viewCamera.CFrame=CFrame.lookAt(target+Vector3.new(math.cos(yaw)*x+math.sin(yaw)*z,20+size.Y*0.3,-math.sin(yaw)*x+math.cos(yaw)*z),target)
 end
-
-local render
-render = function()
+local homeNames={"Cottage","Townhouse","Garden villa","Grand villa"}
+render=function()
     if not data then return end
-    local state = data.game
-    local current = state.players[state.turn]
-    local mine = playerById(state, player.UserId)
-    local myTurn = state.status == "playing" and current and current.id == player.UserId and current.alive
-    local isHost = data.hostId == player.UserId
-    if saleModal.Visible and (state.status ~= "playing" or saleTurn ~= state.turnCount or not myTurn) then saleModal.Visible = false end
-    local ownedCount, districtCount = 0, 0
-    for _, property in ipairs(state.properties) do if property.ownerId == player.UserId then ownedCount = ownedCount + 1 end end
-    for group in pairs(Config.groups) do if mine and ownsGroup(state, player.UserId, group) then districtCount = districtCount + 1 end end
-    wealthLabel.Text = mine and ("$" .. netWorth(state, mine) .. " NET WORTH") or "BUILD YOUR FORTUNE"
-    portfolioLabel.Text = ownedCount .. " DEEDS  ·  " .. districtCount .. " DISTRICTS"
+    local state=data.game
+    local current=state.players[state.turn]
+    local mine=resident(state,player.UserId)
+    local myTurn=state.status=="playing" and current and current.id==player.UserId and current.alive
+    local isHost=data.hostId==player.UserId
+    visitIndex=nil
+    for _, visitor in ipairs(data.visitors or {}) do if visitor.id==player.UserId then visitIndex=visitor.tile end end
+    if sale.Visible and (not myTurn or state.turnCount~=saleTurn) then sale.Visible=false end
+    cashLabel.Text=mine and ("$"..mine.cash) or "$1,500"
+    worthLabel.Text=mine and ("NET WORTH  $"..worth(state,mine)) or "YOUR STARTING BALANCE"
+    local count=0
+    for _,property in ipairs(state.properties) do if property.ownerId==player.UserId then count=count+1 end end
+    homesButton.Text="Your homes  ·  "..count
     seats:ClearAllChildren()
-    local entries = state.status == "lobby" and data.lobby or state.players
-    for seat, entry in ipairs(entries) do
-        local active = state.status == "playing" and current and current.id == entry.id
-        local row = panel(seats, 0, (seat - 1) * 49, 200, 43, active and C.line or C.dark)
-        local tint = Color3.fromHex(Config.playerColors[entry.colorIndex or seat] or "FFFFFF")
-        panel(row, 8, 11, 5, 21, tint)
-        local name = label(row, entry.name .. (entry.alive == false and " · OUT" or ""), 22, 4, 112, 18, 12, entry.alive == false and C.muted or C.cream, true)
-        name.TextTruncate, name.TextWrapped = Enum.TextTruncate.AtEnd, false
-        label(row, active and (entry.id == player.UserId and "YOUR MOVE" or "TAKING A TURN") or (entry.bot and "CITY BOT" or "CITY RESIDENT"), 22, 23, 112, 13, 8, active and C.gold or C.muted, true)
-        label(row, entry.cash and ("$" .. entry.cash) or "Ready", 138, 8, 58, 26, 12, tint, true)
+    local entries=state.status=="lobby" and data.lobby or state.players
+    for seat,entry in ipairs(entries) do
+        local row=frame(seats,0,(seat-1)*47,168,41,(current and state.status=="playing" and current.id==entry.id) and C.mint or C.card)
+        local tint=Color3.fromHex(Config.playerColors[entry.colorIndex or seat] or "DCC098")
+        local dot=frame(row,9,13,13,13,tint);round(dot,7)
+        local name=text(row,entry.name,31,4,125,19,12,entry.alive==false and C.muted or C.ink,true);truncate(name)
+        text(row,entry.cash and ("$"..entry.cash..(entry.alive==false and " · out" or "")) or "Ready to move in",31,23,125,13,10,C.muted)
     end
-    newsText.Text = #state.logs > 0 and table.concat(state.logs, "\n\n", 1, math.min(4, #state.logs)) or "Invite friends, or start solo to play against City Bot. No purchases or Robux required."
-    roundLabel.Text = state.status == "playing" and ("TURN " .. state.turnCount .. " / " .. Config.maxTurns) or "THE CITY IS OPEN"
-    diceA.Text, diceB.Text = state.dice[1] > 0 and tostring(state.dice[1]) or "–", state.dice[2] > 0 and tostring(state.dice[2]) or "–"
-    skipButton.Visible = false
-    mainButton.Active, mainButton.BackgroundColor3 = true, C.gold
-    mainCommand = nil
-    if state.status == "lobby" or state.status == "finished" then
-        local finished = state.status == "finished"
-        local winner = playerById(state, state.winnerId)
-        turnTitle.Text = finished and (winner and (winner.name .. " wins!") or "Match complete") or "Welcome to Citymoney"
-        turnSubtitle.Text = #data.lobby == 1 and "Start solo to play against City Bot." or (#data.lobby .. " residents ready. The host can start.")
-        mainButton.Text = isHost and (finished and "Play again" or "Start the city") or "Waiting for host…"
-        mainCommand = isHost and "Start" or nil
-        statusText.Text = finished and "A NEW CITY STORY STARTS HERE" or "BUY. BUILD. MAKE YOUR FORTUNE."
+    roster.Size=UDim2.fromOffset(188,52+math.min(#entries,6)*47)
+    roundText.Text=state.status=="playing" and ("TURN "..state.turnCount.." / "..Config.maxTurns) or "THE NEIGHBORHOOD IS OPEN"
+    if layout then turnChip.Position=UDim2.fromOffset(24,layout.roster[2]+roster.Size.Y.Offset+12) end
+    dieTextA.Text,dieTextB.Text=state.dice[1]>0 and tostring(state.dice[1]) or "·",state.dice[2]>0 and tostring(state.dice[2]) or "·"
+    passButton.Visible=false;mainCommand=nil
+    if state.status~="playing" then
+        turnTitle.Text=state.status=="finished" and "Your next neighborhood awaits." or "A neighborhood of possibilities."
+        turnHint.Text=#data.lobby==1 and "Start solo and meet City Bot. Your first home awaits." or (#data.lobby.." residents ready. The host starts the game.")
+        mainCommand=isHost and "Start" or nil
+        actionButton.Text=isHost and (state.status=="finished" and "Build again" or "Start the neighborhood") or "Waiting for host"
     else
-        statusText.Text = myTurn and "YOUR CITY. YOUR MOVE." or ((current and current.name or "A resident") .. " IS MAKING A MOVE")
-        turnTitle.Text = myTurn and "It's your turn" or ((current and current.name or "A resident") .. "'s turn")
-        if not mine then
-            turnSubtitle.Text = "You're watching this match. You'll join the next one."
-        elseif not mine.alive then
-            turnSubtitle.Text = "You're out this round. Watch who wins the city!"
-        else
-            turnSubtitle.Text = state.notice or "Build your city."
-        end
+        turnTitle.Text=myTurn and "Make your next move." or ((current and current.name or "A resident").." is exploring.")
+        turnHint.Text=state.notice or "A new address is waiting."
         if myTurn then
-            if state.phase == "roll" then
-                mainCommand, mainButton.Text = "Roll", mine.detained and "Serve detention" or "Roll the dice  [R]"
-            elseif state.phase == "buy" then
-                local tile = Config.tiles[state.pendingTile]
-                mainCommand, mainButton.Text = "Buy", "Buy " .. tile.name .. " · $" .. tile.price
-                skipButton.Visible = true
-                if mine.cash < tile.price then
-                    mainCommand, mainButton.Text = nil, "Need $" .. tile.price .. " · sell a deed or pass"
-                end
-            else
-                mainCommand, mainButton.Text = "End", "End turn  [Space]"
-            end
-        elseif current and current.id == player.UserId and not current.alive and state.phase == "end" then
-            mainCommand, mainButton.Text = "End", "End turn"
-        else
-            mainButton.Text = "Watching the city…"
+            if state.phase=="roll" then mainCommand="Roll";actionButton.Text=mine.detained and "Serve detention" or "Roll the dice  [R]"
+            elseif state.phase=="buy" then
+                local tile=Config.tiles[state.pendingTile]
+                mainCommand=mine.cash>=tile.price and "Buy" or nil
+                actionButton.Text=mainCommand and ("Buy cottage · $"..tile.price) or "Sell a deed or pass"
+                passButton.Visible=true
+            else mainCommand="End";actionButton.Text="End turn  [Space]" end
+        elseif current and current.id==player.UserId and state.phase=="end" then mainCommand="End";actionButton.Text="End turn"
+        else actionButton.Text="Enjoy the neighborhood" end
+    end
+    if rolling then mainCommand=nil;actionButton.Text="Rolling the dice…" end
+    available(actionButton,mainCommand~=nil,C.green)
+    portfolio.Visible=portfolioOpen and not visitIndex
+    homeList:ClearAllChildren()
+    local row=0
+    for index,property in ipairs(state.properties) do
+        if property.ownerId==player.UserId then
+            local tile=Config.tiles[index]
+            local item=button(homeList,"",2,row*68,276,60,C.paper,function() selected=index;inspectorOpen=true;portfolioOpen=false;render() end)
+            local strip=frame(item,9,10,5,40,Color3.fromHex(Config.groups[tile.group].color));round(strip,3)
+            text(item,tile.name,26,8,235,24,15,C.ink,true)
+            text(item,homeNames[property.level+1].." · $"..rent(state,index).." rent"..(pair(state,player.UserId,tile.group) and " · PAIR" or ""),26,32,235,18,11,C.muted)
+            row=row+1
         end
     end
-    if rolling then mainCommand, mainButton.Text = nil, "Rolling…" end
-    enabled(mainButton, mainCommand ~= nil, C.gold)
-
-    local previousScroll = deeds.CanvasPosition
-    deeds:ClearAllChildren()
-    local count = 0
-    for index, property in ipairs(state.properties) do
-        if property.ownerId == player.UserId then
-            local tile = Config.tiles[index]
-            local matching = ownsGroup(state, player.UserId, tile.group)
-            local row = button(deeds, tile.name .. (matching and "  ★ " or "  ·  ") .. "L" .. property.level, 2, count * 39, 208, 33, Color3.fromHex(Config.groups[tile.group].color), function()
-                selected = index
-                render()
-            end)
-            row.TextSize = 12
-            count = count + 1
-        end
-    end
-    deeds.CanvasSize, deedsCount.Text, noDeeds.Visible = UDim2.fromOffset(0, count * 39), count .. " deeds", count == 0
-    deeds.CanvasPosition = Vector2.new(0, math.min(previousScroll.Y, math.max(0, count * 39 - 230)))
-    if not selected and mine then selected = mine.position end
-    local tile = selected and Config.tiles[selected]
-    local board = workspace:FindFirstChild("CitymoneyBoard")
-    tileHighlight.Adornee = board and selected and board:FindFirstChild("Tile" .. selected) or nil
-    upgradeButton.Visible, sellButton.Visible = false, false
-    if tile then
-        local property = state.properties[selected]
-        districtName.Text = tile.group and string.upper(Config.groups[tile.group].name) or "AROUND THE CITY"
-        districtStrip.BackgroundColor3 = tile.group and Color3.fromHex(Config.groups[tile.group].color) or C.gold
-        tileName.Text = tile.name
-        if tile.kind == "property" then
-            local owner = playerById(state, property.ownerId)
-            tileInfo.Text = (owner and ("Owned by " .. owner.name) or ("Price  $" .. tile.price))
-                .. "\nRent  $" .. propertyRent(state, selected) .. "  ·  Level " .. property.level .. "/3"
-                .. "\nBuild cost  $" .. tile.upgrade
-            local own = property.ownerId == player.UserId
-            upgradeButton.Visible, sellButton.Visible = myTurn and own, myTurn and own
-            if own then
-                tileInfo.Text = tileInfo.Text .. "\nResale  $" .. math.floor((tile.price + property.level * tile.upgrade) / 2)
-            end
-            local pair = own and ownsGroup(state, player.UserId, tile.group)
-            local canBuild = myTurn and own and pair and property.level < Config.maxLevel and mine.cash >= tile.upgrade
-            upgradeButton.TextSize = 12
-            upgradeButton.Text = property.level >= 3 and "Max level" or (not pair and "Need pair" or ("Build $" .. tile.upgrade))
-            enabled(upgradeButton, canBuild == true, C.green)
-        else
-            local descriptions = { start = "Collect $200 whenever you pass City Gate.", visit = "Just visiting. Detained players miss their next move.",
-                detention = "Go straight to detention. No City Gate bonus.", park = "Take a breath. Nothing to pay here.",
-                event = "The city has news for you. A random event changes your fortune.", tax = "Pay $120 into the city budget." }
-            tileInfo.Text = descriptions[tile.kind] or "Explore the city."
-        end
-    end
-    replayButton.Visible = isHost
-    if state.status == "finished" then
-        local winner = playerById(state, state.winnerId)
-        resultTitle.Text = winner and (winner.name .. " wins the city!") or "The match is over"
-        resultSubtitle.Text = winner and ("$" .. netWorth(state, winner) .. " net worth · a city well built") or "Gather your friends for another round."
+    homeList.CanvasSize=UDim2.fromOffset(0,row*68)
+    emptyHomes.Visible=row==0
+    inspector.Visible=inspectorOpen and selected~=nil and not portfolioOpen and not visitIndex
+    highlight.Adornee=nil
+    if selected and Config.tiles[selected] and Config.tiles[selected].kind=="property" then
+        local tile,property=Config.tiles[selected],state.properties[selected]
+        local owner=resident(state,property.ownerId)
+        district.Text=string.upper(Config.groups[tile.group].name)
+        propertyName.Text=tile.name
+        ownerText.Text=owner and (owner.name.."'s home · "..homeNames[property.level+1]) or ("FOR SALE · $"..tile.price.." including your cottage")
+        rentText.Text="$"..rent(state,selected).." / visit"
+        levelText.Text="LEVEL "..property.level.." / 3"
+        local own=property.ownerId==player.UserId
+        local fullPair=own and pair(state,player.UserId,tile.group)
+        nextRent.Text=own and (property.level==3 and "Your finest address. Fully upgraded." or (fullPair and ("Next: $"..tile.rent*Config.rentMultipliers[property.level+2].." rent · upgrade $"..tile.upgrade) or "Own both district homes to unlock upgrades.")) or "A complete home appears as soon as you buy."
+        propertyPreview(selected,owner,property)
+        upgradeButton.Visible,sellButton.Visible,paintButton.Visible=own and myTurn,own and myTurn,own and myTurn
+        visitButton.Visible=own and mine and mine.alive and state.status=="playing"
+        visitButton.Text="Walk through your home"
+        upgradeButton.Text=property.level==3 and "Grand villa" or (fullPair and ("Upgrade · $"..tile.upgrade) or "Complete the pair")
+        available(upgradeButton,myTurn and fullPair and property.level<3 and mine.cash>=tile.upgrade or false,C.green)
+        local board=workspace:FindFirstChild("CitymoneyBoard")
+        if board and inspector.Visible then highlight.Adornee=board:FindFirstChild("Property"..selected) or board:FindFirstChild("Tile"..selected) end
+    else inspector.Visible=false end
+    visitBanner.Visible=visitIndex~=nil
+    if visitIndex then visitText.Text="At home · "..Config.tiles[visitIndex].name end
+    roster.Visible=not visitIndex and not (layout and layout.compact)
+    turnChip.Visible=roster.Visible
+    cameraBar.Visible=not visitIndex
+    replay.Visible=isHost
+    if state.status=="finished" then
+        local winner=resident(state,state.winnerId)
+        resultTitle.Text=winner and (winner.name.." wins the neighborhood.") or "A neighborhood well built."
+        resultSubtitle.Text=winner and ("$"..worth(state,winner).." net worth. Home, sweet home.") or "Time for a fresh start."
         resultRows:ClearAllChildren()
-        local standings = table.clone(state.players)
-        table.sort(standings, function(a, b)
-            if a.alive ~= b.alive then return a.alive end
-            local left, right = netWorth(state, a), netWorth(state, b)
-            return left > right or (left == right and a.colorIndex < b.colorIndex)
+        local standings=table.clone(state.players)
+        table.sort(standings,function(a,b)
+            if a.alive~=b.alive then return a.alive end
+            local aw,bw=worth(state,a),worth(state,b)
+            return aw>bw or (aw==bw and a.colorIndex<b.colorIndex)
         end)
-        for rank, resident in ipairs(standings) do
-            local row = label(resultRows, rank .. "   " .. resident.name .. "    $" .. netWorth(state, resident) .. (resident.alive and "" or "  · OUT"), 0, (rank - 1) * 34, 504, 30, 16,
-                Color3.fromHex(Config.playerColors[resident.colorIndex]), rank == 1)
-            row.ZIndex = 22
+        for rank,entry in ipairs(standings) do
+            text(resultRows,rank.."   "..entry.name.."     $"..worth(state,entry),0,(rank-1)*33,468,30,16,rank==1 and C.green or C.muted,rank==1)
         end
     end
 end
-
-local diceAnimation = 0
-local function animateDice(first, second)
-    diceAnimation = diceAnimation + 1
-    local version = diceAnimation
-    rolling = true
-    render()
-    task.spawn(function()
-        for frame = 1, 10 do
-            if diceAnimation ~= version then return end
-            diceA.Text, diceB.Text = tostring(math.random(1, 6)), tostring(math.random(1, 6))
-            diceA.Rotation, diceB.Rotation = frame % 2 == 0 and 7 or -7, frame % 2 == 0 and -7 or 7
-            task.wait(0.045 + frame * 0.003)
+local function updateLayout()
+    local area=safe.AbsoluteSize
+    if area.X<1 or area.Y<1 then return end
+    layout=Layout.calculate(area.X,area.Y)
+    local w,h=layout.width,layout.height
+    uiScale.Scale=layout.scale;root.Size,root.Position=UDim2.fromOffset(w,h),UDim2.fromOffset(0,0)
+    place(header,24,16,w-48,layout.headerHeight)
+    local hw=w-48
+    if layout.compact then
+        place(brand,54,9,170,30);brand.TextSize=23;strap.Visible=false
+        place(cashLabel,18,59,160,28);place(worthLabel,180,64,250,18)
+        place(homesButton,hw-228,12,136,36);place(helpButton,hw-84,12,70,36);helpButton.Text="Rules";dayButton.Visible=false
+    else
+        place(brand,60,7,210,32);brand.TextSize=27;strap.Visible=true
+        place(cashLabel,math.max(310,hw*0.34),8,190,30);place(worthLabel,math.max(310,hw*0.34),39,230,16)
+        place(homesButton,hw-410,14,150,40);place(dayButton,hw-250,14,110,40);place(helpButton,hw-130,14,116,40)
+        helpButton.Text="How to play";dayButton.Visible=true
+    end
+    local r=layout.roster;place(roster,r[1],r[2],r[3],roster.Size.Y.Offset)
+    local card=layout.inspector;place(inspector,card[1],card[2],card[3],462)
+    -- Deed cards can scroll on short or portrait screens, instead of clipping.
+    if card[4]<462 then
+        local fit=math.max(0.76,card[4]/462)
+        local inner=inspector:FindFirstChildOfClass("UIScale") or Instance.new("UIScale")
+        inner.Scale,inner.Parent=fit,inspector
+        inspector.Position=UDim2.fromOffset(w-24-258*fit,card[2])
+    else local inner=inspector:FindFirstChildOfClass("UIScale");if inner then inner.Scale=1 end end
+    place(portfolio,w-332,layout.headerHeight+46,308,math.min(440,h-layout.headerHeight-210))
+    homeList.Size=UDim2.fromOffset(284,portfolio.Size.Y.Offset-102)
+    local t=layout.toolbar;place(control,t[1],t[2],t[3],t[4])
+    if layout.compact then
+        place(dieA,16,16,44,44);place(dieB,66,16,44,44)
+        place(turnTitle,124,14,t[3]-140,27);turnTitle.TextSize=18
+        place(turnHint,16,67,t[3]-32,22)
+        place(actionButton,16,101,t[3]-112,42);place(passButton,t[3]-88,101,72,42)
+        place(timeText,124,44,t[3]-140,17)
+    else
+        place(dieA,16,18,48,48);place(dieB,72,18,48,48)
+        place(turnTitle,140,14,t[3]-390,29);turnTitle.TextSize=21
+        place(turnHint,140,48,t[3]-390,26)
+        place(actionButton,t[3]-236,17,220,54);place(passButton,t[3]-90,79,74,24)
+        place(timeText,16,81,t[3]-122,18)
+    end
+    place(timeTrack,16,t[4]-7,t[3]-32,3)
+    place(cameraBar,(w-340)/2,t[2]-58,340,42)
+    place(toast,(w-400)/2,layout.headerHeight+36,400,45)
+    place(visitBanner,(w-440)/2,layout.headerHeight+36,440,58)
+    if data then render() end
+end
+safe:GetPropertyChangedSignal("AbsoluteSize"):Connect(updateLayout)
+updateLayout()
+local cameraAngle,cameraDistance=math.rad(42),230
+local cameraTarget=Vector3.new(0,3,6)
+local wasVisiting=false
+local function updateCamera(dt)
+    local camera=workspace.CurrentCamera
+    if not camera then return end
+    if visitIndex then
+        local humanoid=player.Character and player.Character:FindFirstChildOfClass("Humanoid")
+        if humanoid then
+            camera.CameraSubject, camera.CameraType=humanoid,Enum.CameraType.Custom
+            player.CameraMinZoomDistance,player.CameraMaxZoomDistance=4,35
+            if not wasVisiting then camera.CFrame=CFrame.lookAt(humanoid.RootPart.Position+Vector3.new(14,11,16),humanoid.RootPart.Position) end
         end
-        if diceAnimation ~= version then return end
-        diceA.Text, diceB.Text, diceA.Rotation, diceB.Rotation = tostring(first), tostring(second), 0, 0
-        rolling = false
-        render()
+        wasVisiting=true;return
+    end
+    wasVisiting=false
+    camera.CameraType,camera.FieldOfView=Enum.CameraType.Scriptable,38
+    local alpha=1-math.exp(-5*math.min(dt,0.1))
+    local wantedAngle=math.rad(42)+(root:GetAttribute("Rotate") or 0)*math.pi/2
+    local wantedDistance=230*(root:GetAttribute("Zoom") or 1)
+    local wantedTarget=Vector3.new(0,3,6)
+    if focusIndex and Config.tiles[focusIndex].kind=="property" then
+        local p,yaw=Architecture.site(focusIndex)
+        wantedTarget=Vector3.new(p[1],8,p[3]);wantedDistance=34;wantedAngle=yaw+math.rad(150)
+    else wantedDistance=wantedDistance*math.max(1,1.1/math.max(0.4,camera.ViewportSize.X/camera.ViewportSize.Y)) end
+    cameraAngle=cameraAngle+(wantedAngle-cameraAngle)*alpha
+    cameraDistance=cameraDistance+(wantedDistance-cameraDistance)*alpha
+    cameraTarget=cameraTarget:Lerp(wantedTarget,alpha)
+    camera.CFrame=CFrame.lookAt(cameraTarget+Vector3.new(math.sin(cameraAngle)*cameraDistance,cameraDistance*0.86,math.cos(cameraAngle)*cameraDistance),cameraTarget)
+end
+local animationVersion=0
+local function diceAnimation(first,second)
+    animationVersion=animationVersion+1;local version=animationVersion
+    rolling=true;render()
+    task.spawn(function()
+        for step=1,10 do
+            if version~=animationVersion then return end
+            dieTextA.Text,dieTextB.Text=tostring(math.random(1,6)),tostring(math.random(1,6))
+            dieA.Rotation,dieB.Rotation=step%2==0 and 7 or -7,step%2==0 and -7 or 7
+            task.wait(0.045+step*0.003)
+        end
+        if version~=animationVersion then return end
+        dieTextA.Text,dieTextB.Text,dieA.Rotation,dieB.Rotation=tostring(first),tostring(second),0,0
+        rolling=false;render()
     end)
 end
-
-local welcomeShown = false
 snapshot.OnClientEvent:Connect(function(incoming)
-    if data and incoming.revision < data.revision then return end
-    local previous = data
-    local before = data and playerById(data.game, player.UserId)
-    local after = playerById(incoming.game, player.UserId)
-    if after and (not before or before.position ~= after.position or incoming.game.turnCount < data.game.turnCount) then
-        selected = after.position
+    if data and incoming.revision<data.revision then return end
+    local old=data
+    local before=old and resident(old.game,player.UserId)
+    local after=resident(incoming.game,player.UserId)
+    data=incoming
+    local state=data.game
+    if old and state.status=="playing" and old.game.status~="playing" then
+        results.Visible=false;focusIndex=nil;inspectorOpen=false;portfolioOpen=false
     end
-    data = incoming
-    render()
-    local state = data.game
-    if not welcomeShown and state.status == "lobby" then
-        welcomeShown, welcomeModal.Visible = true, true
+    if after and before and after.cash~=before.cash then
+        local delta=after.cash-before.cash
+        notify((delta>0 and "+$" or "−$")..math.abs(delta).." · Balance $"..after.cash)
     end
-    if state.status ~= "lobby" then welcomeModal.Visible = false end
-    if state.status ~= "finished" then resultModal.Visible = false end
-    if before and after and before.cash ~= after.cash then
-        local delta = after.cash - before.cash
-        notify((delta > 0 and "+$" or "−$") .. math.abs(delta) .. "  ·  Cash $" .. after.cash)
-    end
-    local current = state.players[state.turn]
-    if current and current.id == player.UserId and state.status == "playing" and state.phase == "roll"
-        and (not previous or previous.game.turnCount ~= state.turnCount or previous.game.status ~= "playing") then
-        notify(current.detained and "Your turn — serve detention, then end your turn." or "Your turn! Roll the dice to explore the city.")
-    end
-    if previous and previous.game.phase == "roll" and state.phase ~= "roll" and state.dice[1] > 0 and state.turnCount == previous.game.turnCount then
-        animateDice(state.dice[1], state.dice[2])
-    end
-    if state.status == "finished" and (not previous or previous.game.status ~= "finished") then
-        resultModal.Visible, help.Visible, saleModal.Visible = true, false, false
-        for _ = 1, 30 do
-            local confetti = Instance.new("Frame")
-            confetti.Size, confetti.Position, confetti.Rotation = UDim2.fromOffset(7, 14), UDim2.fromOffset(math.random(0, 1120), -20), math.random(0, 180)
-            confetti.BorderSizePixel, confetti.BackgroundColor3, confetti.ZIndex, confetti.Parent = 0, Color3.fromHex(Config.playerColors[math.random(1, 6)]), 19, root
-            TweenService:Create(confetti, TweenInfo.new(2 + math.random(), Enum.EasingStyle.Quad, Enum.EasingDirection.In),
-                { Position = UDim2.fromOffset(math.random(0, 1120), 780), Rotation = math.random(-360, 360) }):Play()
-            task.delay(3.2, function() confetti:Destroy() end)
+    if state.status=="playing" and state.phase=="buy" and state.players[state.turn].id==player.UserId then
+        if not old or old.game.phase~="buy" or old.game.pendingTile~=state.pendingTile then
+            selected,inspectorOpen,portfolioOpen=state.pendingTile,true,false
         end
     end
+    if old then
+        for index,property in ipairs(state.properties) do
+            if property.ownerId==player.UserId and old.game.properties[index].ownerId~=player.UserId then
+                selected,focusIndex,inspectorOpen=index,index,true
+                notify("Welcome home! Your cottage at "..Config.tiles[index].name.." is ready.")
+            end
+        end
+        if state.turnCount~=old.game.turnCount then focusIndex=nil end
+        if old.game.phase=="roll" and state.phase~="roll" and state.dice[1]>0 and state.turnCount==old.game.turnCount then diceAnimation(state.dice[1],state.dice[2]) end
+    end
+    if state.status=="finished" and (not old or old.game.status~="finished") then results.Visible=true;help.Visible=false;sale.Visible=false end
+    render()
 end)
-feedback.OnClientEvent:Connect(notify)
-local function inspectAt(position)
-    if help.Visible or welcomeModal.Visible or saleModal.Visible or resultModal.Visible then return end
-    local board = workspace:FindFirstChild("CitymoneyBoard")
-    local currentCamera = workspace.CurrentCamera
-    if not board or not currentCamera then return end
-    local ray = currentCamera:ScreenPointToRay(position.X, position.Y)
-    local parameters = RaycastParams.new()
-    parameters.FilterType, parameters.FilterDescendantsInstances = Enum.RaycastFilterType.Include, { board }
-    local hit = workspace:Raycast(ray.Origin, ray.Direction * 1000, parameters)
-    local index = hit and hit.Instance:GetAttribute("TileIndex")
-    if index and Config.tiles[index] then selected = index; render() end
+feedback.OnClientEvent:Connect(function(message) locked=false;notify(message) end)
+local function inspect(position)
+    if help.Visible or sale.Visible or results.Visible or visitIndex then return end
+    local camera,board=workspace.CurrentCamera,workspace:FindFirstChild("CitymoneyBoard")
+    if not camera or not board then return end
+    local ray=camera:ScreenPointToRay(position.X,position.Y)
+    local parameters=RaycastParams.new();parameters.FilterType,parameters.FilterDescendantsInstances=Enum.RaycastFilterType.Include,{board}
+    local hit=workspace:Raycast(ray.Origin,ray.Direction*1500,parameters)
+    local index=hit and (hit.Instance:GetAttribute("TileIndex") or hit.Instance.Parent:GetAttribute("TileIndex"))
+    if index and Config.tiles[index].kind=="property" then selected,inspectorOpen,portfolioOpen=index,true,false;render() end
 end
-UserInputService.TouchTapInWorld:Connect(function(position, processed) if not processed then inspectAt(position) end end)
-UserInputService.InputBegan:Connect(function(input, processed)
-    if not processed and input.UserInputType == Enum.UserInputType.MouseButton1 then inspectAt(input.Position) end
-    if processed or help.Visible or welcomeModal.Visible or saleModal.Visible or resultModal.Visible or not mainCommand then return end
-    if (input.KeyCode == Enum.KeyCode.R and mainCommand == "Roll") or input.KeyCode == Enum.KeyCode.Space then send(mainCommand) end
+Input.TouchTapInWorld:Connect(function(position,processed) if not processed then inspect(position) end end)
+Input.InputBegan:Connect(function(input,processed)
+    if not processed and input.UserInputType==Enum.UserInputType.MouseButton1 then inspect(input.Position) end
+    if processed or help.Visible or sale.Visible or results.Visible then return end
+    if input.KeyCode==Enum.KeyCode.B and visitIndex then send("Return")
+    elseif input.KeyCode==Enum.KeyCode.R and mainCommand=="Roll" then send("Roll")
+    elseif input.KeyCode==Enum.KeyCode.Space and mainCommand and not visitIndex then send(mainCommand) end
 end)
-RunService.RenderStepped:Connect(function(deltaTime)
-    updateCamera(deltaTime)
-    if data and data.game.status == "playing" then
-        local remaining = math.max(0, data.deadline - workspace:GetServerTimeNow())
-        timerLabel.Text = math.ceil(remaining) .. "s left · auto-play on timeout"
-        timerFill.Size = UDim2.fromScale(math.clamp(remaining / Config.turnSeconds, 0, 1), 1)
-        timerFill.BackgroundColor3, timerLabel.TextColor3 = remaining <= 8 and C.red or C.green, remaining <= 8 and C.red or C.muted
-    else
-        timerLabel.Text = "1–6 players · cash stays in this match"
-        timerFill.Size, timerLabel.TextColor3 = UDim2.fromScale(0, 1), C.muted
+Input.InputChanged:Connect(function(input,processed)
+    if not processed and not visitIndex and input.UserInputType==Enum.UserInputType.MouseWheel then
+        root:SetAttribute("Zoom",math.clamp((root:GetAttribute("Zoom") or 1)-input.Position.Z*0.06,0.65,1.35))
     end
 end)
--- The listener is attached before requesting the first snapshot (including late joins).
+RunService.RenderStepped:Connect(function(dt)
+    updateCamera(dt)
+    dayButton.Text=night and "Night stroll" or "Golden hour"
+    if data and data.game.status=="playing" then
+        local seconds=math.max(0,data.deadline-workspace:GetServerTimeNow())
+        timeText.Text=math.ceil(seconds).."s to decide · R to roll · B to leave a home"
+        timeFill.Size,timeFill.BackgroundColor3=UDim2.fromScale(math.clamp(seconds/Config.turnSeconds,0,1),1),seconds<10 and C.red or C.green
+    else timeText.Text="2–6 residents · solo games include City Bot";timeFill.Size=UDim2.fromScale(0,1) end
+end)
 action:FireServer("Sync")
+task.delay(3,function() if not data then action:FireServer("Sync") end end)

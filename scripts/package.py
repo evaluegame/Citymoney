@@ -9,7 +9,7 @@ with ZipFile(destination, "w", compression=ZIP_DEFLATED) as bundle:
     bundle.write(root / "build/Citymoney.rbxlx", "Citymoney/build/Citymoney.rbxlx")
     for name in ("START-HERE.txt", "README.md", ".gitignore", "default.project.json"):
         bundle.write(root / name, "Citymoney/" + name)
-    for directory in ("src", "scripts", "tests"):
+    for directory in ("src", "scripts", "tests", "docs"):
         for source in sorted((root / directory).rglob("*")):
             if source.is_file() and "__pycache__" not in source.parts:
                 bundle.write(source, "Citymoney/" + source.relative_to(root).as_posix())

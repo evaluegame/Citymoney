@@ -26,6 +26,9 @@ expected = [
     (child(shared, "Config", "ModuleScript"), "src/shared/Config.lua"),
     (child(shared, "Engine", "ModuleScript"), "src/shared/Engine.lua"),
     (child(shared, "Board", "ModuleScript"), "src/shared/Board.lua"),
+    (child(shared, "Architecture", "ModuleScript"), "src/shared/Architecture.lua"),
+    (child(shared, "Scene", "ModuleScript"), "src/shared/Scene.lua"),
+    (child(shared, "Layout", "ModuleScript"), "src/shared/Layout.lua"),
     (server, "src/server/init.server.lua"),
     (child(server, "World", "ModuleScript"), "src/server/World.lua"),
     (client, "src/client/init.client.lua"),
@@ -46,6 +49,8 @@ for index, entry in enumerate(scene):
     assert frame is not None, f"Missing serialized CFrame for {name}"
     for axis, expected_coordinate in zip(("X", "Y", "Z"), entry["position"]):
         assert math.isclose(float(frame.findtext(axis)), expected_coordinate, abs_tol=1e-4), name
+    for axis, expected_component in zip(("R00","R01","R02","R10","R11","R12","R20","R21","R22"), entry.get("rotation", [1,0,0,0,1,0,0,0,1])):
+        assert math.isclose(float(frame.findtext(axis)), expected_component, abs_tol=1e-4), (name, axis)
 for index in range(1, 25):
     tile = child(board, f"Tile{index}", "Part")
     assert tile.find("Item[@class='SurfaceGui']") is not None, "Missing editor tile caption"
