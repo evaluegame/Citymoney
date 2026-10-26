@@ -168,6 +168,10 @@ function World:sync(state)
                 owner and self.config.playerColors[owner.colorIndex] or "A6B4A0",property.level,property.paint or 0)
             view.model = Scene.model(entries,"Property"..index,self.root)
             view.model:SetAttribute("TileIndex",index)
+            view.model:SetAttribute("OwnerId",owner and owner.id or false)
+            view.model:SetAttribute("OwnerName",owner and owner.name or "For sale")
+            view.model:SetAttribute("OwnerColor",owner and self.config.playerColors[owner.colorIndex] or "DCC098")
+            view.effectsKey=nil
             if owner then
                 self:wireDoor(view.model,owner.id)
                 local glow=Instance.new("Highlight")
@@ -181,6 +185,23 @@ function World:sync(state)
                     local visitor=Players:GetPlayerByUserId(id)
                     if owner and owner.id==id and visitor then self:visit(visitor,index) else self:endVisit(id) end
                 end
+            end
+        end
+        local effectsKey=tostring(property.shield)..":"..(property.boost or 0)..":"..(property.rentTier or 1)
+        if view.model and view.effectsKey~=effectsKey then
+            view.effectsKey=effectsKey
+            for _,name in ipairs({"ProtectionSign","RentBoostSign","RentRateSign"}) do
+                local sign=view.model:FindFirstChild(name)
+                if sign then sign:Destroy() end
+            end
+            local owner
+            for _,entry in ipairs(state.players) do if entry.id==property.ownerId then owner=entry end end
+            if owner then
+                local effects={}
+                for _,entry in ipairs(Architecture.property(self.config,index,owner.name,self.config.playerColors[owner.colorIndex],property.level,property.paint or 0,property)) do
+                    if entry.name=="ProtectionSign" or entry.name=="RentBoostSign" or entry.name=="RentRateSign" then table.insert(effects,entry) end
+                end
+                Scene.populate(effects,view.model)
             end
         end
     end
@@ -211,7 +232,30 @@ function World:sync(state)
         end
         local active = state.status=="playing" and state.players[state.turn].id==resident.id
         tag.TextLabel.Text = (active and "▸ " or "")..resident.name
+        tag.TextLabel.TextColor3=Color3.fromHex(self.config.playerColors[resident.colorIndex])
         tag.Enabled = resident.alive
+        if not model:FindFirstChild("PlayerColorRing") then
+            local root=model:FindFirstChild("HumanoidRootPart") or model.PrimaryPart
+            local humanoid=model:FindFirstChildOfClass("Humanoid")
+            if root then
+                local ring=Instance.new("Part")
+                ring.Name,ring.Shape,ring.Size="PlayerColorRing",Enum.PartType.Cylinder,Vector3.new(0.12,3.6,3.6)
+                ring.Color,ring.Transparency=Color3.fromHex(self.config.playerColors[resident.colorIndex]),0.18
+                ring.CanCollide,ring.CanTouch,ring.CanQuery,ring.Massless=false,false,false,true
+                local offset=humanoid and (humanoid.HipHeight+root.Size.Y/2) or 2.1
+                ring.CFrame=root.CFrame*CFrame.new(0,-offset+0.06,0)*CFrame.Angles(0,0,math.pi/2)
+                ring.Parent=model
+                local weld=Instance.new("WeldConstraint");weld.Part0,weld.Part1,weld.Parent=root,ring,ring
+            end
+        end
+        local colorRing=model:FindFirstChild("PlayerColorRing")
+        if colorRing then colorRing.Color=Color3.fromHex(self.config.playerColors[resident.colorIndex]);colorRing.Transparency=resident.alive and 0.18 or 1 end
+        if model:GetAttribute("GeneratedFigure") then
+            for _,name in ipairs({"Torso","LeftArm","RightArm"}) do
+                local part=model:FindFirstChild(name)
+                if part then part.Color=Color3.fromHex(self.config.playerColors[resident.colorIndex]) end
+            end
+        end
         if self.visiting[resident.id] and (not resident.alive or state.status~="playing") then self:endVisit(resident.id) end
         if not self.visiting[resident.id] then
             local old = self.positions[resident.id]
@@ -243,9 +287,28 @@ function World:sync(state)
     for id, model in pairs(self.tokens) do
         if not present[id] then
             self:cancelMotion(id)
-            if model:GetAttribute("GeneratedFigure") then model:Destroy() end
+            if model:GetAttribute("GeneratedFigure") then model:Destroy()
+            elseif model.Parent then
+                local tag=model:FindFirstChild("ResidentTag");if tag then tag.Enabled=false end
+                local ring=model:FindFirstChild("PlayerColorRing");if ring then ring.Transparency=1 end
+                model:PivotTo(CFrame.new(0,5,42))
+            end
             self.tokens[id],self.positions[id],self.visiting[id] = nil,nil,nil
         end
+    end
+    local event=state.lastAction
+    if not event then self.lastActionSeq=0
+    elseif event.seq~=self.lastActionSeq then
+        self.lastActionSeq=event.seq
+        local site=Architecture.site(event.tile)
+        local position=Vector3.new(table.unpack(site))
+        local pulse=Instance.new("Part")
+        pulse.Name,pulse.Shape,pulse.Size="TacticalEffect",Enum.PartType.Ball,Vector3.new(2,2,2)
+        pulse.Position,pulse.Anchored,pulse.CanCollide,pulse.CanQuery=position+Vector3.new(0,3,0),true,false,false
+        pulse.Color=Color3.fromHex(event.blocked and "9AC5DE" or (event.kind=="demolish" and "D5B18B" or "9FCAAC"))
+        pulse.Transparency,pulse.Parent=0.2,self.root
+        TweenService:Create(pulse,TweenInfo.new(0.8),{Size=Vector3.new(12,7,12),Transparency=1,Position=position+Vector3.new(0,6,0)}):Play()
+        task.delay(0.9,function() pulse:Destroy() end)
     end
 end
 return World

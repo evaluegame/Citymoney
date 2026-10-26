@@ -24,7 +24,7 @@ function Architecture.rotation(yaw, pitch, roll)
     return { c*d+s*b*e, -c*e+s*b*d, s*a, a*e, a*d, -b, -s*d+c*b*e, s*e+c*b*d, c*a }
 end
 
-function Architecture.house(origin, yaw, theme, level, tint, paint)
+function Architecture.house(origin, yaw, theme, level, tint, paint, owned)
     local parts = {}
     local c, s = math.cos(yaw), math.sin(yaw)
     local function add(name, size, x, y, z, color, extra)
@@ -36,7 +36,7 @@ function Architecture.house(origin, yaw, theme, level, tint, paint)
         return value
     end
     local wall = ({ theme, tint, "F0E7D5", "56636A" })[(paint or 0) + 1] or theme
-    local roof, trim, glass = "40535B", "F8F0DF", "96C2CE"
+    local roof, trim, glass = owned and tint or "40535B", "F8F0DF", "96C2CE"
     local floors = level == 0 and 1 or (level == 3 and 3 or 2)
     local height, width, depth = floors * 6.5, level >= 2 and 11.5 or 10, 9
     add("Foundation", { width+1, 0.5, depth+1 }, 0, 0.25, 0.8, "D7D1C4", { material = "Concrete" })
@@ -58,6 +58,7 @@ function Architecture.house(origin, yaw, theme, level, tint, paint)
         add("PorchColumn", { 0.35, 5.8, 0.35 }, x, 3.65, -5.9, trim)
     end
     add("PorchCanopy", { width+1, 0.35, 3.1 }, 0, 6.7, -5.1, roof)
+    add("OwnerFascia", { width+1.05, 0.2, 0.25 }, 0, 6.65, -6.65, tint)
     for floor = 0, floors-1 do
         local base = 0.7 + floor * 6.5
         if floor > 0 then
@@ -99,10 +100,10 @@ function Architecture.house(origin, yaw, theme, level, tint, paint)
         local roofY = height + 2.35
         add("FrontRoof", { width+2, 0.5, 6.3 }, 0, roofY, -1.65, roof, { pitch = math.rad(-27), material = "Slate" })
         add("BackRoof", { width+2, 0.5, 6.3 }, 0, roofY, 3.25, roof, { pitch = math.rad(27), material = "Slate" })
-        add("RoofRidge", { width+2.1, 0.4, 0.45 }, 0, roofY+1.4, 0.8, roof)
+        add("RoofRidge", { width+2.1, 0.4, 0.45 }, 0, roofY+1.4, 0.8, tint)
         add("Chimney", { 1.1, 3.3, 1.1 }, width/2-1.2, height+2.2, 2, "B88B72", { material = "Brick" })
     else
-        add("PenthouseRoof", { width+1.1, 0.5, depth+1.1 }, 0, height+0.95, 0.8, trim)
+        add("PenthouseRoof", { width+1.1, 0.5, depth+1.1 }, 0, height+0.95, 0.8, owned and tint or trim)
         add("RoofGarden", { width-1, 0.25, depth-1 }, 0, height+1.35, 0.8, "7E9D76", { material = "Grass" })
         add("RoofHedge", { width, 1, 0.7 }, 0, height+1.9, 5, "547C61", { material = "Grass" })
         for _, x in ipairs({ -width*0.35, width*0.35 }) do
@@ -126,7 +127,7 @@ function Architecture.house(origin, yaw, theme, level, tint, paint)
     return parts
 end
 
-function Architecture.property(config, index, ownerName, ownerTint, level, paint)
+function Architecture.property(config, index, ownerName, ownerTint, level, paint, effects)
     local tile = config.tiles[index]
     local origin, yaw = Architecture.site(index)
     local c, s, entries = math.cos(yaw), math.sin(yaw), {}
@@ -144,13 +145,26 @@ function Architecture.property(config, index, ownerName, ownerTint, level, paint
     end
     add("BackHedge", { 17.6, 1.3, 0.85 }, 0, 0.6, 8.1, "557D5A", { material = "Grass" })
     if ownerName then
-        local house = Architecture.house(origin, yaw, config.groups[tile.group].color, level or 0, ownerTint, paint or 0)
+        for _,x in ipairs({-9,9}) do add("OwnershipBorder",{0.3,0.35,18.3},x,0.22,0,ownerTint) end
+        for _,z in ipairs({-9,9}) do add("OwnershipBorder",{18.3,0.35,0.3},0,0.22,z,ownerTint) end
+        local house = Architecture.house(origin, yaw, config.groups[tile.group].color, level or 0, ownerTint, paint or 0, true)
         for _, entry in ipairs(house) do entry.tileIndex = index; table.insert(entries, entry) end
         add("Mailbox", { 0.7, 1, 0.65 }, 5.9, 1.7, -7.9, ownerTint)
         add("MailboxPost", { 0.2, 1.4, 0.2 }, 5.9, 0.7, -7.9, "EEE3CC")
         add("OwnerSign", { 5, 1.4, 0.16 }, -5.2, 1.7, -8, "F6EFDF",
             { text = ownerName .. "'s home", textFace = "Front", textColor = "263E3A", textSize = 27, canCollide = false })
         add("OwnerStripe", { 5, 0.18, 0.2 }, -5.2, 2.5, -8, ownerTint)
+        add("OwnerFlagpole",{0.16,4.2,0.16},7.6,2.1,-7.6,"ECE6D5",{material="Metal"})
+        add("OwnerFlag",{1.8,1.1,0.12},6.7,3.7,-7.6,ownerTint)
+        if effects and effects.shield then
+            add("ProtectionSign",{4,0.9,0.16},-5.2,3.4,-8,"A9D0DE",{text="SHIELDED",textFace="Front",textColor="284453",textSize=24,canCollide=false})
+        end
+        if effects and (effects.boost or 0)>0 then
+            add("RentBoostSign",{4,0.9,0.16},2.5,1.5,-8,"E8C78B",{text="RENT +50%",textFace="Front",textColor="59462C",textSize=22,canCollide=false})
+        end
+        if effects and (effects.rentTier or 1)>1 then
+            add("RentRateSign",{4,0.9,0.16},2.5,2.6,-8,"DCE4CF",{text=tostring(config.rentTiers[effects.rentTier]).."× RENT",textFace="Front",textColor="3D583D",textSize=22,canCollide=false})
+        end
         add("GardenTreeTrunk", { 0.35, 2.5, 0.35 }, 6.8, 1.25, 5.6, "9C8366", { material = "Wood" })
         add("GardenTree", { 2.6, 2.7, 2.6 }, 6.8, 3.7, 5.6, "7C9B70", { shape = "Ball", material = "Grass" })
     else

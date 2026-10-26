@@ -11,12 +11,19 @@ for index,tile in ipairs(Config.tiles) do
         for level=0,3 do
             local home=Architecture.property(Config,index,"Owner","E2B792",level,0)
             local door,ownerSign,furniture,stairs=false,false,false,0
+            local borders,flag,ownerRoof=0,false,false
             local maximum=0
             for _,entry in ipairs(home) do
                 door=door or entry.door==true
                 ownerSign=ownerSign or entry.name=="OwnerSign"
                 furniture=furniture or entry.name=="Sofa"
                 if entry.name=="StairTread" then stairs=stairs+1 end
+                if entry.name=="OwnershipBorder" then
+                    borders=borders+1
+                    check(entry.color=="E2B792", "Lot borders must use the player's ownership color")
+                end
+                if entry.name=="OwnerFlag" then flag=entry.color=="E2B792" end
+                if entry.name=="FrontRoof" or entry.name=="PenthouseRoof" then ownerRoof=entry.color=="E2B792" end
                 maximum=math.max(maximum,entry.position[2]+entry.size[2]/2)
                 check(entry.tileIndex==index, "A home part lost its inspection target")
                 for _,size in ipairs(entry.size) do check(size>0 and size<math.huge,"Invalid building geometry") end
@@ -30,6 +37,7 @@ for index,tile in ipairs(Config.tiles) do
                 end
             end
             check(door and ownerSign and furniture, "Purchase must include a real door, owner sign and furnished home")
+            check(borders==4 and flag and ownerRoof, "Every level must show its owner through colored borders, flag and roof")
             check(maximum>=previousHeight, "An upgrade unexpectedly shrinks the home")
             if level>0 then check(stairs>0,"An upper-floor home needs a staircase") end
             previousHeight=maximum
@@ -39,6 +47,10 @@ for index,tile in ipairs(Config.tiles) do
         check(math.abs((porch[1]-lot[1])^2+(porch[3]-lot[3])^2-49)<1e-6,"Visitor must arrive at the front path")
     end
 end
+local decorated=Architecture.property(Config,2,"Owner","E2B792",1,0,{shield=true,boost=2,rentTier=4})
+local signs={}
+for _,entry in ipairs(decorated) do signs[entry.name]=true end
+check(signs.ProtectionSign and signs.RentBoostSign and signs.RentRateSign,"Home effects must have visible physical signs")
 print("PASS homes: all 16 parcels, four building levels, walkable doors, furniture, stairs, rotation matrices and visit arrival points.")
 for _,area in ipairs({{1192,642},{1192,610},{1920,1016},{1366,660},{800,560},{390,760},{430,840},{1024,680}}) do
     local layout=Layout.calculate(area[1],area[2])

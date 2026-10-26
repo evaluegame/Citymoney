@@ -22,18 +22,11 @@ replicated = child(place, "ReplicatedStorage", "ReplicatedStorage")
 shared = child(replicated, "Citymoney", "Folder")
 server = child(child(place, "ServerScriptService", "ServerScriptService"), "CitymoneyServer", "Script")
 client = child(child(child(place, "StarterPlayer", "StarterPlayer"), "StarterPlayerScripts", "StarterPlayerScripts"), "CitymoneyClient", "LocalScript")
-expected = [
-    (child(shared, "Config", "ModuleScript"), "src/shared/Config.lua"),
-    (child(shared, "Engine", "ModuleScript"), "src/shared/Engine.lua"),
-    (child(shared, "Board", "ModuleScript"), "src/shared/Board.lua"),
-    (child(shared, "Architecture", "ModuleScript"), "src/shared/Architecture.lua"),
-    (child(shared, "Scene", "ModuleScript"), "src/shared/Scene.lua"),
-    (child(shared, "Layout", "ModuleScript"), "src/shared/Layout.lua"),
-    (child(shared, "PropertyPlans", "ModuleScript"), "src/shared/PropertyPlans.lua"),
-    (server, "src/server/init.server.lua"),
-    (child(server, "World", "ModuleScript"), "src/server/World.lua"),
-    (client, "src/client/init.client.lua"),
-]
+expected = []
+for directory, parent, entry in (("shared", shared, None), ("server", server, "init.server.lua"), ("client", client, "init.client.lua")):
+    for source in sorted((ROOT / "src" / directory).glob("*.lua")):
+        item = parent if source.name == entry else child(parent, source.stem, "ModuleScript")
+        expected.append((item, source.relative_to(ROOT).as_posix()))
 for item, source in expected:
     embedded = item.find("Properties/*[@name='Source']")
     assert embedded is not None and embedded.text == (ROOT / source).read_text(), source

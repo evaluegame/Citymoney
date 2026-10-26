@@ -1,50 +1,69 @@
 CITYMONEY — THE WATERFRONT CLUB
 
-OPEN THE UPDATED GAME
+OPEN IN ROBLOX STUDIO
 1. Extract Citymoney-Waterfront.zip.
-2. Open Roblox Studio on a Windows PC or Mac and sign in.
+2. Install Roblox Studio on Windows or macOS and sign in.
 3. Choose File > Open from File (Ctrl+O / Cmd+O).
 4. Open Citymoney/build/Citymoney.rbxlx from the extracted ZIP.
-5. Press Play (F5), then Start the neighborhood.
+5. Press Play (F5). Open Match / invite, choose 2 or 4 players,
+   keep practice bots ON, then click Practice.
+Studio: https://create.roblox.com/
 
-Solo games include City Bot. The game interface appears during Play.
-Studio download: https://create.roblox.com/
+PLAY ONLINE / INVITE FRIENDS
+Publish the updated place using File > Publish to Roblox in your account.
+In Creator Dashboard, make it available to your intended players. A public
+lobby capacity of 12 is recommended; matches admit exactly 2 or 4 humans.
+Join the published experience in the Roblox app. Open Match / invite,
+choose 2 or 4 players, and join the corresponding automatic queue.
+Online matches never add bots.
 
-YOUR FIRST HOME
-Roll the dice. When you land on an unowned property, choose a starting level:
-L0 Cottage, L1 Townhouse, L2 Garden villa, or L3 Grand villa.
-Each option shows a 3D preview, full price, rent and balance after purchase.
-Confirm the home you want and can afford. That furnished house appears
-immediately with your name, garden and mailbox. Previewing is free.
+Invite friends BEFORE queueing. Accepting the native invite brings friends
+to your server and party. Guests mark Ready; the leader queues the party.
+Parties stay together when matched. Cancel while searching; once connecting,
+wait for the reserved-match teleport. Return to lobby after the match,
+then invite friends again to form your next party.
 
-UPGRADE OPTIONS
-Select one of your homes during your turn, then click Upgrade options.
-Choose any higher level and confirm. Only the added levels are charged.
-You do not need a district pair to upgrade. District pairs still double
-the base rent of L0 cottages. Current/lower levels cannot be bought again.
+STUDIO MULTIPLAYER TEST
+Use Server & Clients with 2 or 4 clients. On EACH client choose the same
+match size and join the queue. It starts automatically when enough players
+are queued. This is a local test. Live invitations and cross-server teleports
+must be tested in a published experience using the Roblox app.
 
-WALK THROUGH YOUR HOME
-Click your house (or open Your homes) and select Walk through your home.
-Use normal Roblox walking controls. The front-door prompt uses E to open
-and close the door. Upgraded houses have stairs and upstairs bedrooms.
-Press B or Back to board to return. Other players keep taking turns.
+BUY / UPGRADE YOUR HOME
+Land on an unowned lot and choose L0 Cottage, L1 Townhouse, L2 Garden villa,
+or L3 Grand villa. Compare the 3D preview, full price, rent and cash left.
+Confirm to construct that furnished home immediately. Your roof, borders,
+flag, mailbox and avatar ring show your color. Signs show your name.
+Select your home > Upgrade options to choose a higher level later.
+Only added building levels are charged; you do not need a district pair.
 
-DURING YOUR TURN
-Use Upgrade, Repaint or Sell on a home you own. Repainting is free.
-The Close-up button gives you a closer architectural view.
-Roll/end-turn automatically returns your avatar to the board.
+CHOOSE HIGHER RENT
+Select your home during your turn > Rent options.
+Choose 1.5x, 2x or 3x future rent. Compare the fee and new rent, then confirm.
+Fees charge only added tier steps: 2 x build cost per tier step.
+The multiplier remains until the home is sold or destroyed.
 
-CAMERA
-Use Overview, rotation arrows and + / - to move the board camera.
-The desktop header lets you switch between golden hour and night.
+CARDS & GOALS
+Open Cards & goals. Choose a card, then its property and any required
+opponent. One card per turn; hold up to three copies of each type.
+- Demolish: destroy a selected opponent's whole house; lot returns to city.
+- Shield: protect your selected home against the next demolition.
+- Renovate: add one level to your selected home free (max L3).
+- Rent boost: +50% rent on your chosen property for two paid collections.
+- Demand rent: choose your property and an opponent; demand 2x rent now,
+  capped at $350.
+Online always uses full demolition. Practice also offers one-level attacks.
 
-WITH FRIENDS
-Use Studio's Server & Clients test with 2-6 players. The first connected
-player hosts and starts the game. Late arrivals play the next match.
+Complete rotating challenges, then claim cash and a card during your turn.
+One claim per turn; changing the goal costs $50 once per turn.
+City News has 20 events. City Gate, City News, the park and goals award cards.
 
-PUBLISHING
-Use File > Publish to Roblox in your own account. Set server capacity to 6.
-Publishing to Roblox is separate from downloading the Studio place.
+WALK THROUGH / CAMERA
+Select your home > Walk through your home. Use normal Roblox controls.
+E opens your front door. B or Back to board returns. Matches keep moving.
+Use Overview, rotation arrows, + / -, mouse wheel and Close-up for cameras.
 
-If your browser displays XML, save the file with the .rbxlx extension,
-or download the ZIP instead. README.md contains full rules and controls.
+This ZIP includes the ready-to-open place and all source. No paid assets,
+HTTP flag or API keys are required. Live matchmaking needs Roblox services.
+Automated cloud checks do not replace Studio and published-game playtests.
+README.md contains full rules, controls and development instructions.

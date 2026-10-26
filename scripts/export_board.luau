@@ -27,7 +27,7 @@ local mode = ...
 local scene = Board.generate(Config)
 if mode == "showcase" or mode == "home" then
     local Architecture = require("../src/shared/Architecture")
-    local showcase = { [2] = { "Avery", "D2A982", 0 }, [8] = { "Riley", "92B6BE", 1 }, [14] = { "Jamie", "B3C3A6", 2 }, [23] = { "Morgan", "C5B387", 3 } }
+    local showcase = { [2] = { "Avery", Config.playerColors[1], 0 }, [8] = { "Riley", Config.playerColors[2], 1 }, [14] = { "Jamie", Config.playerColors[3], 2 }, [23] = { "Morgan", Config.playerColors[4], 3 } }
     local entries = {}
     if mode == "showcase" then
         for _, entry in ipairs(scene) do

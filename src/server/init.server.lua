@@ -3,10 +3,15 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local shared = ReplicatedStorage:WaitForChild("Citymoney")
 local Config = require(shared.Config)
 local Engine = require(shared.Engine)
+local Parties = require(shared.Parties)
+local Tactics = require(shared.Tactics)
+local Matchmaker = require(script.Matchmaker)
 local World = require(script.World)
 local random = Random.new()
 local engine = Engine.new(Config, function(low, high) return random:NextInteger(low, high) end)
 local world = World.new(Config)
+local parties = Parties.new(Config)
+local matcher
 
 local remotes = Instance.new("Folder")
 remotes.Name, remotes.Parent = "Remotes", shared
@@ -17,21 +22,16 @@ snapshot.Name, snapshot.Parent = "Snapshot", remotes
 local feedback = Instance.new("RemoteEvent")
 feedback.Name, feedback.Parent = "Feedback", remotes
 
-local joined, lastRequest = {}, {}
+local lastRequest = {}
 local deadline = 0
 local revision = 0
 local botReadyAt = 0
-local function roster()
-    local result = {}
-    for _, player in ipairs(joined) do
-        if player.Parent == Players then table.insert(result, { id = player.UserId, name = player.DisplayName }) end
-    end
-    return result
-end
-
-local function payload()
-    local lobby = roster()
-    return { game = engine.state, lobby = lobby, hostId = lobby[1] and lobby[1].id or false,
+local function payload(id)
+    local party=parties:get(id)
+    local lobby=party and party.members or {}
+    local settings=party and party:snapshot() or {seats=2,fillBots=true,attackMode="destroy",hostId=false,members={}}
+    return { game = engine:view(id), lobby = lobby, lobbyConfig=settings,hostId = party and party:hostId() or false,
+        matchmaking=matcher and matcher:status(id) or nil,
         deadline = deadline, serverTime = workspace:GetServerTimeNow(), revision = revision, visitors = world:visitorList() }
 end
 
@@ -40,7 +40,7 @@ local function publish(resetTimer)
     if resetTimer then deadline = workspace:GetServerTimeNow() + Config.turnSeconds end
     if resetTimer or botReadyAt == 0 then botReadyAt = workspace:GetServerTimeNow() + 2.1 end
     world:sync(engine.state)
-    snapshot:FireAllClients(payload())
+    for _,recipient in ipairs(Players:GetPlayers()) do snapshot:FireClient(recipient,payload(recipient.UserId)) end
 end
 
 local function perform(id, command, index, level, expectedTurn)
@@ -55,22 +55,49 @@ local function perform(id, command, index, level, expectedTurn)
     return ok, message
 end
 
+matcher=Matchmaker.new(Config,{
+    changed=function() publish(false) end,
+    canStart=function() return engine.state.status~="playing" end,
+    canQueue=function(id)
+        local player=engine:player(id)
+        return not (engine.state.status=="playing" and player and player.alive)
+    end,
+    start=function(roster,rules)
+        local ok,message=engine:start(roster,rules)
+        if ok then
+            parties:combine(roster)
+            for id in pairs(world.visiting) do world:endVisit(id) end
+            publish(true)
+        end
+        return ok,message
+    end,
+    joinParty=function(id,leader)
+        if matcher:isQueued(id) or matcher:isQueued(leader) then return false,"Your friend is already queued." end
+        local ok,message=parties:join(id,leader)
+        if ok then publish(false) end
+        return ok,message
+    end,
+})
+
 local function addPlayer(player)
-    if table.find(joined, player) then return end
-    table.insert(joined, player)
+    if parties:get(player.UserId) then return end
+    parties:add(player.UserId,player.DisplayName)
     player.CharacterAdded:Connect(function(character) task.spawn(function() world:prepareCharacter(player, character) end) end)
     if player.Character then task.spawn(function() world:prepareCharacter(player, player.Character) end) end
     publish(false)
+    task.spawn(function() matcher:playerAdded(player) end)
 end
 Players.PlayerAdded:Connect(addPlayer)
 for _, player in ipairs(Players:GetPlayers()) do addPlayer(player) end
 
 Players.PlayerRemoving:Connect(function(player)
-    local index = table.find(joined, player)
-    if index then table.remove(joined, index) end
+    matcher:remove(player.UserId)
+    parties:remove(player.UserId)
     lastRequest[player] = nil
     engine:remove(player.UserId)
-    if #roster() == 0 then
+    local remaining=0
+    for _,other in ipairs(Players:GetPlayers()) do if other~=player then remaining=remaining+1 end end
+    if remaining == 0 then
         engine = Engine.new(Config, function(low, high) return random:NextInteger(low, high) end)
     end
     publish(true)
@@ -81,17 +108,71 @@ action.OnServerEvent:Connect(function(player, command, index, level, expectedTur
     local now = os.clock()
     if lastRequest[player] and now - lastRequest[player] < 0.18 then return end
     lastRequest[player] = now
-    if command == "Sync" then snapshot:FireClient(player, payload()); return end
+    if command == "Sync" then snapshot:FireClient(player, payload(player.UserId)); return end
+    local party=parties:get(player.UserId)
+    if not party then return end
+    if command=="Queue" then
+        local active=engine:player(player.UserId)
+        if engine.state.status=="playing" and active and active.alive then feedback:FireClient(player,"Finish this match or leave it before queuing.");return end
+        local ok,message=matcher:enqueue(player.UserId,party)
+        if not ok then feedback:FireClient(player,message) end
+        return
+    elseif command=="QueueCancel" then
+        local ok,message=matcher:cancel(player.UserId,false)
+        if not ok then feedback:FireClient(player,message) end
+        return
+    elseif command=="BackLobby" then
+        local ok,message=matcher:backToLobby(player)
+        if not ok then feedback:FireClient(player,message) end
+        return
+    elseif command=="LeaveParty" then
+        if matcher.reserved then
+            local ok,message=matcher:backToLobby(player)
+            if not ok then feedback:FireClient(player,message) end
+            return
+        end
+        local ok,message=matcher:cancel(player.UserId,false)
+        if ok then ok,message=parties:leave(player.UserId) end
+        if ok then publish(false) else feedback:FireClient(player,message) end
+        return
+    elseif command=="JoinParty" then
+        if type(index)~="number" or matcher:isQueued(player.UserId) or matcher:isQueued(index) then feedback:FireClient(player,"Choose an available party leader.");return end
+        local ok,message=parties:join(player.UserId,index)
+        if ok then publish(false) else feedback:FireClient(player,message) end
+        return
+    end
+    if command=="Seats" or command=="Bots" or command=="AttackRule" or command=="Color" or command=="Ready" then
+        local ok,message
+        local active=engine:player(player.UserId)
+        if matcher:isQueued(player.UserId) then ok,message=false,"Cancel matchmaking before changing party settings."
+        elseif matcher.reserved then ok,message=false,"Return to the lobby to change the party."
+        elseif command=="Ready" then ok,message=party:setReady(player.UserId,index)
+        elseif engine.state.status=="playing" and active and active.alive then ok,message=false,"Change match settings and colors between games."
+        elseif command=="Color" then ok,message=party:setColor(player.UserId,index)
+        else
+            local field=command=="Seats" and "seats" or (command=="Bots" and "bots" or "attack")
+            ok,message=party:configure(player.UserId,field,index)
+        end
+        if ok then publish(false) else feedback:FireClient(player,message) end
+        return
+    end
+    if command=="Card" then
+        if type(index)~="table" then feedback:FireClient(player,"Choose a tactical card and its targets.");return end
+        local ok,message=engine:playCard(player.UserId,index.kind,index.tile,index.targetId,index.turn)
+        if ok then publish(false) else feedback:FireClient(player,message) end
+        return
+    end
     if command == "Return" then
         if world.visiting[player.UserId] then world:endVisit(player.UserId); publish(false) end
         return
     end
     if command == "Start" then
-        local lobby = roster()
-        if not lobby[1] or lobby[1].id ~= player.UserId then feedback:FireClient(player, "Only the host can start a match."); return end
-        if #lobby > Config.maxPlayers then feedback:FireClient(player, "Set your server capacity to 6 players or fewer."); return end
-        if #lobby == 1 then table.insert(lobby, { id = Config.botId, name = "City Bot", bot = true }) end
-        local ok, message = engine:start(lobby)
+        if matcher.reserved then feedback:FireClient(player,"Return to the lobby to queue another online match.");return end
+        if matcher:isQueued(player.UserId) then feedback:FireClient(player,"Cancel matchmaking before starting practice.");return end
+        local lobby,message=party:buildRoster(player.UserId)
+        if not lobby then feedback:FireClient(player,message);return end
+        local ok
+        ok, message = engine:start(lobby,{attackMode=party.attackMode})
         if ok then
             for id in pairs(world.visiting) do world:endVisit(id) end
             publish(true)
@@ -125,8 +206,23 @@ task.spawn(function()
             local current = engine:current()
             local now = workspace:GetServerTimeNow()
             if (current.bot and now >= botReadyAt) or now >= deadline then
+                local handled=false
+                if current.bot and current.alive then
+                    if current.challenge.ready and not engine.state.challengeClaimed then
+                        handled=perform(current.id,"Claim",nil,nil,engine.state.turnCount)
+                    elseif not engine.state.actionUsed then
+                        local move=Tactics.botMove(engine,current.id)
+                        if move then
+                            handled=engine:playCard(current.id,move.kind,move.tile,move.targetId,move.turn)
+                            if handled then publish(false) end
+                        end
+                    end
+                    if handled then botReadyAt=now+1.2 end
+                end
                 local phase = engine.state.phase
-                if phase == "roll" then
+                if handled then
+                    -- The next tick resumes the normal decision after its card/goal animation.
+                elseif phase == "roll" then
                     perform(current.id, "Roll")
                 elseif phase == "buy" then
                     local tile = Config.tiles[engine.state.pendingTile]
@@ -149,5 +245,7 @@ task.spawn(function()
         end
     end
 end)
+
+matcher:start()
 
 print("[Citymoney] Board ready. Open the client lobby to start a match.")
