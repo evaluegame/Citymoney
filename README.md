@@ -1,6 +1,6 @@
 # Citymoney · The Waterfront Club
 
-A Roblox property game set in a landscaped island neighborhood. Buy a lot and a **physical, furnished cottage** appears immediately—with its garden, porch, mailbox, and your name on the owner sign. Collect districts, upgrade into bigger homes, and walk through the properties you own.
+A Roblox property game set in a landscaped island neighborhood. Choose your starting home level when buying a lot, and that **physical, furnished home** appears immediately—with its garden, porch, mailbox, and your name on the owner sign. Upgrade later, collect districts, and walk through the properties you own.
 
 **[Download the Waterfront game](https://github.com/evaluegame/Citymoney/raw/refs/heads/main/Citymoney-Waterfront.zip)** · **[Studio place file](https://github.com/evaluegame/Citymoney/blob/main/Citymoney-Waterfront.rbxlx)**
 
@@ -22,10 +22,12 @@ The editor includes the neighborhood preview; menus appear during Play. The plac
 
 ## What changed
 
+- A level selector when you first buy a property: compare Cottage (L0), Townhouse (L1), Garden villa (L2), and Grand villa (L3), with a changing 3D preview, exact total price, rent, and balance after purchase.
+- **Upgrade options** on any owned home during your turn: choose any higher level and pay only the difference. A district pair is no longer required to build.
 - A larger waterfront neighborhood with park paths, a tiered fountain, flower gardens, trees, street lamps, jetties, and boats.
 - Warm afternoon lighting, soft shadows, a cream-and-sage HUD, compact player cards, and property cards with live 3D home previews.
 - The HUD fits the actual safe screen area. Roblox chat and player-list overlays are hidden during play, and the action bar stays inside the window.
-- Every purchase immediately builds a house. Homes have real doorway openings, owner signs, mailboxes, furniture, and landscaped plots.
+- Every purchase immediately builds the home at your selected level. Homes have real doorway openings, owner signs, mailboxes, furniture, and landscaped plots.
 - Upgrades change the architecture: cottage → townhouse → garden villa → grand villa, with balconies, rooftop pergolas, upstairs bedrooms, and staircases.
 - Actual player avatars move around the board. You can switch to walking mode at your own properties, open the front door, and explore.
 - Free exterior repainting during your turn, close-up camera views, a day/night switch, a home portfolio, confirmation before selling, and end-of-match standings.
@@ -36,8 +38,9 @@ The editor includes the neighborhood preview; menus appear during Play. The plac
 | --- | --- |
 | Roll / buy / end turn | Bottom action button; **R** rolls; **Space** performs the current action while in board view |
 | Inspect a property | Click/tap its plot or house, or open **Your homes** |
-| Buy a home | Land on an unowned property and choose **Buy cottage** |
-| Upgrade / repaint / sell | Select a home you own during your turn; upgrades require its district pair |
+| Buy a home | Land on an unowned property; select a level in the home chooser, check the price/rent, and confirm |
+| Upgrade | Select a home you own → **Upgrade options** → choose a higher level → confirm the added cost |
+| Repaint / sell | Select a home you own during your turn; sales ask for confirmation |
 | Visit a home | Select your home and click **Walk through your home**, including during another player's turn |
 | Walk and look around | Normal Roblox WASD / touch controls and camera in walking mode |
 | Open/close the front door | Use the door prompt, **E** on keyboard; only the owner operates it |
@@ -50,13 +53,24 @@ Visits do not change your token's game position, money, or turn. The match conti
 
 ## Rules
 
-Start with **$1,500** and roll two six-sided dice. Passing or landing on City Gate pays **$200**. Doubles do not grant another turn. Buy unowned properties on arrival, or pass. Buying includes the level-0 cottage; you do not need a district pair for that first house.
+Start with **$1,500** and roll two six-sided dice. Passing or landing on City Gate pays **$200**. Doubles do not grant another turn. Buy unowned properties on arrival, or pass. Before paying, choose any affordable starting level from 0 to 3. The price includes the land and all levels selected: `land price + level × build cost`. The chosen model is built immediately after confirmation. Opening or previewing options spends nothing.
 
-Visitors to another resident's property pay rent. Own both deeds in a colored district to double their base rent and unlock upgrades. Upgraded rent is **3× / 6× / 10×** the original base rent. Each upgrade charges the deed's build cost. Repainting cycles four exterior palettes for free during your turn and does not change rent.
+Visitors to another resident's property pay rent. Own both deeds in a colored district to double their **level-0 base rent**. Upgraded rent is **3× / 6× / 10×** the original base rent. You can upgrade a single owned property during your turn without completing its district. Choose any higher target level; the upgrade costs `(target level − current level) × build cost`. Current/lower levels cannot be bought again as upgrades. Repainting cycles four exterior palettes for free during your turn and does not change rent.
+
+For example, Copper Lane has a $90 land price and $60 build cost per level:
+
+| Starting home | Total purchase price | Rent without a district bonus |
+| --- | --- | --- |
+| L0 · Cottage | $90 | $12 |
+| L1 · Townhouse | $150 | $36 |
+| L2 · Garden villa | $210 | $72 |
+| L3 · Grand villa | $270 | $120 |
+
+If you buy the Townhouse first, upgrading it directly to Grand villa later costs **$120** for the two added levels. You do not repay the land price or the level already owned. Both the purchase and upgrade menus show the cash left after confirming. Unaffordable options can be previewed, but cannot be confirmed. The server rechecks ownership, turn, target level and funds, and rejects expired menus or duplicate transactions.
 
 City News draws a random event. City Tax costs **$120**. Detention skips your next move; merely visiting detention is harmless. Central Park is a rest stop. Each decision allows **55 seconds**, then the server automatically rolls, passes on a purchase, or ends the turn. Property visits and repainting do not extend that timer or delay the bot.
 
-Sell a deed for half its purchase and upgrade costs. Cash shortfalls automatically sell deeds in board order to cover a bill; insolvency eliminates the resident. Sold, abandoned, or repossessed homes are removed from the physical neighborhood. A departing owner's deeds return to the city. Existing upgraded rent remains if a district partner is sold, but further upgrades require completing the pair again.
+Sell a deed for half its land and building investment, including levels chosen at first purchase. Cash shortfalls automatically sell deeds in board order to cover a bill; insolvency eliminates the resident. Sold, abandoned, or repossessed homes are removed from the physical neighborhood. A departing owner's deeds return to the city. Selling a district partner removes its level-0 rent bonus; your remaining home can still be upgraded.
 
 The last resident standing wins. At **120 total turns**, the highest cash plus full property/upgrade cost wins; ties go to the earlier seat. The host can start another game. All money and progress belong to the current match; persistent profiles, player-to-player trading, and auctions are not included.
 
@@ -85,11 +99,12 @@ For source editing on the same machine as Studio, use `rojo serve default.projec
 | `src/shared/Layout.lua` | Screen-safe desktop and portrait HUD layout |
 | `src/shared/Engine.lua` | Server-owned turns, buying, rent, upgrades, repainting, and visit authorization |
 | `src/shared/Config.lua` | Economy, district colors, events, and match settings |
+| `src/shared/PropertyPlans.lua` | Shared level prices, upgrade differences, affordability and projected rental quotes |
 | `src/server/World.lua` | House lifecycle, animated avatars, visits, and interactive doors |
 | `src/server/init.server.lua` | Lobby, validated remotes, bot, and turn deadlines |
 | `src/client/init.client.lua` | HUD, deed previews, overview/close-up/walking cameras, and input |
 
-The checks include **35 engine tests with 200 complete simulated matches**, board-path/scene checks, all 16 home plots at all four levels, doorway/furniture/stair/rotation checks, and responsive-layout cases including the reported 1192×642 safe area. Shared modules are analyzed, all game scripts compile, and the built place is checked against the current source, all tile labels, camera reference, and serialized geometry transforms.
+The checks include **35 engine tests with 200 complete simulated matches**, **18 purchase/upgrade tests** covering every property and starting level, quotes, insufficient funds, direct upgrades, stale/duplicate confirmations and resale, plus board-path/scene checks, all 16 home plots at all four levels, doorway/furniture/stair/rotation checks, and responsive-layout cases including the reported 1192×642 safe area. Shared modules are analyzed, all game scripts compile, and the built place is checked against the current source, all tile labels, camera reference, and serialized geometry transforms.
 
 `scripts/render_preview.py` optionally renders exported real scene geometry with Blender. These renders are **geometry previews, not Roblox Studio screenshots**. Blender is not needed to play or build the game.
 

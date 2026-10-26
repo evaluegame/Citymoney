@@ -46,5 +46,6 @@ for _,area in ipairs({{1192,642},{1192,610},{1920,1016},{1366,660},{800,560},{39
     local bar=layout.toolbar
     check(bar[1]>=0 and bar[2]>=0 and bar[1]+bar[3]<=layout.width and bar[2]+bar[4]<=layout.height,"Action buttons are cropped")
     check(layout.inspector[1]>=0,"Inspector is outside screen")
+    check(Layout.homeChooserWidth<=layout.width and Layout.homeChooserHeight<=layout.height,"Home level chooser is cropped")
 end
 print("PASS responsive layout: screenshot size, short Studio windows, desktop and portrait safe areas.")

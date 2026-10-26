@@ -92,16 +92,15 @@ test("matching district doubles base rent", function()
     equal(engine:rent(3), 32)
     expect(engine:ownsGroup(1, "old"))
 end)
-test("build requires complete district and owner turn", function()
+test("single properties can upgrade but only on their owner's turn", function()
     local engine = gameWith()
     engine.state.properties[2].ownerId = 1
-    expect(not engine:act(1, "Upgrade", 2))
-    engine.state.properties[3].ownerId = 1
     expect(not engine:act(2, "Upgrade", 2))
     expect(engine:act(1, "Upgrade", 2))
     equal(engine.state.properties[2].level, 1)
     equal(engine:player(1).cash, 1440)
     equal(engine:rent(2), 36)
+    equal(engine.state.properties[3].ownerId, false)
 end)
 test("build caps at three levels and requires cash", function()
     local engine = gameWith()
@@ -336,13 +335,20 @@ test("200 full seeded matches preserve economy and terminate", function()
             else
                 for index, property in ipairs(engine.state.properties) do
                     local tile = Config.tiles[index]
-                    if current.alive and property.ownerId == current.id and property.level < 3 and engine:ownsGroup(current.id, tile.group) and current.cash > tile.upgrade + 200 then
-                        expect(engine:act(current.id, "Upgrade", index))
+                    local target=math.min(Config.maxLevel,property.level+1+match%2)
+                    if current.alive and property.ownerId == current.id and property.level < 3 and current.cash > (target-property.level)*tile.upgrade + 200 then
+                        expect(engine:act(current.id, "Upgrade", index,target,engine.state.turnCount))
                     end
                 end
                 command = "End"
             end
-            expect(engine:act(current.id, command))
+            local level
+            if command=="Buy" then
+                local tile=Config.tiles[engine.state.pendingTile]
+                level=(match+engine.state.turnCount)%4
+                while level>0 and tile.price+level*tile.upgrade>current.cash-100 do level=level-1 end
+            end
+            expect(engine:act(current.id, command,nil,level,engine.state.turnCount))
             actions = actions + 1
             expect(actions < 500, "Match did not terminate")
             for _, entry in ipairs(engine.state.players) do

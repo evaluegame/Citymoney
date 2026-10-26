@@ -29,6 +29,7 @@ expected = [
     (child(shared, "Architecture", "ModuleScript"), "src/shared/Architecture.lua"),
     (child(shared, "Scene", "ModuleScript"), "src/shared/Scene.lua"),
     (child(shared, "Layout", "ModuleScript"), "src/shared/Layout.lua"),
+    (child(shared, "PropertyPlans", "ModuleScript"), "src/shared/PropertyPlans.lua"),
     (server, "src/server/init.server.lua"),
     (child(server, "World", "ModuleScript"), "src/server/World.lua"),
     (client, "src/client/init.client.lua"),

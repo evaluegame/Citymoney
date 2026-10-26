@@ -11,9 +11,17 @@ Solo games include City Bot. The game interface appears during Play.
 Studio download: https://create.roblox.com/
 
 YOUR FIRST HOME
-Roll the dice. When you land on an unowned property, choose Buy cottage.
-A real furnished house with your name, garden and mailbox appears on that
-lot immediately. Collect both properties in its district to upgrade it.
+Roll the dice. When you land on an unowned property, choose a starting level:
+L0 Cottage, L1 Townhouse, L2 Garden villa, or L3 Grand villa.
+Each option shows a 3D preview, full price, rent and balance after purchase.
+Confirm the home you want and can afford. That furnished house appears
+immediately with your name, garden and mailbox. Previewing is free.
+
+UPGRADE OPTIONS
+Select one of your homes during your turn, then click Upgrade options.
+Choose any higher level and confirm. Only the added levels are charged.
+You do not need a district pair to upgrade. District pairs still double
+the base rent of L0 cottages. Current/lower levels cannot be bought again.
 
 WALK THROUGH YOUR HOME
 Click your house (or open Your homes) and select Walk through your home.

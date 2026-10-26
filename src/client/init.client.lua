@@ -7,6 +7,7 @@ local StarterGui = game:GetService("StarterGui")
 local player = Players.LocalPlayer
 local shared = RS:WaitForChild("Citymoney")
 local Config, Architecture, Scene, Layout = require(shared.Config),require(shared.Architecture),require(shared.Scene),require(shared.Layout)
+local Plans=require(shared.PropertyPlans)
 local remotes=shared:WaitForChild("Remotes")
 local action,snapshot,feedback=remotes:WaitForChild("Action"),remotes:WaitForChild("Snapshot"),remotes:WaitForChild("Feedback")
 -- The default chat and player-list panels obscured the old game HUD.
@@ -63,11 +64,12 @@ end
 local function truncate(object) object.TextWrapped,object.TextTruncate=false,Enum.TextTruncate.AtEnd end
 local data,selected,focusIndex,mainCommand,visitIndex,layout
 local inspectorOpen,portfolioOpen,rolling,locked=false,false,false,false
-local notify,render,requestSale
-local function send(command,index)
-    if locked or (rolling and command~="Return") then return end
-    locked=true;action:FireServer(command,index)
+local notify,render,requestSale,openPlans,renderPlans,mainAction
+local function send(command,index,level,expectedTurn)
+    if locked or (rolling and command~="Return") then return false end
+    locked=true;action:FireServer(command,index,level,expectedTurn)
     task.delay(0.22,function() locked=false end)
+    return true
 end
 local header=frame(root,24,16,1200,68)
 local mark=frame(header,19,21,24,24,C.green);mark.Rotation=45
@@ -96,10 +98,11 @@ viewport.LightDirection,viewport.BorderSizePixel,viewport.Parent=Vector3.new(-1,
 local viewWorld=Instance.new("WorldModel");viewWorld.Parent=viewport
 local viewCamera=Instance.new("Camera");viewCamera.FieldOfView,viewCamera.Parent=34,viewport;viewport.CurrentCamera=viewCamera
 local ownerText=text(inspector,"A place to call your own",18,237,222,20,12,C.muted)
+truncate(ownerText)
 local rentText=text(inspector,"RENT  $0",18,263,110,28,18,C.ink,true)
 local levelText=text(inspector,"Cottage",139,263,103,28,13,C.green,true)
 local nextRent=text(inspector,"Buy this lot to build a furnished cottage.",18,296,222,34,12,C.muted)
-local upgradeButton=button(inspector,"Upgrade",16,340,146,38,C.green,function() if selected then send("Upgrade",selected) end end)
+local upgradeButton=button(inspector,"Upgrade options",16,340,146,38,C.green,function() if selected and openPlans then openPlans("upgrade",selected) end end)
 local sellButton=button(inspector,"Sell",170,340,72,38,C.paper,function() if requestSale then requestSale(selected) end end)
 local visitButton=button(inspector,"Walk through your home",16,386,226,39,C.green,function() if selected then send("Visit",selected) end end)
 local paintButton=button(inspector,"Repaint",16,432,106,28,C.paper,function() if selected then send("Paint",selected) end end)
@@ -120,7 +123,7 @@ local dieTextA=text(dieA,"·",0,0,48,48,28,C.ink,true);dieTextA.TextXAlignment=E
 local dieTextB=text(dieB,"·",0,0,48,48,28,C.ink,true);dieTextB.TextXAlignment=Enum.TextXAlignment.Center
 local turnTitle=text(control,"A neighborhood of possibilities.",140,14,400,29,21,C.ink,true)
 local turnHint=text(control,"Start solo against City Bot, or invite your friends.",140,48,400,26,12,C.muted);truncate(turnHint)
-local actionButton=button(control,"Connecting…",574,17,220,54,C.green,function() if mainCommand then send(mainCommand) end end)
+local actionButton=button(control,"Connecting…",574,17,220,54,C.green,function() if mainAction then mainAction() end end)
 local passButton=button(control,"Pass",500,79,75,26,C.paper,function() send("Skip") end)
 local timeText=text(control,"",16,81,400,18,10,C.muted)
 local timeTrack=frame(control,16,104,778,3,C.paper)
@@ -154,9 +157,9 @@ end
 local help,helpCard=overlay(510,420)
 text(helpCard,"Make yourself at home.",26,22,458,44,27,C.ink,true)
 text(helpCard,"01   BUY A HOME",26,91,458,25,13,C.green,true)
-text(helpCard,"Roll the dice. Buy a lot to instantly build a cottage\nwith a porch, furniture, garden and your name on it.",26,120,458,48,15,C.muted)
+text(helpCard,"Roll, then choose Cottage, Townhouse or a Villa.\nCompare the full price, rent and 3D preview first.",26,120,458,48,15,C.muted)
 text(helpCard,"02   GROW YOUR NEIGHBORHOOD",26,183,458,25,13,C.green,true)
-text(helpCard,"Complete a district pair to unlock bigger homes.\nVisitors pay rent. Pass City Gate to collect $200.",26,212,458,48,15,C.muted)
+text(helpCard,"Upgrade options let you choose any higher level.\nPay only the difference. District pairs boost base rent.",26,212,458,48,15,C.muted)
 text(helpCard,"03   STEP INSIDE",26,275,458,25,13,C.green,true)
 text(helpCard,"Select your home, then Walk through. Use WASD\nand open the front door with E. Press B to return.",26,304,458,48,15,C.muted)
 button(helpCard,"Let's build a neighborhood",26,365,458,36,C.green,function() help.Visible=false end)
@@ -183,6 +186,55 @@ local resultSubtitle=text(resultCard,"",26,73,468,30,15,C.green)
 local resultRows=Instance.new("Frame");place(resultRows,26,121,468,212);resultRows.BackgroundTransparency,resultRows.Parent=1,resultCard
 local replay=button(resultCard,"Play again",26,360,292,44,C.green,function() results.Visible=false;send("Start") end)
 button(resultCard,"Keep looking",330,360,164,44,C.paper,function() results.Visible=false end)
+local chooser,chooserCard=overlay(Layout.homeChooserWidth,Layout.homeChooserHeight)
+local chooserTitle=text(chooserCard,"Choose your home level",24,15,442,36,25,C.ink,true)
+local chooserSubtitle=text(chooserCard,"",24,52,472,24,12,C.muted)
+truncate(chooserSubtitle)
+local planIndex,planMode,planLevel,planTurn,planPending,planError
+local planRequestId=0
+local planPreviewKey
+local closeChooser=button(chooserCard,"×",468,17,28,28,C.paper,function() if not planPending then chooser.Visible=false end end)
+local planViewport=Instance.new("ViewportFrame");place(planViewport,24,88,472,174)
+planViewport.BackgroundColor3,planViewport.Ambient,planViewport.LightColor=C.mint,Color3.fromRGB(180,180,165),Color3.fromRGB(255,235,206)
+planViewport.LightDirection,planViewport.BorderSizePixel,planViewport.Parent=Vector3.new(-1,-2,-1),0,chooserCard;round(planViewport,12)
+local planWorld=Instance.new("WorldModel");planWorld.Parent=planViewport
+local planCamera=Instance.new("Camera");planCamera.FieldOfView,planCamera.Parent=34,planViewport;planViewport.CurrentCamera=planCamera
+local planDescription=text(chooserCard,"",24,270,472,30,12,C.muted)
+local planCards={}
+for level=0,Config.maxLevel do
+    local x,y=24+(level%2)*242,309+math.floor(level/2)*76
+    local option=button(chooserCard,"",x,y,230,66,C.paper,function()
+        if not planPending then planLevel=level;planError=nil;renderPlans() end
+    end)
+    local border=Instance.new("UIStroke");border.Color,border.Transparency,border.Parent=C.line,0.1,option
+    local name=text(option,"",12,5,208,21,14,C.ink,true)
+    local price=text(option,"",12,28,208,18,12,C.muted)
+    local status=text(option,"",12,47,208,14,10,C.muted)
+    planCards[level+1]={ button=option, border=border, name=name, price=price, status=status }
+end
+local planTotal=text(chooserCard,"",24,469,472,26,18,C.ink,true)
+local planBalance=text(chooserCard,"",24,499,472,22,13,C.green)
+local planNote=text(chooserCard,"",24,526,472,25,11,C.muted)
+local confirmPlan=button(chooserCard,"Confirm",24,564,332,40,C.green,function()
+    if planPending or not data then return end
+    local options=Plans.options(Config,data.game,player.UserId,planIndex,planMode)
+    local option=options[(planLevel or -1)+1]
+    if not option or not option.affordable then return end
+    if send(planMode=="buy" and "Buy" or "Upgrade",planIndex,planLevel,planTurn) then
+        planPending=true;planError=nil;renderPlans()
+        planRequestId=planRequestId+1
+        local requestId=planRequestId
+        task.delay(4,function()
+            if requestId==planRequestId and planPending and chooser.Visible then
+                planPending=false
+                planError="No confirmation yet. Check the refreshed details before retrying."
+                action:FireServer("Sync")
+                renderPlans()
+            end
+        end)
+    end
+end)
+local cancelPlan=button(chooserCard,"Back",368,564,128,40,C.paper,function() if not planPending then chooser.Visible=false end end)
 local highlight=Instance.new("Highlight")
 highlight.Name,highlight.FillColor,highlight.OutlineColor="SelectedAddress",C.gold,C.green
 highlight.FillTransparency,highlight.OutlineTransparency,highlight.Parent=0.94,0.1,workspace
@@ -208,18 +260,78 @@ local function worth(state,person)
     return total
 end
 local previewKey
-local function propertyPreview(index,owner,property)
-    local key=index..":"..tostring(property.ownerId)..":"..property.level..":"..(property.paint or 0)
-    if previewKey==key then return end
-    previewKey=key;viewWorld:ClearAllChildren()
-    local model=Scene.model(Architecture.property(Config,index,owner and owner.name or "Your next home",owner and Config.playerColors[owner.colorIndex] or "D4AF84",property.level,property.paint or 0),"Preview",viewWorld,true)
+local function fillPreview(world,camera,index,owner,property,level)
+    world:ClearAllChildren()
+    local model=Scene.model(Architecture.property(Config,index,owner and owner.name or "Your next home",owner and Config.playerColors[owner.colorIndex] or "D4AF84",level,property.paint or 0),"Preview",world,true)
     local cf,size=model:GetBoundingBox()
     local target=cf.Position+Vector3.new(0,1,0)
     local _,yaw=Architecture.site(index)
     local x,z=22,-29
-    viewCamera.CFrame=CFrame.lookAt(target+Vector3.new(math.cos(yaw)*x+math.sin(yaw)*z,20+size.Y*0.3,-math.sin(yaw)*x+math.cos(yaw)*z),target)
+    camera.CFrame=CFrame.lookAt(target+Vector3.new(math.cos(yaw)*x+math.sin(yaw)*z,20+size.Y*0.3,-math.sin(yaw)*x+math.cos(yaw)*z),target)
 end
-local homeNames={"Cottage","Townhouse","Garden villa","Grand villa"}
+local function propertyPreview(index,owner,property)
+    local key=index..":"..tostring(property.ownerId)..":"..property.level..":"..(property.paint or 0)
+    if previewKey==key then return end
+    previewKey=key
+    fillPreview(viewWorld,viewCamera,index,owner,property,property.level)
+end
+local homeNames=Config.homeNames
+renderPlans=function()
+    if not chooser.Visible or not data or not planIndex then return end
+    local state=data.game
+    local current=state.players[state.turn]
+    local property=state.properties[planIndex]
+    local valid=state.status=="playing" and state.turnCount==planTurn and current and current.id==player.UserId and current.alive
+    if planMode=="buy" then valid=valid and state.phase=="buy" and state.pendingTile==planIndex and not property.ownerId
+    else valid=valid and property.ownerId==player.UserId end
+    if not valid then chooser.Visible=false;planPending=false;return end
+    local mine=resident(state,player.UserId)
+    local options=Plans.options(Config,state,player.UserId,planIndex,planMode)
+    local chosen=options[planLevel+1]
+    if not chosen then chooser.Visible=false;return end
+    chooserTitle.Text=planMode=="buy" and "Choose your home level" or "Choose your upgrade"
+    chooserSubtitle.Text=Config.tiles[planIndex].name.." · $"..mine.cash.." available"..(planMode=="upgrade" and (" · Current L"..property.level) or " · Land included")
+    for _,option in ipairs(options) do
+        local row=planCards[option.level+1]
+        local active=option.level==planLevel
+        row.button.BackgroundColor3=active and C.mint or C.paper
+        row.border.Color,row.border.Thickness=active and C.green or C.line,active and 2 or 1
+        row.name.Text="L"..option.level.." · "..option.name
+        row.price.Text=(option.available and ("$"..option.cost..(planMode=="buy" and " total" or " to upgrade")) or "Included already").." · $"..option.rent.." rent"
+        row.status.Text=option.current and "YOUR CURRENT HOME" or (not option.available and "CHOOSE A HIGHER LEVEL" or (option.affordable and (active and "SELECTED" or "TAP TO PREVIEW") or ("Need $"..(-option.remaining).." more")))
+        row.status.TextColor3=option.available and not option.affordable and C.red or C.muted
+        row.button.Active=not planPending
+    end
+    local key=planIndex..":"..planLevel..":"..(property.paint or 0)..":"..mine.colorIndex
+    if key~=planPreviewKey then
+        planPreviewKey=key;fillPreview(planWorld,planCamera,planIndex,mine,property,planLevel)
+    end
+    planDescription.Text=chosen.description
+    local currentRent=planMode=="upgrade" and rent(state,planIndex) or 0
+    planTotal.Text=chosen.available and ((planMode=="buy" and "Total price: $" or "Upgrade cost: $")..chosen.cost.."   ·   Rent $"..currentRent.." → $"..chosen.rent) or "Select a higher home level to upgrade."
+    planBalance.Text=chosen.available and (chosen.affordable and ("Balance after: $"..chosen.remaining) or ("Need $"..(-chosen.remaining).." more. Choose a lower level, or go back.")) or "Your current investment is already included."
+    planBalance.TextColor3=chosen.available and not chosen.affordable and C.red or C.green
+    planNote.Text=planError or ("No district pair required. "..(planMode=="buy" and "Land + all selected building levels are included." or "You pay only for the levels you add."))
+    planNote.TextColor3=planError and C.red or C.muted
+    local enabled=chosen.affordable and not planPending and not rolling
+    confirmPlan.Text=planPending and "Building your home…" or (rolling and "Dice are rolling…" or (chosen.available and ((planMode=="buy" and "Buy " or "Upgrade to ")..chosen.name.." · $"..chosen.cost) or "Choose a higher level"))
+    available(confirmPlan,enabled,C.green)
+    available(cancelPlan,not planPending,C.paper)
+    available(closeChooser,not planPending,C.paper)
+end
+openPlans=function(mode,index)
+    if not data then return end
+    if planIndex~=index or planMode~=mode or planTurn~=data.game.turnCount then
+        planLevel=mode=="buy" and 0 or math.min(Config.maxLevel,data.game.properties[index].level+1)
+    end
+    planIndex,planMode,planTurn,planPending,planError=index,mode,data.game.turnCount,false,nil
+    chooser.Visible=true;help.Visible=false;sale.Visible=false
+    renderPlans()
+end
+mainAction=function()
+    if mainCommand=="Buy" and data then openPlans("buy",data.game.pendingTile)
+    elseif mainCommand then send(mainCommand) end
+end
 render=function()
     if not data then return end
     local state=data.game
@@ -261,8 +373,8 @@ render=function()
             if state.phase=="roll" then mainCommand="Roll";actionButton.Text=mine.detained and "Serve detention" or "Roll the dice  [R]"
             elseif state.phase=="buy" then
                 local tile=Config.tiles[state.pendingTile]
-                mainCommand=mine.cash>=tile.price and "Buy" or nil
-                actionButton.Text=mainCommand and ("Buy cottage · $"..tile.price) or "Sell a deed or pass"
+                mainCommand="Buy"
+                actionButton.Text="Choose home · from $"..tile.price
                 passButton.Visible=true
             else mainCommand="End";actionButton.Text="End turn  [Space]" end
         elseif current and current.id==player.UserId and state.phase=="end" then mainCommand="End";actionButton.Text="End turn"
@@ -292,18 +404,17 @@ render=function()
         local owner=resident(state,property.ownerId)
         district.Text=string.upper(Config.groups[tile.group].name)
         propertyName.Text=tile.name
-        ownerText.Text=owner and (owner.name.."'s home · "..homeNames[property.level+1]) or ("FOR SALE · $"..tile.price.." including your cottage")
+        ownerText.Text=owner and (owner.name.."'s home · "..homeNames[property.level+1]) or ("FOR SALE · from $"..tile.price.." including land")
         rentText.Text="$"..rent(state,selected).." / visit"
         levelText.Text="LEVEL "..property.level.." / 3"
         local own=property.ownerId==player.UserId
-        local fullPair=own and pair(state,player.UserId,tile.group)
-        nextRent.Text=own and (property.level==3 and "Your finest address. Fully upgraded." or (fullPair and ("Next: $"..tile.rent*Config.rentMultipliers[property.level+2].." rent · upgrade $"..tile.upgrade) or "Own both district homes to unlock upgrades.")) or "A complete home appears as soon as you buy."
+        nextRent.Text=own and (property.level==3 and "Your finest address. Fully upgraded." or ("Upgrades from $"..tile.upgrade..". Compare any higher home level.")) or "Choose your starting home level before you buy."
         propertyPreview(selected,owner,property)
         upgradeButton.Visible,sellButton.Visible,paintButton.Visible=own and myTurn,own and myTurn,own and myTurn
         visitButton.Visible=own and mine and mine.alive and state.status=="playing"
         visitButton.Text="Walk through your home"
-        upgradeButton.Text=property.level==3 and "Grand villa" or (fullPair and ("Upgrade · $"..tile.upgrade) or "Complete the pair")
-        available(upgradeButton,myTurn and fullPair and property.level<3 and mine.cash>=tile.upgrade or false,C.green)
+        upgradeButton.Text=property.level==3 and "Fully upgraded" or "Upgrade options"
+        available(upgradeButton,myTurn and property.level<Config.maxLevel or false,C.green)
         local board=workspace:FindFirstChild("CitymoneyBoard")
         if board and inspector.Visible then highlight.Adornee=board:FindFirstChild("Property"..selected) or board:FindFirstChild("Tile"..selected) end
     else inspector.Visible=false end
@@ -328,6 +439,7 @@ render=function()
             text(resultRows,rank.."   "..entry.name.."     $"..worth(state,entry),0,(rank-1)*33,468,30,16,rank==1 and C.green or C.muted,rank==1)
         end
     end
+    renderPlans()
 end
 local function updateLayout()
     local area=safe.AbsoluteSize
@@ -403,7 +515,8 @@ local function updateCamera(dt)
     local wantedTarget=Vector3.new(0,3,6)
     if focusIndex and Config.tiles[focusIndex].kind=="property" then
         local p,yaw=Architecture.site(focusIndex)
-        wantedTarget=Vector3.new(p[1],8,p[3]);wantedDistance=34;wantedAngle=yaw+math.rad(150)
+        local level=data and data.game.properties[focusIndex].level or 0
+        wantedTarget=Vector3.new(p[1],7+level*2.2,p[3]);wantedDistance=34+level*4;wantedAngle=yaw+math.rad(150)
     else wantedDistance=wantedDistance*math.max(1,1.1/math.max(0.4,camera.ViewportSize.X/camera.ViewportSize.Y)) end
     cameraAngle=cameraAngle+(wantedAngle-cameraAngle)*alpha
     cameraDistance=cameraDistance+(wantedDistance-cameraDistance)*alpha
@@ -435,6 +548,7 @@ snapshot.OnClientEvent:Connect(function(incoming)
     local state=data.game
     if old and state.status=="playing" and old.game.status~="playing" then
         results.Visible=false;focusIndex=nil;inspectorOpen=false;portfolioOpen=false
+        chooser.Visible=false;planPending=false;planIndex=nil;planTurn=nil
     end
     if after and before and after.cash~=before.cash then
         local delta=after.cash-before.cash
@@ -443,13 +557,23 @@ snapshot.OnClientEvent:Connect(function(incoming)
     if state.status=="playing" and state.phase=="buy" and state.players[state.turn].id==player.UserId then
         if not old or old.game.phase~="buy" or old.game.pendingTile~=state.pendingTile then
             selected,inspectorOpen,portfolioOpen=state.pendingTile,true,false
+            openPlans("buy",state.pendingTile)
+        end
+    end
+    if planPending and chooser.Visible then
+        local property=state.properties[planIndex]
+        if property and property.ownerId==player.UserId and property.level==planLevel then
+            chooser.Visible=false;planPending=false
         end
     end
     if old then
         for index,property in ipairs(state.properties) do
             if property.ownerId==player.UserId and old.game.properties[index].ownerId~=player.UserId then
                 selected,focusIndex,inspectorOpen=index,index,true
-                notify("Welcome home! Your cottage at "..Config.tiles[index].name.." is ready.")
+                notify("Your level "..property.level.." "..homeNames[property.level+1].." at "..Config.tiles[index].name.." is ready.")
+            elseif property.ownerId==player.UserId and old.game.properties[index].ownerId==player.UserId and property.level>old.game.properties[index].level then
+                selected,focusIndex,inspectorOpen=index,index,true
+                notify(Config.tiles[index].name.." is now a level "..property.level.." "..homeNames[property.level+1].."!")
             end
         end
         if state.turnCount~=old.game.turnCount then focusIndex=nil end
@@ -458,9 +582,13 @@ snapshot.OnClientEvent:Connect(function(incoming)
     if state.status=="finished" and (not old or old.game.status~="finished") then results.Visible=true;help.Visible=false;sale.Visible=false end
     render()
 end)
-feedback.OnClientEvent:Connect(function(message) locked=false;notify(message) end)
+feedback.OnClientEvent:Connect(function(message)
+    locked=false;planPending=false
+    if chooser.Visible then planError=message end
+    notify(message);renderPlans()
+end)
 local function inspect(position)
-    if help.Visible or sale.Visible or results.Visible or visitIndex then return end
+    if help.Visible or sale.Visible or results.Visible or chooser.Visible or visitIndex then return end
     local camera,board=workspace.CurrentCamera,workspace:FindFirstChild("CitymoneyBoard")
     if not camera or not board then return end
     local ray=camera:ScreenPointToRay(position.X,position.Y)
@@ -472,10 +600,10 @@ end
 Input.TouchTapInWorld:Connect(function(position,processed) if not processed then inspect(position) end end)
 Input.InputBegan:Connect(function(input,processed)
     if not processed and input.UserInputType==Enum.UserInputType.MouseButton1 then inspect(input.Position) end
-    if processed or help.Visible or sale.Visible or results.Visible then return end
+    if processed or help.Visible or sale.Visible or results.Visible or chooser.Visible then return end
     if input.KeyCode==Enum.KeyCode.B and visitIndex then send("Return")
     elseif input.KeyCode==Enum.KeyCode.R and mainCommand=="Roll" then send("Roll")
-    elseif input.KeyCode==Enum.KeyCode.Space and mainCommand and not visitIndex then send(mainCommand) end
+    elseif input.KeyCode==Enum.KeyCode.Space and mainCommand and not visitIndex then mainAction() end
 end)
 Input.InputChanged:Connect(function(input,processed)
     if not processed and not visitIndex and input.UserInputType==Enum.UserInputType.MouseWheel then
@@ -488,6 +616,10 @@ RunService.RenderStepped:Connect(function(dt)
     if data and data.game.status=="playing" then
         local seconds=math.max(0,data.deadline-workspace:GetServerTimeNow())
         timeText.Text=math.ceil(seconds).."s to decide · R to roll · B to leave a home"
+        if chooser.Visible and not planError then
+            local tile=Config.tiles[planIndex]
+            planNote.Text=(planMode=="buy" and ("Land $"..tile.price.." + building $"..planLevel*tile.upgrade) or "Only the added levels are charged.").."  ·  "..math.ceil(seconds).."s left"
+        end
         timeFill.Size,timeFill.BackgroundColor3=UDim2.fromScale(math.clamp(seconds/Config.turnSeconds,0,1),1),seconds<10 and C.red or C.green
     else timeText.Text="2–6 residents · solo games include City Bot";timeFill.Size=UDim2.fromScale(0,1) end
 end)

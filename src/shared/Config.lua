@@ -6,6 +6,13 @@ local Config = {
     maxPlayers = 6,
     maxTurns = 120,
     maxLevel = 3,
+    homeNames = { "Cottage", "Townhouse", "Garden villa", "Grand villa" },
+    homeDescriptions = {
+        "A furnished cottage, porch, flower boxes and private garden.",
+        "Two floors, an upstairs bedroom and a staircase.",
+        "A larger villa with a balcony, roof garden and pergola.",
+        "Three floors, upstairs bedrooms and the highest rental income.",
+    },
     botId = "city-bot", -- Studio test players can have negative numeric UserIds.
     rentMultipliers = { 1, 3, 6, 10 },
     playerColors = { "FFBE55", "6BDDC3", "AA9FFF", "FF8C9F", "71BDFF", "E6E984" },

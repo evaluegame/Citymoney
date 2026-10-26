@@ -1,4 +1,6 @@
 -- Pure Luau: no Roblox services. The server alone owns this state.
+local runtimeScript = getfenv().script
+local Plans = runtimeScript and require(runtimeScript.Parent.PropertyPlans) or require("./PropertyPlans")
 local Engine = {}
 Engine.__index = Engine
 
@@ -197,11 +199,14 @@ function Engine:canVisit(id, tileIndex: any)
     return true
 end
 
-function Engine:act(id, action, tileIndex: any)
+function Engine:act(id, action, tileIndex: any, targetLevel: any, expectedTurn: any)
     if self.state.status ~= "playing" then return false, "Start a match first." end
     local player = self:current()
     if not player or player.id ~= id then return false, "Wait for your turn." end
     if not player.alive and action ~= "End" then return false, "You are bankrupt. End your turn." end
+    if (action=="Buy" or action=="Upgrade") and expectedTurn~=nil and expectedTurn~=self.state.turnCount then
+        return false, "That home selection expired. Open the options again."
+    end
     local phase = self.state.phase
     if action == "Roll" and phase == "roll" then
         if player.detained then
@@ -221,11 +226,15 @@ function Engine:act(id, action, tileIndex: any)
     elseif action == "Buy" and phase == "buy" then
         local index = self.state.pendingTile
         local tile, property = self.config.tiles[index], self.state.properties[index]
+        if tileIndex~=nil and tileIndex~=index then return false, "This is a different property. Open its options again." end
         if property.ownerId then return false, "This property is already owned." end
-        if player.cash < tile.price then return false, "You need $" .. tile.price .. " to buy this property." end
-        player.cash, property.ownerId = player.cash - tile.price, id
+        local level = targetLevel==nil and 0 or targetLevel
+        local cost = Plans.purchaseCost(self.config,index,level)
+        if not cost then return false, "Choose a home level from 0 to "..self.config.maxLevel.."." end
+        if player.cash < cost then return false, "You need $" .. cost .. " for this home and its land." end
+        player.cash, property.ownerId, property.level = player.cash - cost, id, level
         self.state.phase, self.state.pendingTile = "end", false
-        self:log(player.name .. " bought " .. tile.name .. " for $" .. tile.price .. "!")
+        self:log(player.name .. " bought " .. tile.name .. " as a level "..level.." "..self.config.homeNames[level+1].." for $" .. cost .. "!")
     elseif action == "Skip" and phase == "buy" then
         self.state.phase, self.state.pendingTile = "end", false
         self:log(player.name .. " passed on the property.")
@@ -241,11 +250,13 @@ function Engine:act(id, action, tileIndex: any)
         elseif action == "Sell" then
             self:liquidate(player, tileIndex)
         else
-            if not self:ownsGroup(id, tile.group) then return false, "Own both properties in this district to build." end
             if property.level >= self.config.maxLevel then return false, "This property is fully upgraded." end
-            if player.cash < tile.upgrade then return false, "Not enough cash to build." end
-            player.cash, property.level = player.cash - tile.upgrade, property.level + 1
-            self:log(player.name .. " upgraded " .. tile.name .. " to level " .. property.level .. ".")
+            local level = targetLevel==nil and property.level+1 or targetLevel
+            local cost = Plans.upgradeCost(self.config,tileIndex,property.level,level)
+            if not cost then return false, "Choose a higher home level, up to "..self.config.maxLevel.."." end
+            if player.cash < cost then return false, "You need $"..cost.." for this upgrade." end
+            player.cash, property.level = player.cash - cost, level
+            self:log(player.name .. " upgraded " .. tile.name .. " to level " .. property.level .. " "..self.config.homeNames[level+1].." for $"..cost..".")
         end
     else
         return false, "That action is unavailable right now."

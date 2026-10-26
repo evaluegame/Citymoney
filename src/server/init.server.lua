@@ -43,10 +43,10 @@ local function publish(resetTimer)
     snapshot:FireAllClients(payload())
 end
 
-local function perform(id, command, index)
+local function perform(id, command, index, level, expectedTurn)
     local previousTurn = engine.state.turnCount
     local previousPhase = engine.state.phase
-    local ok, message = engine:act(id, command, index)
+    local ok, message = engine:act(id, command, index, level, expectedTurn)
     if ok then
         if command == "Roll" or command == "End" then world:endVisit(id) end
         local changedTurn = previousTurn ~= engine.state.turnCount
@@ -76,7 +76,7 @@ Players.PlayerRemoving:Connect(function(player)
     publish(true)
 end)
 
-action.OnServerEvent:Connect(function(player, command, index)
+action.OnServerEvent:Connect(function(player, command, index, level, expectedTurn)
     if type(command) ~= "string" or #command > 16 then return end
     local now = os.clock()
     if lastRequest[player] and now - lastRequest[player] < 0.18 then return end
@@ -99,13 +99,21 @@ action.OnServerEvent:Connect(function(player, command, index)
         return
     end
     if index ~= nil and (type(index) ~= "number" or index ~= index or index % 1 ~= 0 or index < 1 or index > #Config.tiles) then return end
+    if command=="Buy" or command=="Upgrade" then
+        if level~=nil and (type(level)~="number" or level~=level or level%1~=0 or level<0 or level>Config.maxLevel) then
+            feedback:FireClient(player,"Choose a valid home level."); return
+        end
+        if expectedTurn~=nil and expectedTurn~=engine.state.turnCount then
+            feedback:FireClient(player,"That home selection expired. Open the options again."); return
+        end
+    end
     if command == "Visit" then
         local ok, message = engine:canVisit(player.UserId, index)
         if ok then ok, message = world:visit(player, index) end
         if ok then publish(false) else feedback:FireClient(player, message) end
         return
     end
-    local ok, message = perform(player.UserId, command, index)
+    local ok, message = perform(player.UserId, command, index, level, expectedTurn)
     if not ok then feedback:FireClient(player, message) end
 end)
 
@@ -123,13 +131,14 @@ task.spawn(function()
                 elseif phase == "buy" then
                     local tile = Config.tiles[engine.state.pendingTile]
                     local buy = current.bot and current.cash >= tile.price + 180
-                    perform(current.id, buy and "Buy" or "Skip")
+                    local level=current.bot and current.cash>=tile.price+tile.upgrade+350 and 1 or 0
+                    perform(current.id, buy and "Buy" or "Skip",nil,level)
                 else
                     if current.bot then
                         for index, property in ipairs(engine.state.properties) do
                             local tile = Config.tiles[index]
                             if property.ownerId == current.id and property.level < Config.maxLevel
-                                and engine:ownsGroup(current.id, tile.group) and current.cash >= tile.upgrade + 250 then
+                                and current.cash >= tile.upgrade + 250 then
                                 engine:act(current.id, "Upgrade", index)
                             end
                         end
