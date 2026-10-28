@@ -11,6 +11,7 @@ function Menus.new(ui)
     local frame,text,button,overlay=ui.frame,ui.text,ui.button,ui.overlay
     self.matchButton=button(ui.root,"Match / invite",24,320,188,38,C.paper,function() self.lobby.Visible=true;self.actions.Visible=false;self.error=nil;self:render(ui.data()) end)
     self.cardsButton=button(ui.root,"Cards & goals",24,366,188,38,C.green,function() self.actions.Visible=true;self.lobby.Visible=false;self.error=nil;self:render(ui.data()) end)
+    self.styleButton=button(ui.root,"Club collection",24,412,188,38,C.paper,function() if ui.openStyles then ui.openStyles() end end)
     self.lobby,self.lobbyCard=overlay(520,632)
     text(self.lobbyCard,"Play together",24,16,436,36,26,C.ink,true)
     text(self.lobbyCard,"Choose your match, player color and readiness.",24,55,472,30,13,C.muted)
@@ -105,9 +106,11 @@ function Menus:feedback(message)
     self:render(self.ui.data())
 end
 function Menus:resize(layout,rosterHeight)
-    local y=math.min(layout.roster[2]+rosterHeight+60,layout.toolbar[2]-104)
-    self.matchButton.Position=UDim2.fromOffset(24,y)
-    self.cardsButton.Position=UDim2.fromOffset(layout.compact and 224 or 24,layout.compact and y or y+46)
+    local y=math.min(layout.roster[2]+rosterHeight+60,layout.toolbar[2]-150)
+    for index,button in ipairs({self.matchButton,self.cardsButton,self.styleButton}) do
+        button.Position=UDim2.fromOffset(layout.compact and 24+(index-1)*172 or 24,layout.compact and y or y+(index-1)*46)
+        button.Size=UDim2.fromOffset(layout.compact and 164 or 188,38)
+    end
 end
 function Menus:playCard()
     local data=self.ui.data()
@@ -149,7 +152,7 @@ function Menus:render(data)
     end
     local visiting=false
     for _,visitor in ipairs(data.visitors or {}) do if visitor.id==ui.id then visiting=true end end
-    self.matchButton.Visible,self.cardsButton.Visible=not visiting,not visiting
+    self.matchButton.Visible,self.cardsButton.Visible,self.styleButton.Visible=not visiting,not visiting,not visiting
     local total=0
     for _,count in pairs(me and me.cards or {}) do total=total+count end
     self.cardsButton.Text=me and me.challenge and me.challenge.ready and "Challenge reward ready!" or ("Cards & goals · "..total)

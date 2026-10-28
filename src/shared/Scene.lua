@@ -35,7 +35,7 @@ function Scene.populate(entries, parent, preview)
         end
         if entry.light and not preview then
             local light = Instance.new("PointLight")
-            light.Color, light.Brightness, light.Range = Color3.fromHex("FFE2B3"), 0.7, 13
+            light.Color, light.Brightness, light.Range = Color3.fromHex(entry.color), 0.7, 13
             light.Parent = object
         end
         table.insert(objects, object)

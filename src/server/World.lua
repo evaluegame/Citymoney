@@ -2,6 +2,7 @@ local Players = game:GetService("Players")
 local TweenService = game:GetService("TweenService")
 local shared = game:GetService("ReplicatedStorage"):WaitForChild("Citymoney")
 local Board, Architecture, Scene = require(shared.Board), require(shared.Architecture), require(shared.Scene)
+local Cosmetics=require(shared.Cosmetics)
 local World = {}
 World.__index = World
 
@@ -153,24 +154,67 @@ function World:wireDoor(model, ownerId)
     end)
 end
 
+function World:styleAvatar(model,resident)
+    local styleId,effects="classic",true
+    if self.club then styleId,effects=self.club:visual(resident.id) end
+    local style=Cosmetics.get(styleId)
+    local root=model:FindFirstChild("HumanoidRootPart") or model.PrimaryPart
+    if not root then return end
+    if model:GetAttribute("ClubStyle")~=style.id then
+        for _,name in ipairs({"ClubAura","ClubTrail","ClubTrailStart","ClubTrailEnd"}) do
+            local old=model:FindFirstChild(name,true);if old then old:Destroy() end
+        end
+        model:SetAttribute("ClubStyle",style.id)
+        if style.premium then
+            local humanoid=model:FindFirstChildOfClass("Humanoid")
+            local offset=humanoid and (humanoid.HipHeight+root.Size.Y/2) or 2.1
+            local aura=Instance.new("Part")
+            aura.Name,aura.Shape,aura.Size="ClubAura",Enum.PartType.Cylinder,Vector3.new(0.05,4.1,4.1)
+            aura.Material,aura.Color,aura.Transparency=Enum.Material.Neon,Color3.fromHex(style.accent),0.65
+            aura.CanCollide,aura.CanTouch,aura.CanQuery,aura.Massless=false,false,false,true
+            aura.CFrame=root.CFrame*CFrame.new(0,-offset+0.01,0)*CFrame.Angles(0,0,math.pi/2)
+            aura.Parent=model
+            local weld=Instance.new("WeldConstraint");weld.Part0,weld.Part1,weld.Parent=root,aura,aura
+            local a,b=Instance.new("Attachment"),Instance.new("Attachment")
+            a.Name,a.Position,a.Parent="ClubTrailStart",Vector3.new(-0.65,-0.6,0.15),root
+            b.Name,b.Position,b.Parent="ClubTrailEnd",Vector3.new(0.65,-0.6,0.15),root
+            local trail=Instance.new("Trail")
+            trail.Name,trail.Attachment0,trail.Attachment1="ClubTrail",a,b
+            trail.Color=ColorSequence.new(Color3.fromHex(self.config.playerColors[resident.colorIndex]),Color3.fromHex(style.accent))
+            trail.Transparency=NumberSequence.new({NumberSequenceKeypoint.new(0,0.65),NumberSequenceKeypoint.new(1,1)})
+            trail.Lifetime,trail.MinLength,trail.LightEmission=0.35,0.1,0.7
+            trail.Enabled,trail.Parent=false,model
+        end
+    end
+    local aura=model:FindFirstChild("ClubAura")
+    if aura then aura.Transparency=resident.alive and 0.65 or 1 end
+    local trail=model:FindFirstChild("ClubTrail")
+    if trail then
+        trail.Color=ColorSequence.new(Color3.fromHex(self.config.playerColors[resident.colorIndex]),Color3.fromHex(style.accent))
+        trail.Enabled=resident.alive and effects and self.state.status=="playing" and self.visiting[resident.id]~=nil
+    end
+end
+
 function World:sync(state)
     self.state = state
     -- Buying immediately constructs a complete home, including its owner's sign.
     for index, view in pairs(self.propertyViews) do
         local property = state.properties[index]
-        local key = tostring(property.ownerId)..":"..property.level..":"..(property.paint or 0)
+        local styleId=self.club and self.club:visual(property.ownerId) or "classic"
+        local key = tostring(property.ownerId)..":"..property.level..":"..(property.paint or 0)..":"..styleId
         if key ~= view.key then
             view.key = key
             if view.model then view.model:Destroy() end
             local owner
             for _, resident in ipairs(state.players) do if resident.id==property.ownerId then owner=resident end end
             local entries = Architecture.property(self.config,index,owner and owner.name or false,
-                owner and self.config.playerColors[owner.colorIndex] or "A6B4A0",property.level,property.paint or 0)
+                owner and self.config.playerColors[owner.colorIndex] or "A6B4A0",property.level,property.paint or 0,nil,styleId)
             view.model = Scene.model(entries,"Property"..index,self.root)
             view.model:SetAttribute("TileIndex",index)
             view.model:SetAttribute("OwnerId",owner and owner.id or false)
             view.model:SetAttribute("OwnerName",owner and owner.name or "For sale")
             view.model:SetAttribute("OwnerColor",owner and self.config.playerColors[owner.colorIndex] or "DCC098")
+            view.model:SetAttribute("ClubStyle",styleId)
             view.effectsKey=nil
             if owner then
                 self:wireDoor(view.model,owner.id)
@@ -231,7 +275,8 @@ function World:sync(state)
             label.TextColor3,label.TextStrokeTransparency,label.Parent = Color3.fromHex("FFFFFF"),0.5,tag
         end
         local active = state.status=="playing" and state.players[state.turn].id==resident.id
-        tag.TextLabel.Text = (active and "▸ " or "")..resident.name
+        local style=Cosmetics.get(self.club and self.club:visual(resident.id) or "classic")
+        tag.TextLabel.Text = (active and "▸ " or "")..(style.premium and "★ " or "")..resident.name
         tag.TextLabel.TextColor3=Color3.fromHex(self.config.playerColors[resident.colorIndex])
         tag.Enabled = resident.alive
         if not model:FindFirstChild("PlayerColorRing") then
@@ -256,6 +301,7 @@ function World:sync(state)
                 if part then part.Color=Color3.fromHex(self.config.playerColors[resident.colorIndex]) end
             end
         end
+        self:styleAvatar(model,resident)
         if self.visiting[resident.id] and (not resident.alive or state.status~="playing") then self:endVisit(resident.id) end
         if not self.visiting[resident.id] then
             local old = self.positions[resident.id]
@@ -291,6 +337,8 @@ function World:sync(state)
             elseif model.Parent then
                 local tag=model:FindFirstChild("ResidentTag");if tag then tag.Enabled=false end
                 local ring=model:FindFirstChild("PlayerColorRing");if ring then ring.Transparency=1 end
+                local aura=model:FindFirstChild("ClubAura");if aura then aura.Transparency=1 end
+                local trail=model:FindFirstChild("ClubTrail");if trail then trail.Enabled=false end
                 model:PivotTo(CFrame.new(0,5,42))
             end
             self.tokens[id],self.positions[id],self.visiting[id] = nil,nil,nil

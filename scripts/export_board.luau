@@ -25,18 +25,19 @@ encode = function(value: any): string
 end
 local mode = ...
 local scene = Board.generate(Config)
-if mode == "showcase" or mode == "home" then
+if mode == "showcase" or mode == "home" or mode=="clubhome" or mode=="clubshowcase" then
     local Architecture = require("../src/shared/Architecture")
-    local showcase = { [2] = { "Avery", Config.playerColors[1], 0 }, [8] = { "Riley", Config.playerColors[2], 1 }, [14] = { "Jamie", Config.playerColors[3], 2 }, [23] = { "Morgan", Config.playerColors[4], 3 } }
+    local showcase = { [2] = { "Avery", Config.playerColors[1], mode=="clubhome" and 2 or 0,"gilded" }, [8] = { "Riley", Config.playerColors[2], 1,"gilded" }, [14] = { "Jamie", Config.playerColors[3], 2,"aurora" }, [23] = { "Morgan", Config.playerColors[4], 3,"rose" } }
     local entries = {}
-    if mode == "showcase" then
+    if mode == "showcase" or mode=="clubshowcase" then
         for _, entry in ipairs(scene) do
             if not (entry.tileIndex and showcase[entry.tileIndex] and entry.name ~= "Tile"..entry.tileIndex and entry.name ~= "DistrictInlay") then table.insert(entries, entry) end
         end
     end
     for index, owner in pairs(showcase) do
-        if mode == "showcase" or index == 2 then
-            for _, entry in ipairs(Architecture.property(Config,index,owner[1],owner[2],owner[3],0)) do table.insert(entries,entry) end
+        if mode == "showcase" or mode=="clubshowcase" or index == 2 then
+            local style=mode=="clubhome" or mode=="clubshowcase"
+            for _, entry in ipairs(Architecture.property(Config,index,owner[1],owner[2],owner[3],0,nil,style and owner[4] or "classic")) do table.insert(entries,entry) end
         end
     end
     scene = entries

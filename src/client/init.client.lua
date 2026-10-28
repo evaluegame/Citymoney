@@ -9,6 +9,8 @@ local shared = RS:WaitForChild("Citymoney")
 local Config, Architecture, Scene, Layout = require(shared.Config),require(shared.Architecture),require(shared.Scene),require(shared.Layout)
 local Plans=require(shared.PropertyPlans)
 local Menus=require(script:WaitForChild("Menus"))
+local Boutique=require(script:WaitForChild("Boutique"))
+local Cosmetics=require(shared.Cosmetics)
 local remotes=shared:WaitForChild("Remotes")
 local action,snapshot,feedback=remotes:WaitForChild("Action"),remotes:WaitForChild("Snapshot"),remotes:WaitForChild("Feedback")
 -- The default chat and player-list panels obscured the old game HUD.
@@ -65,7 +67,7 @@ end
 local function truncate(object) object.TextWrapped,object.TextTruncate=false,Enum.TextTruncate.AtEnd end
 local data,selected,focusIndex,mainCommand,visitIndex,layout
 local inspectorOpen,portfolioOpen,rolling,locked=false,false,false,false
-local notify,render,requestSale,openPlans,renderPlans,mainAction,menus
+local notify,render,requestSale,openPlans,renderPlans,mainAction,menus,boutique
 local function send(command,index,level,expectedTurn)
     if locked or (rolling and command~="Return") then return false end
     locked=true;action:FireServer(command,index,level,expectedTurn)
@@ -268,9 +270,13 @@ local function worth(state,person)
     return total
 end
 local previewKey
+local function styleFor(id)
+    for _,entry in ipairs(data and data.styles or {}) do if entry.id==id then return entry.styleId end end
+    return "classic"
+end
 local function fillPreview(world,camera,index,owner,property,level)
     world:ClearAllChildren()
-    local model=Scene.model(Architecture.property(Config,index,owner and owner.name or "Your next home",owner and Config.playerColors[owner.colorIndex] or "D4AF84",level,property.paint or 0,property),"Preview",world,true)
+    local model=Scene.model(Architecture.property(Config,index,owner and owner.name or "Your next home",owner and Config.playerColors[owner.colorIndex] or "D4AF84",level,property.paint or 0,property,styleFor(owner and owner.id or player.UserId)),"Preview",world,true)
     local cf,size=model:GetBoundingBox()
     local target=cf.Position+Vector3.new(0,1,0)
     local _,yaw=Architecture.site(index)
@@ -278,7 +284,7 @@ local function fillPreview(world,camera,index,owner,property,level)
     camera.CFrame=CFrame.lookAt(target+Vector3.new(math.cos(yaw)*x+math.sin(yaw)*z,20+size.Y*0.3,-math.sin(yaw)*x+math.cos(yaw)*z),target)
 end
 local function propertyPreview(index,owner,property)
-    local key=index..":"..tostring(property.ownerId)..":"..property.level..":"..(property.paint or 0)..":"..tostring(property.shield)..":"..(property.boost or 0)..":"..(property.rentTier or 1)
+    local key=index..":"..tostring(property.ownerId)..":"..property.level..":"..(property.paint or 0)..":"..tostring(property.shield)..":"..(property.boost or 0)..":"..(property.rentTier or 1)..":"..styleFor(owner and owner.id or player.UserId)
     if previewKey==key then return end
     previewKey=key
     fillPreview(viewWorld,viewCamera,index,owner,property,property.level)
@@ -311,7 +317,7 @@ renderPlans=function()
         row.button.Active=not planPending
     end
     local shownLevel=planMode=="rent" and property.level or planLevel
-    local key=planIndex..":"..shownLevel..":"..(property.paint or 0)..":"..mine.colorIndex..":"..(property.rentTier or 1)..":"..planLevel
+    local key=planIndex..":"..shownLevel..":"..(property.paint or 0)..":"..mine.colorIndex..":"..(property.rentTier or 1)..":"..planLevel..":"..styleFor(player.UserId)
     if key~=planPreviewKey then
         local preview=table.clone(property)
         if planMode=="rent" then preview.rentTier=planLevel+1 end
@@ -345,8 +351,13 @@ mainAction=function()
     elseif mainCommand=="Ready" and menus then menus:toggleReady()
     elseif mainCommand then send(mainCommand) end
 end
-menus=Menus.new({config=Config,colors=C,root=root,id=player.UserId,frame=frame,text=text,button=button,overlay=overlay,available=available,send=send,notify=notify,data=function() return data end,rent=rent,
-    focus=function(index) selected,focusIndex,inspectorOpen,portfolioOpen=index,index,true,false;render() end})
+do
+    local ui={config=Config,colors=C,root=root,id=player.UserId,frame=frame,text=text,button=button,overlay=overlay,available=available,send=send,notify=notify,data=function() return data end,rent=rent,
+        header=header,mark=mark,strap=strap,dieA=dieA,dieB=dieB,dieTextA=dieTextA,dieTextB=dieTextB,
+        focus=function(index) selected,focusIndex,inspectorOpen,portfolioOpen=index,index,true,false;render() end,
+        openStyles=function() menus.lobby.Visible=false;menus.actions.Visible=false;help.Visible=false;boutique:open() end}
+    menus=Menus.new(ui);boutique=Boutique.new(ui)
+end
 render=function()
     if not data then return end
     local state=data.game
@@ -368,7 +379,7 @@ render=function()
         local row=frame(seats,0,(seat-1)*47,168,41,(current and state.status=="playing" and current.id==entry.id) and C.mint or C.card)
         local tint=Color3.fromHex(Config.playerColors[entry.colorIndex or seat] or "DCC098")
         local dot=frame(row,9,13,13,13,tint);round(dot,7)
-        local name=text(row,entry.name,31,4,125,19,12,entry.alive==false and C.muted or C.ink,true);truncate(name)
+        local name=text(row,(Cosmetics.get(styleFor(entry.id)).premium and "★ " or "")..entry.name,31,4,125,19,12,entry.alive==false and C.muted or C.ink,true);truncate(name)
         text(row,entry.cash and ("$"..entry.cash..(entry.alive==false and " · out" or "")) or "Ready to move in",31,23,125,13,10,C.muted)
     end
     roster.Size=UDim2.fromOffset(188,52+math.min(#entries,6)*47)
@@ -465,6 +476,7 @@ render=function()
     end
     renderPlans()
     menus:render(data)
+    boutique:render(data)
     if layout then menus:resize(layout,roster.Size.Y.Offset) end
 end
 local function updateLayout()
@@ -552,6 +564,9 @@ local function updateCamera(dt)
 end
 local animationVersion=0
 local function diceAnimation(first,second)
+    if data and data.club and not data.club.effects then
+        dieTextA.Text,dieTextB.Text=tostring(first),tostring(second);return
+    end
     animationVersion=animationVersion+1;local version=animationVersion
     rolling=true;render()
     task.spawn(function()
@@ -611,16 +626,20 @@ snapshot.OnClientEvent:Connect(function(incoming)
         if state.turnCount~=old.game.turnCount then focusIndex=nil end
         if old.game.phase=="roll" and state.phase~="roll" and state.dice[1]>0 and state.turnCount==old.game.turnCount then diceAnimation(state.dice[1],state.dice[2]) end
     end
-    if state.status=="finished" and (not old or old.game.status~="finished") then results.Visible=true;help.Visible=false;sale.Visible=false end
+    if state.status=="finished" and (not old or old.game.status~="finished") then
+        results.Visible=true;help.Visible=false;sale.Visible=false
+        menus.lobby.Visible=false;menus.actions.Visible=false;boutique.shade.Visible=false
+        boutique:celebrate()
+    end
     render()
 end)
 feedback.OnClientEvent:Connect(function(message)
     locked=false;planPending=false
     if chooser.Visible then planError=message end
-    notify(message);renderPlans();menus:feedback(message)
+    notify(message);renderPlans();menus:feedback(message);boutique:feedback(message)
 end)
 local function inspect(position)
-    if help.Visible or sale.Visible or results.Visible or chooser.Visible or visitIndex or menus:isOpen() then return end
+    if help.Visible or sale.Visible or results.Visible or chooser.Visible or visitIndex or menus:isOpen() or boutique:isOpen() then return end
     local camera,board=workspace.CurrentCamera,workspace:FindFirstChild("CitymoneyBoard")
     if not camera or not board then return end
     local ray=camera:ScreenPointToRay(position.X,position.Y)
@@ -632,7 +651,7 @@ end
 Input.TouchTapInWorld:Connect(function(position,processed) if not processed then inspect(position) end end)
 Input.InputBegan:Connect(function(input,processed)
     if not processed and input.UserInputType==Enum.UserInputType.MouseButton1 then inspect(input.Position) end
-    if processed or help.Visible or sale.Visible or results.Visible or chooser.Visible or menus:isOpen() then return end
+    if processed or help.Visible or sale.Visible or results.Visible or chooser.Visible or menus:isOpen() or boutique:isOpen() then return end
     if input.KeyCode==Enum.KeyCode.B and visitIndex then send("Return")
     elseif input.KeyCode==Enum.KeyCode.R and mainCommand=="Roll" then send("Roll")
     elseif input.KeyCode==Enum.KeyCode.Space and mainCommand and not visitIndex then mainAction() end

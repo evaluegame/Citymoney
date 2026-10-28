@@ -2,11 +2,13 @@
 
 A Roblox property game with furnished homes, player ownership colors, **2- and 4-player online queues**, friend parties, tactical cards, paid rent improvements, and challenges. Buy a cottage or a villa, walk through it, protect it, and choose which rival property to demolish.
 
+Now includes an optional **Waterfront Club cosmetic game pass** with three luxury collections, a 3D showroom, styled dice, player auras, walking trails, saved preferences, and reduced motion. **[Publishing and pass setup guide](docs/PUBLISHING.md)**.
+
 **[Download the Studio game ZIP](https://github.com/evaluegame/Citymoney/raw/refs/heads/main/Citymoney-Waterfront.zip)** · **[Studio place file](https://github.com/evaluegame/Citymoney/blob/main/Citymoney-Waterfront.rbxlx)**
 
 The download files are at the repository root. On a GitHub file page, use **Download raw file** (the download-arrow button). The ZIP includes a ready-to-open place, source, and instructions.
 
-![Four residents' homes with different ownership colors](docs/Neighborhood-preview.png)
+![Club homes with different ownership colors and signature decorations](docs/Club-neighborhood-preview.png)
 
 *A render of the geometry used by the game, showing example purchases. This is a model preview, not a Roblox Studio screenshot.*
 
@@ -21,7 +23,7 @@ The neighborhood is visible in the editor; menus appear during Play. The place c
 
 ## Play online and invite friends
 
-1. Open the updated place and use **File → Publish to Roblox** in your account.
+1. Open the updated place and use **File → Publish** (called **Publish to Roblox** in some Studio versions) in your account.
 2. In Creator Dashboard, make the experience available to your intended players. A **12-player server capacity** allows several parties to wait in the public lobby. Each reserved match admits exactly **2 or 4 matched humans**.
 3. Join the published experience using the Roblox app. Open **Match / invite**, choose a size and color, then click **Join 2-player queue** or **Join 4-player queue**.
 4. To play together, click **Invite friends before joining the queue**. A friend accepting that invitation is brought to your public server and joins your party. Guests click **I'm ready to play**. The party leader queues everyone together.
@@ -93,6 +95,20 @@ Seven rotating challenges reward collecting homes, adding building levels, earni
 
 Visits do not change your game position, cash, or turn. The match continues while you explore. Rolling/ending your turn returns you to the board. Selling or losing a visited home returns you; upgrades/repainting move you safely onto its front path.
 
+## Waterfront Club cosmetics
+
+![Golden Estate villa with marble steps, lanterns and garden ornaments](docs/Club-home-preview.png)
+
+*A render of the actual Golden Estate geometry. The showroom previews every collection before purchase.*
+
+Open **Club collection** under the player list. Preview **Golden Estate**, **Aurora Residence**, and **Rose Conservatory**, then equip a collection you own. Each adds coordinated metal trim, marble foundations, garden lanterns, planters, ornaments, a Club plaque, dice colors, and a player aura with a walking trail. Your player-colored roof, borders, flag, and owner sign stay visible. Changing styles also updates existing houses and their 3D property previews.
+
+One **permanent cosmetic game pass** unlocks all three collections. Waterfront Classic is free. The pass adds appearance only: no extra game cash, cards, rent, turn time, or dice advantages. It is separate from a Roblox Premium subscription. Roblox handles payment and supplies the price; the server verifies pass ownership on join and after purchases. **Check ownership** retries verification, including passes bought outside the game. Only the active collection and effects preference are saved in DataStore; ownership always comes from Roblox. Selections are carried through matchmaking teleports and validated again at the destination.
+
+**Creator setup is required to sell the pass:** create it under this game's **Monetization → Passes**, put it on sale, and replace `clubPassId = 0` in **ReplicatedStorage → Citymoney → Config** with its numeric asset ID. Republish the place. Until then, the live showroom allows previews and shows **Club pass coming soon**; it cannot charge Robux. See the [full guide](docs/PUBLISHING.md). A ready-to-upload **512×512 PNG** icon is included at `docs/Club-pass-icon.png`.
+
+In Studio, all collections can be equipped for a clearly labeled **test-session preview**; it makes no purchases or permanent unlocks and needs no DataStore/API-access setting. In a published game, only verified pass owners can equip paid collections. **Reduced motion** stops the rotating showroom, dice animation, victory confetti, and your walking trail. Cosmetic menus do not pause the turn timer.
+
 ## Core rules
 
 Start with **$1,500**, roll two six-sided dice, and collect **$200** for passing or landing on City Gate. Doubles do not grant another turn. Own both deeds in a district to double their **L0 base rent**. L1/L2/L3 earn **3× / 6× / 10×** base rent before paid tiers and boosts. City Tax costs $120. Detention skips your next move; merely visiting is harmless.
@@ -123,13 +139,14 @@ For source editing alongside Studio, use `rojo serve default.project.json --addr
 | `Architecture`, `Board`, `Scene`, `Layout` | Homes, neighborhood, Roblox geometry adapter, responsive HUD |
 | `Engine`, `PropertyPlans`, `Config` | Authoritative economy, turns, home/rental quotes, settings |
 | `Tactics` | Cards, targets, challenges, bots' tactical choices |
+| `Cosmetics`, `CosmeticProfiles`, `server/ClubService`, `client/Boutique` | Cosmetic catalogue, verified ownership, saved appearance, Roblox checkout, 3D showroom |
 | `Lobby`, `Parties`, `QueuePlanner`, `MatchProtocol` | Parties, exact-size packing, colors, atomic reservations and recovery |
 | `server/Matchmaker` | MemoryStore, reserved teleports, invitations, Studio queue adapter |
 | `server/World`, `server/init.server` | Physical lifecycle, avatar visits, doors, validated remotes, timers |
 | `client/Menus`, `client/init.client` | Match/card/goal menus, rent selector, HUD, cameras, input |
 
-Checks include **101 numbered cases and 400 complete simulated matches**: 35 core engine cases (200 matches), 18 purchase/upgrade cases, 23 strategy/rent cases (200 tactical matches), and 25 party/matchmaking cases. Additional checks cover all 24 tiles, all 16 plots at all four levels, ownership colors, effect signs, doors/furniture/stairs/rotations, and responsive screen sizes. Pure shared modules are analyzed, all Roblox source compiles, and the built place's scripts and geometry are checked against source.
+Checks include **124 numbered cases and 400 complete simulated matches**: 35 core engine cases (200 matches), 18 purchase/upgrade cases, 23 strategy/rent cases (200 tactical matches), 25 party/matchmaking cases, and 23 cosmetic/ownership/profile cases. The cosmetic cases cover cancellation, wrong/unconfigured pass IDs, verification/storage failures, concurrent preference saves, reconnects, and all **256 plot/style/level combinations**. Additional checks cover all 24 tiles, ownership colors, effect signs, doors/furniture/stairs/rotations, and responsive screen sizes. Pure shared modules are analyzed, all Roblox source compiles, and the built place's scripts and geometry are checked against source.
 
-Reservation tests simulate competing matchmakers, outages, cancellations, rollback, color collisions, and orphan recovery using an in-memory adapter. **Cloud checks do not run Roblox Studio or live MemoryStore/teleports.** Rendering, movement, input, doors, replication, native invites, and cross-server joins still require Studio and published-game playtests.
+Reservation and cosmetic service tests use in-memory adapters. **Cloud checks do not run Roblox Studio or live Roblox services.** Rendering, movement, input, doors, replication, native invites, cross-server joins, actual game-pass checkout, and DataStore persistence still require Studio and published-game playtests.
 
 `scripts/render_preview.py` optionally renders exported geometry with Blender. These are model previews, not Studio screenshots; Blender is not needed to play or build.

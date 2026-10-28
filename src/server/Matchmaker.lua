@@ -119,7 +119,12 @@ function Matchmaker:teleportGroup(group,ticket)
     self.callbacks.changed()
     local options=Instance.new("TeleportOptions")
     options.ReservedServerAccessCode=ticket.code
-    options:SetTeleportData({citymoneyMatch=ticket.id})
+    local styles={}
+    for _,user in ipairs(group.users) do
+        local style=self.callbacks.selection and self.callbacks.selection(user.id)
+        if style then table.insert(styles,{id=user.id,styleId=style.styleId,effects=style.effects}) end
+    end
+    options:SetTeleportData({citymoneyMatch=ticket.id,citymoneyStyles=styles})
     local ok=pcall(function() Teleport:TeleportAsync(game.PlaceId,members,options) end)
     if not ok then
         group.teleporting=false;group.retryAt=os.clock()+3;group.failed=group.attempts>=3
@@ -169,7 +174,7 @@ end
 function Matchmaker:backToLobby(player)
     if self.localMode then return false,"This is a Studio local test. Stop/restart Play to return to the test lobby." end
     local options=Instance.new("TeleportOptions")
-    options:SetTeleportData({citymoneyReturn=true})
+    options:SetTeleportData({citymoneyReturn=true,citymoneyStyle=self.callbacks.selection and self.callbacks.selection(player.UserId) or nil})
     local ok=pcall(function() Teleport:TeleportAsync(game.PlaceId,{player},options) end)
     return ok,if ok then nil else "Could not return to the lobby. Please try again."
 end
@@ -197,7 +202,7 @@ function Matchmaker:playerAdded(player)
     if type(invite)=="table" and type(invite.citymoneyJob)=="string" and type(invite.leaderId)=="number" then
         if invite.citymoneyJob~=game.JobId and not self.localMode then
             local options=Instance.new("TeleportOptions");options.ServerInstanceId=invite.citymoneyJob
-            options:SetTeleportData({citymoneyPartyLeader=invite.leaderId})
+            options:SetTeleportData({citymoneyPartyLeader=invite.leaderId,citymoneyStyle=self.callbacks.selection and self.callbacks.selection(player.UserId) or nil})
             local moved=pcall(function() Teleport:TeleportAsync(game.PlaceId,{player},options) end)
             if moved then return end
         else transfer.citymoneyPartyLeader=invite.leaderId end

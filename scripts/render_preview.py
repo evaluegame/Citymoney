@@ -12,6 +12,7 @@ args = sys.argv[sys.argv.index("--") + 1:]
 source, output = Path(args[0]), Path(args[1])
 entries = json.loads(source.read_text())
 close_up = "home" in source.stem.lower()
+pass_icon = "pass-icon" in output.stem.lower()
 bpy.ops.object.select_all(action="SELECT")
 bpy.ops.object.delete(use_global=False)
 materials = {}
@@ -89,6 +90,7 @@ scene.render.engine = "CYCLES"
 scene.cycles.samples = 48
 scene.cycles.use_denoising = False
 scene.render.resolution_x, scene.render.resolution_y = 1440, 1050
+if pass_icon: scene.render.resolution_x, scene.render.resolution_y = 512, 512
 scene.render.resolution_percentage = 100
 scene.render.image_settings.file_format = "PNG"
 scene.render.filepath = str(output.resolve())
@@ -107,16 +109,28 @@ camera = bpy.context.object
 if close_up:
     camera.location = (51,-41,26)
     target = Vector((40,-74,7))
-    camera.data.type, camera.data.ortho_scale = "ORTHO", 33
+    camera.data.type, camera.data.ortho_scale = "ORTHO", 42 if pass_icon else 33
 else:
     camera.location = (185,-205,220)
     target = Vector((0,-6,3))
     camera.data.type, camera.data.ortho_scale = "ORTHO", 260
 camera.rotation_euler = (target-camera.location).to_track_quat("-Z","Y").to_euler()
+if close_up:
+    # Fit the actual upgraded home, including its pergola, into the frame.
+    # Orthographic width must also account for the shorter vertical field on wide images.
+    inverse=camera.rotation_euler.to_matrix().transposed()
+    corners=[inverse @ (obj.matrix_world @ Vector(corner)) for obj in scene.objects if obj.type=="MESH" for corner in obj.bound_box]
+    lo=Vector(tuple(min(p[axis] for p in corners) for axis in range(3)))
+    hi=Vector(tuple(max(p[axis] for p in corners) for axis in range(3)))
+    center=(lo+hi)/2
+    relative=inverse @ camera.location
+    camera.location+=camera.rotation_euler.to_matrix() @ Vector((center.x-relative.x,center.y-relative.y,0))
+    aspect=scene.render.resolution_x/scene.render.resolution_y
+    camera.data.ortho_scale=max(hi.x-lo.x,(hi.y-lo.y)*aspect)*(1.3 if pass_icon else 1.12)
 scene.camera = camera
 if close_up:
     bpy.ops.mesh.primitive_plane_add(size=200,location=(40,-74,0.9))
-    bpy.context.object.data.materials.append(material({"color":"D9DECB"}))
+    bpy.context.object.data.materials.append(material({"color":"344B43" if pass_icon else "D9DECB"}))
 output.parent.mkdir(parents=True,exist_ok=True)
 bpy.ops.wm.save_as_mainfile(filepath=str(output.with_suffix(".blend").resolve()))
 bpy.ops.render.render(write_still=True)

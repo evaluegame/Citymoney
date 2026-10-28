@@ -6,6 +6,7 @@ local Config = {
     maxPlayers = 6,
     maxTurns = 120,
     maxLevel = 3,
+    clubPassId = 0, -- Create a pass for THIS experience, paste its asset ID here, then republish.
     homeNames = { "Cottage", "Townhouse", "Garden villa", "Grand villa" },
     homeDescriptions = {
         "A furnished cottage, porch, flower boxes and private garden.",

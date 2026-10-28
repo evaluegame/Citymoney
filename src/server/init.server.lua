@@ -6,12 +6,14 @@ local Engine = require(shared.Engine)
 local Parties = require(shared.Parties)
 local Tactics = require(shared.Tactics)
 local Matchmaker = require(script.Matchmaker)
+local ClubService = require(script.ClubService)
 local World = require(script.World)
 local random = Random.new()
 local engine = Engine.new(Config, function(low, high) return random:NextInteger(low, high) end)
 local world = World.new(Config)
 local parties = Parties.new(Config)
 local matcher
+local club
 
 local remotes = Instance.new("Folder")
 remotes.Name, remotes.Parent = "Remotes", shared
@@ -32,6 +34,7 @@ local function payload(id)
     local settings=party and party:snapshot() or {seats=2,fillBots=true,attackMode="destroy",hostId=false,members={}}
     return { game = engine:view(id), lobby = lobby, lobbyConfig=settings,hostId = party and party:hostId() or false,
         matchmaking=matcher and matcher:status(id) or nil,
+        club=club and club:snapshot(id) or nil, styles=club and club:styles() or {},
         deadline = deadline, serverTime = workspace:GetServerTimeNow(), revision = revision, visitors = world:visitorList() }
 end
 
@@ -42,6 +45,9 @@ local function publish(resetTimer)
     world:sync(engine.state)
     for _,recipient in ipairs(Players:GetPlayers()) do snapshot:FireClient(recipient,payload(recipient.UserId)) end
 end
+
+club=ClubService.new(Config,function() publish(false) end)
+world.club=club
 
 local function perform(id, command, index, level, expectedTurn)
     local previousTurn = engine.state.turnCount
@@ -57,6 +63,7 @@ end
 
 matcher=Matchmaker.new(Config,{
     changed=function() publish(false) end,
+    selection=function(id) return club:selection(id) end,
     canStart=function() return engine.state.status~="playing" end,
     canQueue=function(id)
         local player=engine:player(id)
@@ -82,6 +89,7 @@ matcher=Matchmaker.new(Config,{
 local function addPlayer(player)
     if parties:get(player.UserId) then return end
     parties:add(player.UserId,player.DisplayName)
+    club:add(player)
     player.CharacterAdded:Connect(function(character) task.spawn(function() world:prepareCharacter(player, character) end) end)
     if player.Character then task.spawn(function() world:prepareCharacter(player, player.Character) end) end
     publish(false)
@@ -91,8 +99,10 @@ Players.PlayerAdded:Connect(addPlayer)
 for _, player in ipairs(Players:GetPlayers()) do addPlayer(player) end
 
 Players.PlayerRemoving:Connect(function(player)
+    local previousTurn=engine.state.turnCount
     matcher:remove(player.UserId)
     parties:remove(player.UserId)
+    club:remove(player.UserId)
     lastRequest[player] = nil
     engine:remove(player.UserId)
     local remaining=0
@@ -100,7 +110,7 @@ Players.PlayerRemoving:Connect(function(player)
     if remaining == 0 then
         engine = Engine.new(Config, function(low, high) return random:NextInteger(low, high) end)
     end
-    publish(true)
+    publish(engine.state.status=="playing" and engine.state.turnCount~=previousTurn)
 end)
 
 action.OnServerEvent:Connect(function(player, command, index, level, expectedTurn)
@@ -109,6 +119,13 @@ action.OnServerEvent:Connect(function(player, command, index, level, expectedTur
     if lastRequest[player] and now - lastRequest[player] < 0.18 then return end
     lastRequest[player] = now
     if command == "Sync" then snapshot:FireClient(player, payload(player.UserId)); return end
+    if command=="Style" or command=="ClubRefresh" then
+        local ok,message
+        if command=="Style" then ok,message=club:select(player.UserId,index)
+        else ok,message=club:refresh(player.UserId) end
+        if not ok then feedback:FireClient(player,message) end
+        return
+    end
     local party=parties:get(player.UserId)
     if not party then return end
     if command=="Queue" then

@@ -1,5 +1,7 @@
 -- Asset-free, walkable homes. Shared by the live world, deed previews and build.
 local Architecture = {}
+local runtimeScript=getfenv().script
+local Cosmetics=runtimeScript and require(runtimeScript.Parent.Cosmetics) or require("./Cosmetics")
 Architecture.spacing, Architecture.radius = 20, 60
 
 function Architecture.position(index)
@@ -24,7 +26,7 @@ function Architecture.rotation(yaw, pitch, roll)
     return { c*d+s*b*e, -c*e+s*b*d, s*a, a*e, a*d, -b, -s*d+c*b*e, s*e+c*b*d, c*a }
 end
 
-function Architecture.house(origin, yaw, theme, level, tint, paint, owned)
+function Architecture.house(origin, yaw, theme, level, tint, paint, owned, styleId)
     local parts = {}
     local c, s = math.cos(yaw), math.sin(yaw)
     local function add(name, size, x, y, z, color, extra)
@@ -36,10 +38,11 @@ function Architecture.house(origin, yaw, theme, level, tint, paint, owned)
         return value
     end
     local wall = ({ theme, tint, "F0E7D5", "56636A" })[(paint or 0) + 1] or theme
-    local roof, trim, glass = owned and tint or "40535B", "F8F0DF", "96C2CE"
+    local style=Cosmetics.get(styleId)
+    local roof, trim, glass = owned and tint or "40535B", style.trim, style.glass
     local floors = level == 0 and 1 or (level == 3 and 3 or 2)
     local height, width, depth = floors * 6.5, level >= 2 and 11.5 or 10, 9
-    add("Foundation", { width+1, 0.5, depth+1 }, 0, 0.25, 0.8, "D7D1C4", { material = "Concrete" })
+    add("Foundation", { width+1, 0.5, depth+1 }, 0, 0.25, 0.8, style.stone, { material = style.premium and "Marble" or "Concrete" })
     add("Floor", { width, 0.25, depth }, 0, 0.65, 0.8, "C9AE89", { material = "WoodPlanks" })
     add("BackWall", { width, height, 0.4 }, 0, 0.7+height/2, 5.1, wall)
     add("LeftWall", { 0.4, height, depth }, -width/2, 0.7+height/2, 0.8, wall)
@@ -48,12 +51,12 @@ function Architecture.house(origin, yaw, theme, level, tint, paint, owned)
     add("FrontLeft", { width/2-1.5, 6.5, 0.4 }, -(width/4+0.75), 3.95, -3.7, wall)
     add("FrontRight", { width/2-1.5, 6.5, 0.4 }, width/4+0.75, 3.95, -3.7, wall)
     add("DoorLintel", { 3, 1, 0.5 }, 0, 6.7, -3.7, trim)
-    add("Door", { 2.8, 5.5, 0.22 }, 0, 3.45, -3.78, "556F66", { door = true, material = "Wood" })
+    add("Door", { 2.8, 5.5, 0.22 }, 0, 3.45, -3.78, style.door, { door = true, material = "Wood" })
     add("DoorGlass", { 1.75, 2.3, 0.08 }, 0, 4.1, -3.92, glass, { transparency = 0.2, material = "Glass", canCollide = false })
-    add("Doorknob", { 0.16, 0.16, 0.16 }, 0.95, 3, -3.98, "CDB67E", { shape = "Ball", material = "Metal", canCollide = false })
+    add("Doorknob", { style.premium and 0.12 or 0.16, style.premium and 0.85 or 0.16, 0.16 }, 0.95, 3, -3.98, style.premium and style.accent or "CDB67E", { shape = style.premium and "Block" or "Ball", material = "Metal", canCollide = false })
     add("DoorFrame", { 3.3, 0.25, 0.7 }, 0, 6.25, -3.75, trim)
-    add("Porch", { width+0.5, 0.35, 2.7 }, 0, 0.6, -5.1, "E4DDCD")
-    add("Step", { 4, 0.2, 1.4 }, 0, 0.25, -7, "E4DDCD")
+    add("Porch", { width+0.5, 0.35, 2.7 }, 0, 0.6, -5.1, style.premium and style.stone or "E4DDCD", {material=style.premium and "Marble" or "SmoothPlastic"})
+    add("Step", { 4, 0.2, 1.4 }, 0, 0.25, -7, style.premium and style.stone or "E4DDCD")
     for _, x in ipairs({ -width/2+0.35, width/2-0.35 }) do
         add("PorchColumn", { 0.35, 5.8, 0.35 }, x, 3.65, -5.9, trim)
     end
@@ -123,11 +126,11 @@ function Architecture.house(origin, yaw, theme, level, tint, paint, owned)
     add("Sofa", { 4, 0.9, 1.8 }, -2.4, 1.4, 3.4, "A4B5A8")
     add("SofaBack", { 4, 1.5, 0.4 }, -2.4, 2, 4.1, "A4B5A8")
     add("CoffeeTable", { 2.4, 0.7, 1.4 }, -1.8, 1.2, 1, "9B7C5B", { material = "Wood" })
-    add("InteriorLight", { 1.4, 0.2, 1.4 }, 0, 6.7, 0.8, "FFE4BA", { material = "Neon", light = true, canCollide = false })
+    add("InteriorLight", { 1.4, 0.2, 1.4 }, 0, 6.7, 0.8, style.light, { material = "Neon", light = true, canCollide = false })
     return parts
 end
 
-function Architecture.property(config, index, ownerName, ownerTint, level, paint, effects)
+function Architecture.property(config, index, ownerName, ownerTint, level, paint, effects, styleId)
     local tile = config.tiles[index]
     local origin, yaw = Architecture.site(index)
     local c, s, entries = math.cos(yaw), math.sin(yaw), {}
@@ -147,7 +150,8 @@ function Architecture.property(config, index, ownerName, ownerTint, level, paint
     if ownerName then
         for _,x in ipairs({-9,9}) do add("OwnershipBorder",{0.3,0.35,18.3},x,0.22,0,ownerTint) end
         for _,z in ipairs({-9,9}) do add("OwnershipBorder",{18.3,0.35,0.3},0,0.22,z,ownerTint) end
-        local house = Architecture.house(origin, yaw, config.groups[tile.group].color, level or 0, ownerTint, paint or 0, true)
+        local style=Cosmetics.get(styleId)
+        local house = Architecture.house(origin, yaw, config.groups[tile.group].color, level or 0, ownerTint, paint or 0, true,style.id)
         for _, entry in ipairs(house) do entry.tileIndex = index; table.insert(entries, entry) end
         add("Mailbox", { 0.7, 1, 0.65 }, 5.9, 1.7, -7.9, ownerTint)
         add("MailboxPost", { 0.2, 1.4, 0.2 }, 5.9, 0.7, -7.9, "EEE3CC")
@@ -156,6 +160,25 @@ function Architecture.property(config, index, ownerName, ownerTint, level, paint
         add("OwnerStripe", { 5, 0.18, 0.2 }, -5.2, 2.5, -8, ownerTint)
         add("OwnerFlagpole",{0.16,4.2,0.16},7.6,2.1,-7.6,"ECE6D5",{material="Metal"})
         add("OwnerFlag",{1.8,1.1,0.12},6.7,3.7,-7.6,ownerTint)
+        if style.premium then
+            -- Decorations are queryable for inspection, but never obstruct the doorway or stairs.
+            for _,x in ipairs({-6.7,6.7}) do
+                add("ClubPlanter",{1.35,0.9,1.8},x,0.5,2.4,style.stone,{material="Marble",canCollide=false})
+                add("ClubPlanterBand",{1.4,0.15,1.85},x,0.95,2.4,style.accent,{material="Metal",canCollide=false})
+                add("ClubTopiary",{1.65,2.4,1.65},x,2.2,2.4,style.id=="rose" and "D49BAD" or "6F9478",{shape="Ball",material="Grass",canCollide=false})
+                add("ClubLanternPost",{0.18,2.4,0.18},x,1.2,-5.6,style.accent,{material="Metal",canCollide=false})
+                add("ClubLanternBase",{0.7,0.2,0.7},x,2.45,-5.6,style.accent,{material="Metal",canCollide=false})
+                add("ClubLantern",{0.45,0.8,0.45},x,2.9,-5.6,style.light,{material="Neon",light=true,canCollide=false})
+                add("ClubLanternCap",{0.75,0.16,0.75},x,3.4,-5.6,style.accent,{material="Metal",canCollide=false})
+            end
+            add("ClubStepInlay",{3.8,0.04,0.12},0,0.37,-7.5,style.accent,{material="Metal",canCollide=false})
+            add("ClubCanopyTrim",{(level or 0)>=2 and 12.6 or 11.1,0.12,0.2},0,6.85,-6.65,style.accent,{material="Metal",canCollide=false})
+            for _,x in ipairs({-8.75,8.75}) do add("ClubLightInlay",{0.08,0.08,15.5},x,0.45,0,style.accent,{material="Neon",canCollide=false}) end
+            add("ClubCrest",{0.7,0.7,0.14},6.7,3.7,-7.7,style.accent,{roll=math.pi/4,rotation=Architecture.rotation(yaw,0,math.pi/4),material="Metal",canCollide=false})
+            add("ClubPlaque",{5,0.65,0.16},-5.2,0.6,-8.08,style.dice,{text="CLUB · "..style.label,textFace="Front",textColor=style.accent,textSize=20,canCollide=false})
+            add("ClubSculptureBase",{1.8,0.55,1.8},-6.5,0.4,6.3,style.stone,{material="Marble",canCollide=false})
+            add("ClubSculpture",{1.25,style.id=="aurora" and 3.3 or 1.7,1.25},-6.5,2,6.3,style.accent,{shape=style.id=="aurora" and "Block" or "Ball",material=style.id=="aurora" and "Glass" or "Metal",canCollide=false,rotation=Architecture.rotation(yaw,0,math.pi/5)})
+        end
         if effects and effects.shield then
             add("ProtectionSign",{4,0.9,0.16},-5.2,3.4,-8,"A9D0DE",{text="SHIELDED",textFace="Front",textColor="284453",textSize=24,canCollide=false})
         end

@@ -9,8 +9,23 @@ OPEN IN ROBLOX STUDIO
    keep practice bots ON, then click Practice.
 Studio: https://create.roblox.com/
 
+PREMIUM VISUALS / ROBUX PASS
+Open Club collection below the player list. Preview Golden Estate,
+Aurora Residence and Rose Conservatory. One optional cosmetic game pass
+unlocks all three, with house details, dice themes, auras and walking trails.
+Waterfront Classic stays free. Pass ownership gives no gameplay advantage.
+Studio lets you preview/equip all styles for that test session only.
+
+To sell it: publish the place, create a pass for THIS game in Creator
+Dashboard > Monetization > Passes, enable sales and choose your Robux price.
+Copy its Asset ID. Stop Play in Studio. In Explorer open ReplicatedStorage >
+Citymoney > Config, replace clubPassId = 0 with your numeric pass ID,
+then publish again. Until configured, live purchases stay disabled.
+Use docs/Club-pass-icon.png as the pass icon. Full step-by-step instructions,
+current publishing links and troubleshooting are in docs/PUBLISHING.md.
+
 PLAY ONLINE / INVITE FRIENDS
-Publish the updated place using File > Publish to Roblox in your account.
+Publish the updated place using File > Publish (or Publish to Roblox).
 In Creator Dashboard, make it available to your intended players. A public
 lobby capacity of 12 is recommended; matches admit exactly 2 or 4 humans.
 Join the published experience in the Roblox app. Open Match / invite,
