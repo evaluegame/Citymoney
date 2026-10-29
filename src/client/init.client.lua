@@ -11,6 +11,9 @@ local Plans=require(shared.PropertyPlans)
 local Menus=require(script:WaitForChild("Menus"))
 local Boutique=require(script:WaitForChild("Boutique"))
 local Cosmetics=require(shared.Cosmetics)
+local BoardView=require(script:WaitForChild("BoardView"))
+local CityPlaza=require(script:WaitForChild("CityPlaza"))
+local boardView=BoardView.new()
 local remotes=shared:WaitForChild("Remotes")
 local action,snapshot,feedback=remotes:WaitForChild("Action"),remotes:WaitForChild("Snapshot"),remotes:WaitForChild("Feedback")
 -- The default chat and player-list panels obscured the old game HUD.
@@ -67,7 +70,7 @@ end
 local function truncate(object) object.TextWrapped,object.TextTruncate=false,Enum.TextTruncate.AtEnd end
 local data,selected,focusIndex,mainCommand,visitIndex,layout
 local inspectorOpen,portfolioOpen,rolling,locked=false,false,false,false
-local notify,render,requestSale,openPlans,renderPlans,mainAction,menus,boutique
+local notify,render,requestSale,openPlans,renderPlans,mainAction,menus,boutique,city,openCity
 local function send(command,index,level,expectedTurn)
     if locked or (rolling and command~="Return") then return false end
     locked=true;action:FireServer(command,index,level,expectedTurn)
@@ -125,8 +128,8 @@ homeList.BackgroundTransparency,homeList.BorderSizePixel,homeList.ScrollBarThick
 homeList.ScrollBarImageColor3=C.green
 local emptyHomes=text(portfolio,"Your first address is waiting.\nLand on a property and buy it to\nsee your new home appear.",22,135,264,130,16,C.muted)
 local control=frame(root,235,670,810,112)
-local dieA=frame(control,16,18,48,48,C.paper)
-local dieB=frame(control,72,18,48,48,C.paper)
+local dieA=button(control,"",16,18,48,48,C.paper,function() if mainCommand=="Roll" and mainAction then mainAction() end end)
+local dieB=button(control,"",72,18,48,48,C.paper,function() if mainCommand=="Roll" and mainAction then mainAction() end end)
 local dieTextA=text(dieA,"·",0,0,48,48,28,C.ink,true);dieTextA.TextXAlignment=Enum.TextXAlignment.Center
 local dieTextB=text(dieB,"·",0,0,48,48,28,C.ink,true);dieTextB.TextXAlignment=Enum.TextXAlignment.Center
 local turnTitle=text(control,"A neighborhood of possibilities.",140,14,400,29,21,C.ink,true)
@@ -136,13 +139,14 @@ local passButton=button(control,"Pass",500,79,75,26,C.paper,function() send("Ski
 local timeText=text(control,"",16,81,400,18,10,C.muted)
 local timeTrack=frame(control,16,104,778,3,C.paper)
 local timeFill=Instance.new("Frame");timeFill.Size,timeFill.BackgroundColor3,timeFill.BorderSizePixel,timeFill.Parent=UDim2.fromScale(1,1),C.green,0,timeTrack
-local cameraBar=frame(root,470,610,340,42)
-button(cameraBar,"↶",5,5,34,32,C.paper,function() focusIndex=nil;root:SetAttribute("Rotate",(root:GetAttribute("Rotate") or 0)-1) end)
-button(cameraBar,"Overview",45,5,110,32,C.paper,function() focusIndex=nil;inspectorOpen=false;render() end)
-button(cameraBar,"↷",161,5,34,32,C.paper,function() focusIndex=nil;root:SetAttribute("Rotate",(root:GetAttribute("Rotate") or 0)+1) end)
-button(cameraBar,"−",205,5,34,32,C.paper,function() root:SetAttribute("Zoom",math.min(1.35,(root:GetAttribute("Zoom") or 1)+0.1)) end)
-button(cameraBar,"+",245,5,34,32,C.paper,function() root:SetAttribute("Zoom",math.max(0.65,(root:GetAttribute("Zoom") or 1)-0.1)) end)
-button(cameraBar,"News",285,5,50,32,C.paper,function() if data then notify(data.game.notice or "The neighborhood is open.") end end).TextSize=10
+local cameraBar=frame(root,24,510,188,84)
+button(cameraBar,"Table view",6,6,86,30,C.green,function() focusIndex=nil;root:SetAttribute("ViewMode","table");root:SetAttribute("Zoom",1);render() end).Name="TableView"
+button(cameraBar,"City view",96,6,86,30,C.paper,function() focusIndex=nil;root:SetAttribute("ViewMode","city");root:SetAttribute("Zoom",1);render() end).Name="CityView"
+button(cameraBar,"<",6,45,28,30,C.paper,function() focusIndex=nil;root:SetAttribute("Rotate",(root:GetAttribute("Rotate") or 0)-1) end).Name="RotateLeft"
+button(cameraBar,"Fit",39,45,44,30,C.paper,function() focusIndex=nil;inspectorOpen=false;root:SetAttribute("Rotate",0);root:SetAttribute("Zoom",1);render() end).Name="Fit"
+button(cameraBar,">",88,45,28,30,C.paper,function() focusIndex=nil;root:SetAttribute("Rotate",(root:GetAttribute("Rotate") or 0)+1) end).Name="RotateRight"
+button(cameraBar,"-",121,45,27,30,C.paper,function() root:SetAttribute("Zoom",math.min(1.5,(root:GetAttribute("Zoom") or 1)+0.1)) end).Name="ZoomOut"
+button(cameraBar,"+",153,45,28,30,C.paper,function() root:SetAttribute("Zoom",math.max(0.75,(root:GetAttribute("Zoom") or 1)-0.1)) end).Name="ZoomIn"
 local visitBanner=frame(root,420,110,440,58,C.green)
 local visitText=text(visitBanner,"Welcome home",16,8,270,38,16,C.white,true)
 button(visitBanner,"Back to board",292,10,134,38,C.paper,function() send("Return") end)
@@ -163,13 +167,13 @@ local function overlay(w,h)
     return shade,card
 end
 local help,helpCard=overlay(510,420)
-text(helpCard,"Make yourself at home.",26,22,458,44,27,C.ink,true)
-text(helpCard,"01   BUY A HOME",26,91,458,25,13,C.green,true)
-text(helpCard,"Roll, then choose Cottage, Townhouse or a Villa.\nCompare the full price, rent and 3D preview first.",26,120,458,48,15,C.muted)
-text(helpCard,"02   BUILD & SET YOUR RENT",26,183,458,25,13,C.green,true)
-text(helpCard,"Upgrade your home or pay for higher future rent.\nYour roof, border and flag show your player color.",26,212,458,48,15,C.muted)
-text(helpCard,"03   PLAY CARDS & COMPLETE GOALS",26,275,458,25,13,C.green,true)
-text(helpCard,"Open Cards & goals to choose a target or claim rewards.\nMatch & invite opens 2 / 4 player queues and practice.",26,304,458,48,15,C.muted)
+text(helpCard,"Your city. Your table.",26,22,458,44,27,C.ink,true)
+text(helpCard,"01   CLICK THE DICE",26,91,458,25,13,C.green,true)
+text(helpCard,"Tap either die or the central tray. The dice settle,\nthen your avatar moves around the 24-space board.",26,120,458,48,15,C.muted)
+text(helpCard,"02   BUY & BUILD",26,183,458,25,13,C.green,true)
+text(helpCard,"Choose a home level when buying. Use cards,\nupgrades and the city plaza before your next roll.",26,212,458,48,15,C.muted)
+text(helpCard,"03   THE CITY KEEPS MOVING",26,275,458,25,13,C.green,true)
+text(helpCard,"Resolved turns advance automatically after four seconds.\nPress P or click plaza stations for events and cards.",26,304,458,48,15,C.muted)
 button(helpCard,"Let's build a neighborhood",26,365,458,36,C.green,function() help.Visible=false end)
 helpButton=button(header,"How to play",1080,14,124,40,C.paper,function() help.Visible=not help.Visible end)
 local sale,saleCard=overlay(470,260)
@@ -347,16 +351,21 @@ openPlans=function(mode,index)
 end
 mainAction=function()
     if mainCommand=="Buy" and data then openPlans("buy",data.game.pendingTile)
+    elseif mainCommand=="Plaza" then openCity("festival")
     elseif mainCommand=="Match" and menus then menus:openLobby()
     elseif mainCommand=="Ready" and menus then menus:toggleReady()
     elseif mainCommand then send(mainCommand) end
 end
 do
     local ui={config=Config,colors=C,root=root,id=player.UserId,frame=frame,text=text,button=button,overlay=overlay,available=available,send=send,notify=notify,data=function() return data end,rent=rent,
-        header=header,mark=mark,strap=strap,dieA=dieA,dieB=dieB,dieTextA=dieTextA,dieTextB=dieTextB,
-        focus=function(index) selected,focusIndex,inspectorOpen,portfolioOpen=index,index,true,false;render() end,
+        header=header,mark=mark,strap=strap,dieA=dieA,dieB=dieB,dieTextA=dieTextA,dieTextB=dieTextB,cameraBar=cameraBar,
+        focus=function(index) selected,focusIndex,inspectorOpen,portfolioOpen=index,nil,true,false;render() end,
+        openGoals=function() menus.lobby.Visible=false;menus.actions.Visible=true;boutique.shade.Visible=false;menus:render(data) end,
         openStyles=function() menus.lobby.Visible=false;menus.actions.Visible=false;help.Visible=false;boutique:open() end}
-    menus=Menus.new(ui);boutique=Boutique.new(ui)
+    menus=Menus.new(ui);boutique=Boutique.new(ui);city=CityPlaza.new(ui)
+    openCity=function(tab) menus.lobby.Visible=false;menus.actions.Visible=false;boutique.shade.Visible=false;city:open(tab) end
+    boardView.onProperty=function(index) selected,inspectorOpen,portfolioOpen=index,true,false;render() end
+    boardView.onInteraction=function(tab) openCity(tab) end
 end
 render=function()
     if not data then return end
@@ -376,13 +385,13 @@ render=function()
     seats:ClearAllChildren()
     local entries=state.status=="lobby" and data.lobby or state.players
     for seat,entry in ipairs(entries) do
-        local row=frame(seats,0,(seat-1)*47,168,41,(current and state.status=="playing" and current.id==entry.id) and C.mint or C.card)
+        local row=frame(seats,0,(seat-1)*39,168,34,(current and state.status=="playing" and current.id==entry.id) and C.mint or C.card)
         local tint=Color3.fromHex(Config.playerColors[entry.colorIndex or seat] or "DCC098")
         local dot=frame(row,9,13,13,13,tint);round(dot,7)
         local name=text(row,(Cosmetics.get(styleFor(entry.id)).premium and "★ " or "")..entry.name,31,4,125,19,12,entry.alive==false and C.muted or C.ink,true);truncate(name)
-        text(row,entry.cash and ("$"..entry.cash..(entry.alive==false and " · out" or "")) or "Ready to move in",31,23,125,13,10,C.muted)
+        text(row,entry.cash and ("$"..entry.cash..(entry.alive==false and " · out" or "")) or "Ready to move in",31,20,125,12,10,C.muted)
     end
-    roster.Size=UDim2.fromOffset(188,52+math.min(#entries,6)*47)
+    roster.Size=UDim2.fromOffset(188,52+math.min(#entries,6)*39)
     roundText.Text=state.status=="playing" and ("TURN "..state.turnCount.." / "..Config.maxTurns) or "THE NEIGHBORHOOD IS OPEN"
     if layout then turnChip.Position=UDim2.fromOffset(24,layout.roster[2]+roster.Size.Y.Offset+12) end
     dieTextA.Text,dieTextB.Text=state.dice[1]>0 and tostring(state.dice[1]) or "·",state.dice[2]>0 and tostring(state.dice[2]) or "·"
@@ -395,22 +404,25 @@ render=function()
         actionButton.Text=online and (state.status=="finished" and "Return to matchmaking" or "Waiting for matched players") or "Play online / Practice"
     else
         turnTitle.Text=myTurn and "Make your next move." or ((current and current.name or "A resident").." is exploring.")
+        if state.phase=="end" then turnTitle.Text=myTurn and "Turn complete." or ((current and current.name or "A resident").." has finished.") end
         turnHint.Text=state.notice or "A new address is waiting."
         if myTurn then
-            if state.phase=="roll" then mainCommand="Roll";actionButton.Text=mine.detained and "Serve detention" or "Roll the dice  [R]"
+            if state.phase=="roll" then mainCommand="Roll";actionButton.Text=mine.detained and "Serve detention" or "Click dice / Roll [R]"
             elseif state.phase=="buy" then
                 local tile=Config.tiles[state.pendingTile]
                 mainCommand="Buy"
                 actionButton.Text="Choose home · from $"..tile.price
                 passButton.Visible=true
-            else mainCommand="End";actionButton.Text="End turn  [Space]" end
+            else mainCommand="End";actionButton.Text="Next player · Finish now" end
         elseif current and current.id==player.UserId and state.phase=="end" then mainCommand="End";actionButton.Text="End turn"
-        else actionButton.Text="Enjoy the neighborhood" end
+        else mainCommand="Plaza";actionButton.Text="Explore city plaza [P]" end
     end
     if state.status=="playing" and (not mine or not mine.alive) and data.matchmaking and data.matchmaking.mode=="lobby" then
         mainCommand="Match";actionButton.Text=data.matchmaking.queued and "View matchmaking queue" or "Find an online match"
     end
     if rolling then mainCommand=nil;actionButton.Text="Rolling the dice…" end
+    dieA.Active,dieB.Active=mainCommand=="Roll",mainCommand=="Roll"
+    dieA.AutoButtonColor,dieB.AutoButtonColor=dieA.Active,dieB.Active
     available(actionButton,mainCommand~=nil,C.green)
     portfolio.Visible=portfolioOpen and not visitIndex
     homeList:ClearAllChildren()
@@ -457,6 +469,8 @@ render=function()
     roster.Visible=not visitIndex and not (layout and layout.compact)
     turnChip.Visible=roster.Visible
     cameraBar.Visible=not visitIndex
+    available(cameraBar.TableView,true,(root:GetAttribute("ViewMode") or "table")=="table" and C.green or C.paper)
+    available(cameraBar.CityView,true,root:GetAttribute("ViewMode")=="city" and C.green or C.paper)
     replay.Visible=isHost or (data.matchmaking and data.matchmaking.mode=="match")
     replay.Text=data.matchmaking and data.matchmaking.mode=="match" and "Return to matchmaking" or "Play again"
     if state.status=="finished" then
@@ -477,6 +491,7 @@ render=function()
     renderPlans()
     menus:render(data)
     boutique:render(data)
+    city:render(data)
     if layout then menus:resize(layout,roster.Size.Y.Offset) end
 end
 local function updateLayout()
@@ -523,7 +538,6 @@ local function updateLayout()
         place(timeText,16,81,t[3]-122,18)
     end
     place(timeTrack,16,t[4]-7,t[3]-32,3)
-    place(cameraBar,(w-340)/2,t[2]-58,340,42)
     place(toast,(w-400)/2,layout.headerHeight+36,400,45)
     place(visitBanner,(w-440)/2,layout.headerHeight+36,440,58)
     if menus then menus:resize(layout,roster.Size.Y.Offset) end
@@ -531,37 +545,6 @@ local function updateLayout()
 end
 safe:GetPropertyChangedSignal("AbsoluteSize"):Connect(updateLayout)
 updateLayout()
-local cameraAngle,cameraDistance=math.rad(42),230
-local cameraTarget=Vector3.new(0,3,6)
-local wasVisiting=false
-local function updateCamera(dt)
-    local camera=workspace.CurrentCamera
-    if not camera then return end
-    if visitIndex then
-        local humanoid=player.Character and player.Character:FindFirstChildOfClass("Humanoid")
-        if humanoid then
-            camera.CameraSubject, camera.CameraType=humanoid,Enum.CameraType.Custom
-            player.CameraMinZoomDistance,player.CameraMaxZoomDistance=4,35
-            if not wasVisiting then camera.CFrame=CFrame.lookAt(humanoid.RootPart.Position+Vector3.new(14,11,16),humanoid.RootPart.Position) end
-        end
-        wasVisiting=true;return
-    end
-    wasVisiting=false
-    camera.CameraType,camera.FieldOfView=Enum.CameraType.Scriptable,38
-    local alpha=1-math.exp(-5*math.min(dt,0.1))
-    local wantedAngle=math.rad(42)+(root:GetAttribute("Rotate") or 0)*math.pi/2
-    local wantedDistance=230*(root:GetAttribute("Zoom") or 1)
-    local wantedTarget=Vector3.new(0,3,6)
-    if focusIndex and Config.tiles[focusIndex].kind=="property" then
-        local p,yaw=Architecture.site(focusIndex)
-        local level=data and data.game.properties[focusIndex].level or 0
-        wantedTarget=Vector3.new(p[1],7+level*2.2,p[3]);wantedDistance=34+level*4;wantedAngle=yaw+math.rad(150)
-    else wantedDistance=wantedDistance*math.max(1,1.1/math.max(0.4,camera.ViewportSize.X/camera.ViewportSize.Y)) end
-    cameraAngle=cameraAngle+(wantedAngle-cameraAngle)*alpha
-    cameraDistance=cameraDistance+(wantedDistance-cameraDistance)*alpha
-    cameraTarget=cameraTarget:Lerp(wantedTarget,alpha)
-    camera.CFrame=CFrame.lookAt(cameraTarget+Vector3.new(math.sin(cameraAngle)*cameraDistance,cameraDistance*0.86,math.cos(cameraAngle)*cameraDistance),cameraTarget)
-end
 local animationVersion=0
 local function diceAnimation(first,second)
     if data and data.club and not data.club.effects then
@@ -598,8 +581,12 @@ snapshot.OnClientEvent:Connect(function(incoming)
     end
     if state.status=="playing" and state.phase=="buy" and state.players[state.turn].id==player.UserId then
         if not old or old.game.phase~="buy" or old.game.pendingTile~=state.pendingTile then
-            selected,inspectorOpen,portfolioOpen=state.pendingTile,true,false
-            openPlans("buy",state.pendingTile)
+            selected,portfolioOpen=state.pendingTile,false
+            local turn,index=state.turnCount,state.pendingTile
+            local delay=state.lastRoll and Config.diceSeconds+(state.lastRoll.steps or 0)*0.18+0.15 or 0
+            task.delay(delay,function()
+                if data and data.game.status=="playing" and data.game.turnCount==turn and data.game.phase=="buy" and data.game.pendingTile==index and not chooser.Visible then openPlans("buy",index) end
+            end)
         end
     end
     if planPending and chooser.Visible then
@@ -612,23 +599,24 @@ snapshot.OnClientEvent:Connect(function(incoming)
     if old then
         for index,property in ipairs(state.properties) do
             if property.ownerId==player.UserId and old.game.properties[index].ownerId~=player.UserId then
-                selected,focusIndex,inspectorOpen=index,index,true
+                selected=index
                 notify("Your level "..property.level.." "..homeNames[property.level+1].." at "..Config.tiles[index].name.." is ready.")
             elseif property.ownerId==player.UserId and old.game.properties[index].ownerId==player.UserId and property.level>old.game.properties[index].level then
-                selected,focusIndex,inspectorOpen=index,index,true
+                selected=index
                 notify(Config.tiles[index].name.." is now a level "..property.level.." "..homeNames[property.level+1].."!")
             elseif property.ownerId==player.UserId and (property.rentTier or 1)>(old.game.properties[index].rentTier or 1) then
                 notify(Config.tiles[index].name.." now charges "..Config.rentTiers[property.rentTier].."× rent on future visits.")
             elseif old.game.properties[index].ownerId==player.UserId and property.ownerId~=player.UserId and state.lastAction and state.lastAction.kind=="demolish" and state.lastAction.tile==index and state.lastAction.seq>(old.game.lastAction and old.game.lastAction.seq or 0) then
-                focusIndex=index;notify("Your house at "..Config.tiles[index].name.." was demolished. The lot is now for sale.")
+                notify("Your house at "..Config.tiles[index].name.." was demolished. The lot is now for sale.")
             end
         end
         if state.turnCount~=old.game.turnCount then focusIndex=nil end
-        if old.game.phase=="roll" and state.phase~="roll" and state.dice[1]>0 and state.turnCount==old.game.turnCount then diceAnimation(state.dice[1],state.dice[2]) end
+        if state.lastRoll and state.lastRoll.seq>(old.game.lastRoll and old.game.lastRoll.seq or 0) then diceAnimation(state.lastRoll.values[1],state.lastRoll.values[2]) end
     end
     if state.status=="finished" and (not old or old.game.status~="finished") then
         results.Visible=true;help.Visible=false;sale.Visible=false
         menus.lobby.Visible=false;menus.actions.Visible=false;boutique.shade.Visible=false
+        city.shade.Visible=false
         boutique:celebrate()
     end
     render()
@@ -636,42 +624,49 @@ end)
 feedback.OnClientEvent:Connect(function(message)
     locked=false;planPending=false
     if chooser.Visible then planError=message end
-    notify(message);renderPlans();menus:feedback(message);boutique:feedback(message)
+    notify(message);renderPlans();menus:feedback(message);boutique:feedback(message);city:feedback(message)
 end)
 local function inspect(position)
-    if help.Visible or sale.Visible or results.Visible or chooser.Visible or visitIndex or menus:isOpen() or boutique:isOpen() then return end
+    if help.Visible or sale.Visible or results.Visible or chooser.Visible or visitIndex or menus:isOpen() or boutique:isOpen() or city:isOpen() then return end
     local camera,board=workspace.CurrentCamera,workspace:FindFirstChild("CitymoneyBoard")
     if not camera or not board then return end
     local ray=camera:ScreenPointToRay(position.X,position.Y)
     local parameters=RaycastParams.new();parameters.FilterType,parameters.FilterDescendantsInstances=Enum.RaycastFilterType.Include,{board}
     local hit=workspace:Raycast(ray.Origin,ray.Direction*1500,parameters)
+    local interaction=hit and (hit.Instance:GetAttribute("Interaction") or hit.Instance.Parent:GetAttribute("Interaction"))
+    if interaction=="dice" then
+        if mainCommand=="Roll" then mainAction() else notify("Click the dice when it is your turn to roll.") end
+        return
+    elseif interaction then openCity(interaction);return end
     local index=hit and (hit.Instance:GetAttribute("TileIndex") or hit.Instance.Parent:GetAttribute("TileIndex"))
     if index and Config.tiles[index].kind=="property" then selected,inspectorOpen,portfolioOpen=index,true,false;render() end
 end
 Input.TouchTapInWorld:Connect(function(position,processed) if not processed then inspect(position) end end)
 Input.InputBegan:Connect(function(input,processed)
     if not processed and input.UserInputType==Enum.UserInputType.MouseButton1 then inspect(input.Position) end
-    if processed or help.Visible or sale.Visible or results.Visible or chooser.Visible or menus:isOpen() or boutique:isOpen() then return end
+    if processed or help.Visible or sale.Visible or results.Visible or chooser.Visible or menus:isOpen() or boutique:isOpen() or city:isOpen() then return end
     if input.KeyCode==Enum.KeyCode.B and visitIndex then send("Return")
     elseif input.KeyCode==Enum.KeyCode.R and mainCommand=="Roll" then send("Roll")
+    elseif input.KeyCode==Enum.KeyCode.P and not visitIndex then openCity("festival")
     elseif input.KeyCode==Enum.KeyCode.Space and mainCommand and not visitIndex then mainAction() end
 end)
 Input.InputChanged:Connect(function(input,processed)
     if not processed and not visitIndex and input.UserInputType==Enum.UserInputType.MouseWheel then
-        root:SetAttribute("Zoom",math.clamp((root:GetAttribute("Zoom") or 1)-input.Position.Z*0.06,0.65,1.35))
+        root:SetAttribute("Zoom",math.clamp((root:GetAttribute("Zoom") or 1)-input.Position.Z*0.06,0.75,1.5))
     end
 end)
 RunService.RenderStepped:Connect(function(dt)
-    updateCamera(dt)
+    boardView:update(dt,root,safe,layout,data,focusIndex,inspector.Visible or portfolio.Visible,visitIndex,player)
     dayButton.Text=night and "Night stroll" or "Golden hour"
     if data and data.game.status=="playing" then
-        local seconds=math.max(0,data.deadline-workspace:GetServerTimeNow())
-        timeText.Text=math.ceil(seconds).."s to decide · R to roll · B to leave a home"
+        local handing=data.game.phase=="end"
+        local seconds=math.max(0,(handing and data.handoffAt or data.deadline)-workspace:GetServerTimeNow())
+        timeText.Text=handing and ("Next player's turn starts automatically in "..math.ceil(seconds).."s") or (math.ceil(seconds).."s to decide · Click dice / R · City plaza [P]")
         if chooser.Visible and not planError then
             local tile=Config.tiles[planIndex]
             planNote.Text=(planMode=="buy" and ("Land $"..tile.price.." + building $"..planLevel*tile.upgrade) or (planMode=="rent" and "This multiplier applies to future rent payments." or "Only the added levels are charged.")).."  ·  "..math.ceil(seconds).."s left"
         end
-        timeFill.Size,timeFill.BackgroundColor3=UDim2.fromScale(math.clamp(seconds/Config.turnSeconds,0,1),1),seconds<10 and C.red or C.green
+        timeFill.Size,timeFill.BackgroundColor3=UDim2.fromScale(math.clamp(seconds/(handing and Config.autoAdvanceSeconds or Config.turnSeconds),0,1),1),not handing and seconds<10 and C.red or C.green
     else timeText.Text="2 / 4 players · online queues or practice with bots";timeFill.Size=UDim2.fromScale(0,1) end
 end)
 action:FireServer("Sync")

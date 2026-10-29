@@ -13,6 +13,7 @@ source, output = Path(args[0]), Path(args[1])
 entries = json.loads(source.read_text())
 close_up = "home" in source.stem.lower()
 pass_icon = "pass-icon" in output.stem.lower()
+table_view = "table" in source.stem.lower()
 bpy.ops.object.select_all(action="SELECT")
 bpy.ops.object.delete(use_global=False)
 materials = {}
@@ -110,6 +111,10 @@ if close_up:
     camera.location = (51,-41,26)
     target = Vector((40,-74,7))
     camera.data.type, camera.data.ortho_scale = "ORTHO", 42 if pass_icon else 33
+elif table_view:
+    camera.location = (0,-90,330)
+    target = Vector((0,0,8))
+    camera.data.type, camera.data.ortho_scale = "ORTHO", 276
 else:
     camera.location = (185,-205,220)
     target = Vector((0,-6,3))

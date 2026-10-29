@@ -2,6 +2,7 @@
 local runtimeScript = getfenv().script
 local Plans = runtimeScript and require(runtimeScript.Parent.PropertyPlans) or require("./PropertyPlans")
 local Tactics = runtimeScript and require(runtimeScript.Parent.Tactics) or require("./Tactics")
+local Plaza = runtimeScript and require(runtimeScript.Parent.Plaza) or require("./Plaza")
 local Engine = {}
 Engine.__index = Engine
 
@@ -62,6 +63,8 @@ function Engine:start(roster, rules)
     self.state.rules={attackMode=rules and rules.attackMode=="downgrade" and "downgrade" or "destroy"}
     self.state.actionUsed,self.state.challengeClaimed,self.state.challengeSwapped=false,false,false
     self.state.lastAction=false
+    self.state.lastRoll=false
+    self.state.plazaUsed=false
     Tactics.refresh(self)
     self:log("Welcome to Citymoney! " .. self:current().name .. " goes first.")
     return true
@@ -217,6 +220,7 @@ function Engine:nextTurn()
     until self:current().alive
     self.state.phase, self.state.pendingTile, self.state.dice = "roll", false, { 0, 0 }
     self.state.actionUsed,self.state.challengeClaimed,self.state.challengeSwapped=false,false,false
+    self.state.plazaUsed=false
     self:log("It's " .. self:current().name .. "'s turn.")
 end
 
@@ -250,7 +254,9 @@ function Engine:act(id, action, tileIndex: any, targetLevel: any, expectedTurn: 
         return false, "That home selection expired. Open the options again."
     end
     local phase = self.state.phase
-    if action=="Claim" then
+    if action=="Plaza" then
+        return Plaza.act(self,id,tileIndex)
+    elseif action=="Claim" then
         local ok,message=Tactics.claim(self,player)
         if not ok then return false,message end
     elseif action=="NewGoal" then
@@ -270,6 +276,7 @@ function Engine:act(id, action, tileIndex: any, targetLevel: any, expectedTurn: 
             end
             player.position = (destination - 1) % #self.config.tiles + 1
             self:land(player)
+            self.state.lastRoll={seq=(self.state.lastRoll and self.state.lastRoll.seq or 0)+1,turn=self.state.turnCount,actorId=id,values={first,second},steps=first+second}
         end
     elseif action == "Buy" and phase == "buy" then
         local index = self.state.pendingTile

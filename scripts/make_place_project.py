@@ -43,6 +43,8 @@ for index, entry in enumerate(scene):
         node["Glow"] = {"$className": "PointLight", "$properties": {"Color": rgb(entry["color"]), "Brightness": 0.4, "Range": 10}}
     if "tileIndex" in entry:
         node["$attributes"] = {"TileIndex": entry["tileIndex"]}
+    if "interaction" in entry:
+        node.setdefault("$attributes", {})["Interaction"] = entry["interaction"]
     if "text" in entry:
         node["TileLabel"] = {
             "$className": "SurfaceGui",
@@ -56,8 +58,8 @@ for index, entry in enumerate(scene):
     board[entry["name"] if entry["name"].startswith("Tile") else f"{entry['name']}_{index:04}"] = node
 project["tree"]["Workspace"]["CitymoneyBoard"] = board
 # Camera basis uses right/up/back columns, matching Roblox CFrame.lookAt.
-position = [172, 200, 172]
-target = [0, 3, 6]
+position = [0, 310, 85]
+target = [0, 8, 0]
 direction = [a-b for a,b in zip(position,target)]
 length = math.sqrt(sum(value * value for value in direction))
 back = [value / length for value in direction]

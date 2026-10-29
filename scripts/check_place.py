@@ -39,6 +39,9 @@ scene = json.loads((ROOT / "build/board.json").read_text())
 for index, entry in enumerate(scene):
     name = entry["name"] if entry["name"].startswith("Tile") else f"{entry['name']}_{index:04}"
     item = child(board, name, entry.get("className", "Part"))
+    if entry.get("interaction"):
+        attributes = item.find("Properties/BinaryString[@name='AttributesSerialize']")
+        assert attributes is not None and attributes.text, f"Missing interactive attributes for {name}"
     frame = item.find("Properties/CoordinateFrame[@name='CFrame']")
     assert frame is not None, f"Missing serialized CFrame for {name}"
     for axis, expected_coordinate in zip(("X", "Y", "Z"), entry["position"]):

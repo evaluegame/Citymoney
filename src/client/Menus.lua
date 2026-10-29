@@ -106,10 +106,22 @@ function Menus:feedback(message)
     self:render(self.ui.data())
 end
 function Menus:resize(layout,rosterHeight)
-    local y=math.min(layout.roster[2]+rosterHeight+60,layout.toolbar[2]-150)
+    local y=layout.compact and layout.headerHeight+32 or math.min(layout.roster[2]+rosterHeight+60,layout.toolbar[2]-232)
     for index,button in ipairs({self.matchButton,self.cardsButton,self.styleButton}) do
         button.Position=UDim2.fromOffset(layout.compact and 24+(index-1)*172 or 24,layout.compact and y or y+(index-1)*46)
         button.Size=UDim2.fromOffset(layout.compact and 164 or 188,38)
+    end
+    if self.ui.cameraBar then
+        local bar=self.ui.cameraBar
+        bar.Position=UDim2.fromOffset(layout.compact and (layout.width-412)/2 or 24,layout.compact and y+46 or y+138)
+        bar.Size=UDim2.fromOffset(layout.compact and 412 or 188,layout.compact and 42 or 84)
+        local compact={{"TableView",6,86},{"CityView",96,86},{"RotateLeft",188,28},{"Fit",222,50},{"RotateRight",278,28},{"ZoomOut",312,40},{"ZoomIn",358,48}}
+        local desktop={{"TableView",6,6,86},{"CityView",96,6,86},{"RotateLeft",6,45,28},{"Fit",39,45,44},{"RotateRight",88,45,28},{"ZoomOut",121,45,27},{"ZoomIn",153,45,28}}
+        for index,spec in ipairs(desktop) do
+            local object=bar:FindFirstChild(spec[1])
+            object.Position=UDim2.fromOffset(layout.compact and compact[index][2] or spec[2],layout.compact and 6 or spec[3])
+            object.Size=UDim2.fromOffset(layout.compact and compact[index][3] or spec[4],30)
+        end
     end
 end
 function Menus:playCard()

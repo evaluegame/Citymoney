@@ -9,6 +9,27 @@ OPEN IN ROBLOX STUDIO
    keep practice bots ON, then click Practice.
 Studio: https://create.roblox.com/
 
+NEW TABLETOP VIEW AND INTERACTIVE DICE
+The default Table view fits the whole board around the menus. All spaces
+have upright clickable labels with prices or rent and ownership colors.
+Use City view for an angled view, Fit to reset, and + / - to zoom.
+Click a HUD die, either 3D die, or the central dice tray to roll. R also rolls.
+The shared dice settle on the server's values before your avatar moves.
+
+AUTOMATIC TURNS
+Resolved landings, purchases and passes advance to the next player after
+four seconds. Finish now / Space advances sooner. Buying still gives you
+55 seconds to decide. Use cards, upgrades and plaza offers BEFORE rolling.
+Menus do not pause the handoff countdown.
+
+CITY PLAZA
+The center now has clickable stations instead of decorative houses/trees.
+P opens the plaza. City Market sells chosen tactical cards for game cash.
+The festival rotates every eight turns: rent boost ($80), one added building
+level ($110), or a demolition shield ($60), applied to your chosen home.
+One plaza purchase per turn, before rolling. Playing a card is separate.
+Challenge Hall opens goals. City News shows the festival and recent events.
+
 PREMIUM VISUALS / ROBUX PASS
 Open Club collection below the player list. Preview Golden Estate,
 Aurora Residence and Rose Conservatory. One optional cosmetic game pass
@@ -76,7 +97,7 @@ City News has 20 events. City Gate, City News, the park and goals award cards.
 WALK THROUGH / CAMERA
 Select your home > Walk through your home. Use normal Roblox controls.
 E opens your front door. B or Back to board returns. Matches keep moving.
-Use Overview, rotation arrows, + / -, mouse wheel and Close-up for cameras.
+Use Table view, City view, Fit, rotation buttons, + / -, and Close-up.
 
 This ZIP includes the ready-to-open place and all source. No paid assets,
 HTTP flag or API keys are required. Live matchmaking needs Roblox services.

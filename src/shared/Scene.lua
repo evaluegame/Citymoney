@@ -15,6 +15,7 @@ function Scene.populate(entries, parent, preview)
         if entry.shape then object.Shape = Enum.PartType[entry.shape] end
         if object:IsA("SpawnLocation") then object.Neutral, object.Duration = true, 0 end
         if entry.tileIndex then object:SetAttribute("TileIndex", entry.tileIndex) end
+        if entry.interaction then object:SetAttribute("Interaction",entry.interaction) end
         if entry.door then object:SetAttribute("Door", true) end
         object.Parent = parent
         if entry.text and not preview then

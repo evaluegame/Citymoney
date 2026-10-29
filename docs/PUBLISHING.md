@@ -64,6 +64,8 @@ Use the **Roblox app**, not just Studio, for live-service checks:
 - **Saved appearance:** wait for **Style saved for your next visit**, leave, and rejoin. Verify the selected collection/effects return and remain selected when traveling from lobby to match. Use **Check ownership** if a purchase made outside the game is not reflected yet.
 - **Real purchase:** when you choose to test an actual sale, Roblox checkout charges real Robux. After a successful purchase, the collection should unlock; choose a style and press Equip. The server verifies ownership. Studio previews do not simulate a real transaction.
 - **Gameplay:** check buying at different starting levels, later upgrades, rental tiers, targeted demolition/shields, rent demands, challenge claims, doors, and the end-of-match screen.
+- **Tabletop:** confirm all board edges fit in Table view, including with a property card open. Check upright labels and Table/City/Fit controls. Click both HUD dice and the 3D tray; every client should see the same final values before the avatar moves.
+- **Automatic turns and plaza:** buy or decline a home and wait for the four-second automatic handoff. Check that a pending purchase still gives 55 seconds. Before rolling, try City Market or the current festival; inspect the shared one-purchase allowance, cash deduction, effect on the chosen home, and festival change after eight turns.
 
 Citymoney uses Roblox's own MemoryStore, TeleportService, DataStore, and MarketplaceService. Live play needs no HTTP flag or external API keys. Studio preview uses session-only cosmetic preferences and does not require enabling **Studio Access to API Services**.
 

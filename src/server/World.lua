@@ -3,6 +3,8 @@ local TweenService = game:GetService("TweenService")
 local shared = game:GetService("ReplicatedStorage"):WaitForChild("Citymoney")
 local Board, Architecture, Scene = require(shared.Board), require(shared.Architecture), require(shared.Scene)
 local Cosmetics=require(shared.Cosmetics)
+local DiceWorld=require(script.Parent.DiceWorld)
+local Plaza=require(shared.Plaza)
 local World = {}
 World.__index = World
 
@@ -19,11 +21,16 @@ function World.new(config)
     -- Parcel geometry is replaced independently on purchase, repaint and upgrade.
     local entries = {}
     for _, entry in ipairs(Board.generate(config)) do
-        if not (entry.tileIndex and config.tiles[entry.tileIndex].kind == "property" and entry.name ~= "Tile"..entry.tileIndex and entry.name ~= "DistrictInlay") then
+        local die=entry.name=="DiceBody" or string.match(entry.name,"^Pip%d$")
+        if not die and not (entry.tileIndex and config.tiles[entry.tileIndex].kind == "property" and entry.name ~= "Tile"..entry.tileIndex and entry.name ~= "DistrictInlay") then
             table.insert(entries, entry)
         end
     end
     Scene.populate(entries, self.root)
+    self.dice=DiceWorld.new(self.root,config)
+    for _,part in ipairs(self.root:GetChildren()) do
+        if part.Name=="StationLabel" and part:GetAttribute("Interaction")=="festival" then self.festivalLabel=part:FindFirstChild("Caption") end
+    end
     for index, tile in ipairs(config.tiles) do
         if tile.kind == "property" then self.propertyViews[index] = { key="", model=nil } end
     end
@@ -197,6 +204,12 @@ end
 
 function World:sync(state)
     self.state = state
+    if self.festivalLabel and state.turnCount~=self.festivalTurn then
+        self.festivalTurn=state.turnCount
+        local event,remaining=Plaza.festival(self.config,state)
+        self.festivalLabel.TextLabel.Text=string.upper(event.name).."\n$"..event.cost.." - "..remaining.." TURNS"
+    end
+    if self.dice:sync(state,self.club) then self.moveReadyAt=os.clock()+self.config.diceSeconds end
     -- Buying immediately constructs a complete home, including its owner's sign.
     for index, view in pairs(self.propertyViews) do
         local property = state.properties[index]
@@ -276,7 +289,7 @@ function World:sync(state)
         end
         local active = state.status=="playing" and state.players[state.turn].id==resident.id
         local style=Cosmetics.get(self.club and self.club:visual(resident.id) or "classic")
-        tag.TextLabel.Text = (active and "▸ " or "")..(style.premium and "★ " or "")..resident.name
+        tag.TextLabel.Text = (active and "> " or "")..(style.premium and "★ " or "")..resident.name
         tag.TextLabel.TextColor3=Color3.fromHex(self.config.playerColors[resident.colorIndex])
         tag.Enabled = resident.alive
         if not model:FindFirstChild("PlayerColorRing") then
@@ -311,6 +324,8 @@ function World:sync(state)
                 local generation = self.generations[resident.id]
                 local destination, detained = resident.position, resident.detained
                 task.spawn(function()
+                    local delay=math.max(0,(self.moveReadyAt or 0)-os.clock())
+                    if delay>0 and old then task.wait(delay) end
                     if self.generations[resident.id]~=generation or not model.Parent then return end
                     local steps=old and (destination-old)%#self.config.tiles or 0
                     if not old or detained or steps>12 then model:PivotTo(self:tokenFrame(destination,seat,model)); return end

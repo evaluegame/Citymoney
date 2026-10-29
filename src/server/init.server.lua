@@ -5,6 +5,9 @@ local Config = require(shared.Config)
 local Engine = require(shared.Engine)
 local Parties = require(shared.Parties)
 local Tactics = require(shared.Tactics)
+local TurnFlow=require(shared.TurnFlow)
+local Plaza=require(shared.Plaza)
+local flow=TurnFlow.new(Config)
 local Matchmaker = require(script.Matchmaker)
 local ClubService = require(script.ClubService)
 local World = require(script.World)
@@ -35,12 +38,13 @@ local function payload(id)
     return { game = engine:view(id), lobby = lobby, lobbyConfig=settings,hostId = party and party:hostId() or false,
         matchmaking=matcher and matcher:status(id) or nil,
         club=club and club:snapshot(id) or nil, styles=club and club:styles() or {},
-        deadline = deadline, serverTime = workspace:GetServerTimeNow(), revision = revision, visitors = world:visitorList() }
+        deadline = deadline, handoffAt=flow.handoffAt,serverTime = workspace:GetServerTimeNow(), revision = revision, visitors = world:visitorList() }
 end
 
 local function publish(resetTimer)
     revision = revision + 1
-    if resetTimer then deadline = workspace:GetServerTimeNow() + Config.turnSeconds end
+    flow:observe(engine.state,workspace:GetServerTimeNow())
+    deadline=flow.deadline
     if resetTimer or botReadyAt == 0 then botReadyAt = workspace:GetServerTimeNow() + 2.1 end
     world:sync(engine.state)
     for _,recipient in ipairs(Players:GetPlayers()) do snapshot:FireClient(recipient,payload(recipient.UserId)) end
@@ -179,6 +183,11 @@ action.OnServerEvent:Connect(function(player, command, index, level, expectedTur
         if ok then publish(false) else feedback:FireClient(player,message) end
         return
     end
+    if command=="Plaza" then
+        local ok,message=engine:act(player.UserId,"Plaza",index)
+        if ok then publish(false) else feedback:FireClient(player,message) end
+        return
+    end
     if command == "Return" then
         if world.visiting[player.UserId] then world:endVisit(player.UserId); publish(false) end
         return
@@ -222,7 +231,10 @@ task.spawn(function()
         if engine.state.status == "playing" then
             local current = engine:current()
             local now = workspace:GetServerTimeNow()
-            if (current.bot and now >= botReadyAt) or now >= deadline then
+            local automatic=flow:due(engine.state,now)
+            if automatic then
+                perform(current.id,automatic)
+            elseif current.bot and now >= botReadyAt then
                 local handled=false
                 if current.bot and current.alive then
                     if current.challenge.ready and not engine.state.challengeClaimed then
@@ -240,23 +252,20 @@ task.spawn(function()
                 if handled then
                     -- The next tick resumes the normal decision after its card/goal animation.
                 elseif phase == "roll" then
-                    perform(current.id, "Roll")
+                    local offer=Plaza.botMove(engine,current.id)
+                    local target,value=nil,-1
+                    for index,property in ipairs(engine.state.properties) do
+                        local tile=Config.tiles[index]
+                        if property.ownerId==current.id and property.level<Config.maxLevel and current.cash>=tile.upgrade+350 and tile.rent>value then target,value=index,tile.rent end
+                    end
+                    if offer then perform(current.id,"Plaza",offer);botReadyAt=now+0.7
+                    elseif target then perform(current.id,"Upgrade",target);botReadyAt=now+0.7
+                    else perform(current.id,"Roll") end
                 elseif phase == "buy" then
                     local tile = Config.tiles[engine.state.pendingTile]
                     local buy = current.bot and current.cash >= tile.price + 180
                     local level=current.bot and current.cash>=tile.price+tile.upgrade+350 and 1 or 0
                     perform(current.id, buy and "Buy" or "Skip",nil,level)
-                else
-                    if current.bot then
-                        for index, property in ipairs(engine.state.properties) do
-                            local tile = Config.tiles[index]
-                            if property.ownerId == current.id and property.level < Config.maxLevel
-                                and current.cash >= tile.upgrade + 250 then
-                                engine:act(current.id, "Upgrade", index)
-                            end
-                        end
-                    end
-                    perform(current.id, "End")
                 end
             end
         end
