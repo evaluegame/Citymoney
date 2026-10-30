@@ -92,6 +92,7 @@ return function(sources,width,height)
     function methods:FireServer(...) table.insert(requests,{...}) end
     function methods:ScreenPointToRay(x,y) local t=math.tan(math.rad(36)/2);return {Origin=vector(),Direction=vector((2*x/width-1)*t*width/height,(1-2*y/height)*t,-1).Unit} end
     function methods:SetCoreGuiEnabled() end
+    function methods:Raycast() return pointer.Target and {Instance=pointer.Target} end
     absolute=function(object)
         if object.ClassName=="ScreenGui" or not object.Parent then return vector(),vector(width,height,0),1 end
         local parentPos,parentSize,parentScale=absolute(object.Parent)
@@ -121,7 +122,7 @@ return function(sources,width,height)
     local board=node("Folder","CitymoneyBoard");board.Parent=workspace
     local env={game=game,workspace=workspace,Instance={new=node},Enum=enum,Vector2={new=vector,zero=vector()},Vector3={new=vector,zero=vector()},
         Color3=color3,CFrame=cfApi,UDim={new=dim},UDim2={new=dimensions,fromOffset=function(x,y) return dimensions(0,x,0,y) end,fromScale=function(x,y) return dimensions(x,0,y,0) end},
-        TweenInfo={new=function(...) return {...} end},task={spawn=function(callback) table.insert(scheduled,{at=math.huge,callback=callback}) end,delay=function(time,callback) table.insert(scheduled,{at=now+time,callback=callback}) end,wait=function() return 0.016 end}}
+        RaycastParams={new=function() return {} end},TweenInfo={new=function(...) return {...} end},task={spawn=function(callback) table.insert(scheduled,{at=math.huge,callback=callback}) end,delay=function(time,callback) table.insert(scheduled,{at=now+time,callback=callback}) end,wait=function() return 0.016 end}}
     local cache={}
     local function load(module)
         if cache[module] then return cache[module] end
@@ -132,17 +133,28 @@ return function(sources,width,height)
     end
     setmetatable(env,{__index=getfenv()});env.require=load
     load(main)
+    local function advance(seconds)
+        now=now+seconds
+        local ready={}
+        for i=#scheduled,1,-1 do if scheduled[i].at<=now then table.insert(ready,table.remove(scheduled,i).callback) end end
+        for _,callback in ipairs(ready) do callback() end
+    end
     local Engine=load(shared.Engine);local Config=load(shared.Config)
     local engine=Engine.new(Config)
     local roster={{id=1,name="Avery"},{id=2,name="Riley"},{id=3,name="Jamie"},{id=4,name="Morgan"}}
     assert(engine:start(roster))
     for _,asset in ipairs({{2,1,0},{8,2,1},{14,3,2},{23,4,3}}) do local p=engine.state.properties[asset[1]];p.ownerId,p.level=asset[2],asset[3] end
     local members={};for i,p in ipairs(roster) do table.insert(members,{id=p.id,name=p.name,colorIndex=i,ready=true}) end
-    local data={game=engine:view(1),lobby=members,hostId=1,lobbyConfig={seats=4,fillBots=true,attackMode="destroy"},
+    local data={lobby=members,hostId=1,lobbyConfig={seats=4,fillBots=true,attackMode="destroy"},
         matchmaking={mode="lobby",queued=false,status="Studio local matchmaking",studio=true},club={styleId="classic",ownsPass=false,loading=false,studio=true,passId=0,effects=true,status=""},
-        styles={},deadline=155,handoffAt=0,serverTime=100,revision=1,visitors={}}
-    remotes.Snapshot.OnClientEvent:Fire(data)
-    services.RunService.RenderStepped:Fire(0.016)
+        styles={},deadline=155,handoffAt=0,serverTime=100,revision=0,visitors={}}
+    local function publish()
+        data=table.clone(data)
+        data.revision=data.revision+1;data.game=engine:view(1)
+        remotes.Snapshot.OnClientEvent:Fire(data)
+        services.RunService.RenderStepped:Fire(0.016)
+    end
+    publish()
     local gui=playerGui:WaitForChild("Citymoney");local root=gui:WaitForChild("Frame"):WaitForChild("CityRoot")
     local function visible(o) while o do if o.Visible==false or o.Enabled==false then return false end;o=o.Parent end;return true end
     local function findText(text)
@@ -153,47 +165,92 @@ return function(sources,width,height)
         local p,s=absolute(o)
         assert(p.X>=-0.1 and p.Y>=-0.1 and p.X+s.X<=width+0.1 and p.Y+s.Y<=height+0.1,"Cropped "..o.Name)
     end
-    for _,name in ipairs({"Header","TurnDock","CityMenuButton","CameraDock"}) do inside(root:WaitForChild(name)) end
-    local permanent=0
-    for _,child in ipairs(root:GetChildren()) do if child.ClassName=="TextButton" and visible(child) then permanent=permanent+1 end end
-    assert(permanent==1,"Main screen should have one menu launcher")
-    findText("ROLL DICE").Activated:Fire();assert(requests[#requests][1]=="Roll","Roll button did not send a roll")
-    local target=node("Part","Tile2");target.Parent=board;target:SetAttribute("TileIndex",2);pointer.Target=target
-    services.UserInputService.InputChanged:Fire({UserInputType=enum.UserInputType.MouseMovement,Position=vector(width*0.76,height*0.69)},false)
-    services.RunService.RenderStepped:Fire(0.016)
-    assert(root:FindFirstChild("PropertyHover").Visible,"Property hover did not appear")
-    inside(root:FindFirstChild("PropertyHover"))
-    local elements={}
+    local function click(text)
+        local object=findText(text)
+        if object.ClassName~="TextButton" then object=object.Parent end
+        object.Activated:Fire();services.RunService.RenderStepped:Fire(0.016)
+        return object
+    end
+    local function menu(label) root.CityMenuButton.Activated:Fire();click(label) end
     local function hex(c) return string.format("%02x%02x%02x",math.floor(c.R*255+0.5),math.floor(c.G*255+0.5),math.floor(c.B*255+0.5)) end
-    local function export(parent)
-        local children=parent:GetChildren();table.sort(children,function(a,b) if a.ZIndex==b.ZIndex then return a.creationOrder<b.creationOrder end;return (a.ZIndex or 1)<(b.ZIndex or 1) end)
-        for _,o in ipairs(children) do if visible(o) then
-            if guiClasses[o.ClassName] then
-                local p,s,scale=absolute(o);local corner=o:FindFirstChildOfClass("UICorner")
-                local stroke=o:FindFirstChildOfClass("UIStroke")
-                table.insert(elements,{class=o.ClassName,name=o.Name,x=p.X,y=p.Y,w=s.X,h=s.Y,text=o.Text or "",size=(o.TextSize or 14)*scale,bg=hex(o.BackgroundColor3),fg=hex(o.TextColor3),alpha=1-(o.BackgroundTransparency or 0),font=o.Font and o.Font.Name or "Gotham",wrap=o.TextWrapped==true,align=o.TextXAlignment and o.TextXAlignment.Name or "Left",corner=corner and (corner.CornerRadius.Scale*math.min(s.X,s.Y)+corner.CornerRadius.Offset*scale) or 0,
-                    stroke=stroke and {color=hex(stroke.Color or color(0.8,0.85,0.9)),alpha=1-(stroke.Transparency or 0),width=(stroke.Thickness or 1)*scale} or false})
-            end
-            export(o)
-        end end
+    local function export()
+        local elements={}
+        local function walk(parent)
+            local children=parent:GetChildren();table.sort(children,function(a,b) if a.ZIndex==b.ZIndex then return a.creationOrder<b.creationOrder end;return (a.ZIndex or 1)<(b.ZIndex or 1) end)
+            for _,o in ipairs(children) do if visible(o) then
+                if guiClasses[o.ClassName] then
+                    local p,s,scale=absolute(o);local corner=o:FindFirstChildOfClass("UICorner");local stroke=o:FindFirstChildOfClass("UIStroke")
+                    table.insert(elements,{class=o.ClassName,name=o.Name,x=p.X,y=p.Y,w=s.X,h=s.Y,text=o.Text or "",size=(o.TextSize or 14)*scale,bg=hex(o.BackgroundColor3),fg=hex(o.TextColor3),alpha=1-(o.BackgroundTransparency or 0),font=o.Font and o.Font.Name or "Gotham",wrap=o.TextWrapped==true,align=o.TextXAlignment and o.TextXAlignment.Name or "Left",corner=corner and (corner.CornerRadius.Scale*math.min(s.X,s.Y)+corner.CornerRadius.Offset*scale) or 0,
+                        stroke=stroke and {color=hex(stroke.Color or color(0.8,0.85,0.9)),alpha=1-(stroke.Transparency or 0),width=(stroke.Thickness or 1)*scale} or false})
+                end
+                walk(o)
+            end end
+        end
+        walk(gui);return elements
     end
-    export(gui)
-    local function menu(label)
-        root.CityMenuButton.Activated:Fire()
-        services.RunService.RenderStepped:Fire(0.016)
-        local item=findText(label);item.Parent.Activated:Fire()
-        services.RunService.RenderStepped:Fire(0.016)
-    end
-    menu("CARDS & GOALS");findText("Cards & challenges")
-    findText("×").Activated:Fire()
-    menu("CITY EVENTS");findText("Something is happening.")
-    findText("Back").Activated:Fire()
-    menu("YOUR PROPERTIES");findText("Your collection")
-    local property=findText("Copper Lane");property.Parent.Activated:Fire()
-    services.RunService.RenderStepped:Fire(0.016)
-    assert(root:FindFirstChild("PropertyHover").Visible==false)
     local P=load(shared.Presentation);local Fit=load(shared.BoardCamera)
     local layout=P.layout(width,height);local r=P.board(layout,false)
-    local camera=Fit.fit(width,height,{r[1]*layout.scale,r[2]*layout.scale,r[3]*layout.scale,r[4]*layout.scale},P.defaultYaw,P.defaultElevation,1,Fit.cityBounds(Config,load(shared.Architecture),engine.state))
-    return {width=width,height=height,elements=elements,camera=camera,requests=#requests,checks=8}
+    local function camera() return Fit.fit(width,height,{r[1]*layout.scale,r[2]*layout.scale,r[3]*layout.scale,r[4]*layout.scale},P.defaultYaw,P.defaultElevation,1,Fit.cityBounds(Config,load(shared.Architecture),engine.state)) end
+    local views={}
+    local function capture(name) services.RunService.RenderStepped:Fire(0.016);views[name]={elements=export(),camera=camera()} end
+    for _,name in ipairs({"Header","TurnDock","CityMenuButton","CameraDock","QuickActions"}) do inside(root:WaitForChild(name)) end
+    for _,die in ipairs({root.TurnDock.RollDieA,root.TurnDock.RollDieB}) do local _,s=absolute(die);assert(s.X>=50 and s.Y>=50,"Dice are too small to tap") end
+    if layout.compact then
+        for _,button in ipairs({root.QuickActions.OpenEvents,root.QuickActions.OpenCards,root.QuickActions.OpenHomes}) do
+            local _,s=absolute(button);assert(s.Y>=44 and s.X>=44,"Shortcut is too small for touch")
+        end
+    end
+    capture("main")
+    click("ROLL DICE");assert(requests[#requests][1]=="Roll","Roll button did not send a roll");advance(0.3)
+    local target=node("Part","Tile2");target.Parent=board;target:SetAttribute("TileIndex",2);pointer.Target=target
+    services.UserInputService.InputChanged:Fire({UserInputType=enum.UserInputType.MouseMovement,Position=vector(width*0.76,height*0.59)},false)
+    services.RunService.RenderStepped:Fire(0.016)
+    assert(root.PropertyHover.Visible,"Property hover did not appear");inside(root.PropertyHover)
+    target:SetAttribute("TileIndex",nil);target:SetAttribute("Interaction","festival")
+    services.UserInputService.TouchTapInWorld:Fire(vector(width*0.7,height*0.55),false)
+    findText("Join the festival.");findText("JOIN FESTIVAL · $80")
+    click("X")
+    root.QuickActions.OpenEvents.Activated:Fire();findText("Choose an event.");capture("events")
+    click("CARD MARKET");findText("Pick a card.")
+    click("BUY CARD · $100")
+    local request=requests[#requests];assert(request[1]=="Plaza" and request[2].shop=="market" and request[2].kind=="shield")
+    assert(engine:act(1,"Plaza",request[2]));publish()
+    findText("Card added! Open Cards & Goals to play it.")
+    advance(0.3)
+    engine.state.turn=2;publish();root.QuickActions.OpenEvents.Activated:Fire();click("FESTIVAL")
+    assert(findText("BROWSE FOR NEXT TURN").Active==false,"Off-turn event purchase is enabled");click("CLOSE")
+    engine.state.turn=1;engine.state.plazaUsed=false;engine.state.properties[3].ownerId=1;publish()
+    root.QuickActions.OpenEvents.Activated:Fire();click("FESTIVAL")
+    assert(findText("CHOOSE A HOME").Active==false,"Several eligible homes need an explicit choice")
+    click("Brick Courtyard");click("JOIN FESTIVAL · $80")
+    request=requests[#requests];assert(request[1]=="Plaza" and request[2].tile==3,"Festival target was not the chosen home")
+    assert(engine:act(1,"Plaza",request[2]));publish();advance(0.3)
+    root.QuickActions.OpenCards.Activated:Fire();findText("Cards & challenges");inside(findText("Cards & challenges").Parent);click("×")
+    menu("CITY EVENTS");findText("Choose an event.");click("X")
+    root.QuickActions.OpenHomes.Activated:Fire();findText("Your collection");inside(root.PropertyCollection)
+    click("Copper Lane");inside(root.PropertyCard)
+    assert(root.PropertyHover.Visible==false)
+    click("Upgrade options");findText("Choose your upgrade");inside(findText("Choose your upgrade").Parent)
+    assert(not root.PropertyCard.Visible and not root.PropertyCollection.Visible,"Property panels stack behind the chooser")
+    click("L2 · Garden villa");click("Upgrade to Garden villa · $120")
+    request=requests[#requests];assert(request[1]=="Upgrade" and request[2]==2 and request[3]==2)
+    assert(engine:act(1,request[1],request[2],request[3],request[4]));publish();advance(0.3)
+    engine.state.phase="buy";engine.state.pendingTile=5;publish();advance(0.3);services.RunService.RenderStepped:Fire(0.016)
+    findText("Choose your home level");click("L1 · Townhouse");click("Buy Townhouse · $220")
+    request=requests[#requests];assert(request[1]=="Buy" and request[2]==5 and request[3]==1)
+    assert(engine:act(1,request[1],request[2],request[3],request[4]));publish();advance(0.3)
+    engine.state.phase="buy";engine.state.pendingTile=6;publish();advance(0.3);click("Back");click("SKIP")
+    assert(requests[#requests][1]=="Skip");assert(engine:act(1,"Skip"));assert(not engine.state.properties[6].ownerId)
+    advance(0.3)
+    engine=Engine.new(Config);data.lobby={members[1]};data.lobbyConfig.seats=2;publish()
+    assert(root.QuickActions.Visible==false,"Match shortcuts appear before a game starts")
+    click("PLAY NOW");click("4 PLAYERS")
+    assert(requests[#requests][1]=="Seats" and requests[#requests][2]==4)
+    data.lobbyConfig.seats=4;publish();advance(0.3)
+    local queue=findText("PLAY ONLINE · 4 PLAYERS");assert(queue.Active,"Solo host cannot start matchmaking");queue.Activated:Fire()
+    assert(requests[#requests][1]=="Queue");advance(0.3)
+    capture("lobby");inside(findText("Play together").Parent)
+    click("SETTINGS");findText("Practice settings");inside(findText("Practice settings").Parent);click("×")
+    click("PRACTICE WITH BOTS");assert(requests[#requests][1]=="Start","Practice requires extra setup")
+    return {width=width,height=height,elements=views.main.elements,camera=views.main.camera,views=views,requests=#requests}
 end

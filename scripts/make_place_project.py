@@ -48,7 +48,7 @@ for index, entry in enumerate(scene):
     if "text" in entry:
         node["TileLabel"] = {
             "$className": "SurfaceGui",
-            "$properties": {"Face": entry.get("textFace", "Top"), "SizingMode": "PixelsPerStud", "PixelsPerStud": 40, "LightInfluence": 0.25},
+            "$properties": {"Face": entry.get("textFace", "Top"), "SizingMode": "PixelsPerStud", "PixelsPerStud": 40, "LightInfluence": 0},
             "Caption": {"$className": "TextLabel", "$properties": {
                 "Size": {"UDim2": [[1, 0], [1, 0]]}, "BackgroundTransparency": 1,
                 "Text": entry["text"], "TextColor3": rgb(entry["textColor"]),

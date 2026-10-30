@@ -41,7 +41,7 @@ def material(entry):
 
 
 # Share unit geometry by material instead of repeatedly invoking Blender operators.
-# This keeps review renders fast even when every property has a display home.
+# This keeps review renders fast even when many purchased homes are visible.
 bpy.ops.mesh.primitive_cube_add(size=1)
 cube=bpy.context.object.data.copy();bpy.data.objects.remove(bpy.context.object,do_unlink=True)
 bpy.ops.mesh.primitive_ico_sphere_add(subdivisions=2,radius=0.5)
@@ -86,8 +86,8 @@ for entry in entries:
 
 scene = bpy.context.scene
 scene.render.engine = "CYCLES"
-scene.cycles.samples = 32
-scene.cycles.use_denoising = False
+scene.cycles.samples = 96
+scene.cycles.use_denoising = getattr(bpy.app.build_options,"openimagedenoise",False)
 scene.render.resolution_x, scene.render.resolution_y = 1440, 1050
 if pass_icon: scene.render.resolution_x, scene.render.resolution_y = 512, 512
 scene.render.resolution_percentage = 100

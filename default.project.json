@@ -49,7 +49,7 @@
       "WarmAir": {
         "$className": "Atmosphere",
         "$properties": {
-          "Density": 0.12,
+          "Density": 0.03,
           "Offset": 0.15,
           "Color": [
             0.76,
@@ -62,7 +62,7 @@
             0.97
           ],
           "Glare": 0.04,
-          "Haze": 0.3
+          "Haze": 0.05
         }
       },
       "ColorGrade": {

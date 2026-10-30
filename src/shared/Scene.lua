@@ -21,7 +21,7 @@ function Scene.populate(entries, parent, preview)
         if entry.text and not preview then
             local surface = Instance.new("SurfaceGui")
             surface.Name, surface.Face = "Caption", Enum.NormalId[entry.textFace or "Top"]
-            surface.SizingMode, surface.PixelsPerStud, surface.LightInfluence = Enum.SurfaceGuiSizingMode.PixelsPerStud, 40, 0.25
+            surface.SizingMode, surface.PixelsPerStud, surface.LightInfluence = Enum.SurfaceGuiSizingMode.PixelsPerStud, 40, 0
             surface.Parent = object
             local label = Instance.new("TextLabel")
             label.Size, label.BackgroundTransparency = UDim2.fromScale(1,1), 1

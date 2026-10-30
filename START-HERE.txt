@@ -6,27 +6,33 @@ OPEN IN ROBLOX STUDIO
 3. Choose File > Open from File (Ctrl+O / Cmd+O).
 4. Open Citymoney/build/Citymoney.rbxlx from the extracted ZIP.
 5. Press Play (F5). Click PLAY NOW or MENU > Play Together, choose 2 or 4 players,
-   keep practice bots ON, then click Practice.
+   then click PRACTICE WITH BOTS. Optional practice rules are under SETTINGS.
 Studio: https://create.roblox.com/
 
 BRIGHT CITY VIEW AND INTERACTIVE DICE
-The colorful city board has display homes, a card market, festival stage,
+The colorful city board has empty lots, a card market, festival stage,
 challenge hall and broadcast tower. The default City view fits the whole
 board around the HUD. Hover a house for its owner, level and price/rent;
 click or tap to inspect. Top view adds upright clickable board labels.
 Use Fit to reset, and + / - to zoom. MENU [M] contains all game menus.
-Click a HUD die, either 3D die, or the central dice tray to roll. R also rolls.
+EVENTS, CARDS & GOALS and MY HOMES are direct shortcuts. On phones they
+are above the board. The larger turn dock explains your next step.
+Unbought lots have no houses; choose a level and buy to build your home.
+Tap either large HUD die, the bigger 3D dice, or their tray to roll. R also rolls.
+Rounded dice with flat pips show the result; the HUD also shows the total.
 The shared dice settle on the server's values before your avatar moves.
 
 AUTOMATIC TURNS
 Resolved landings, purchases and passes advance to the next player after
-four seconds. Finish now / Space advances sooner. Buying still gives you
+four seconds. Next player / Space advances sooner. Buying still gives you
 55 seconds to decide. Use cards, upgrades and plaza offers BEFORE rolling.
 Menus do not pause the handoff countdown.
 
 CITY PLAZA
 The center now has clickable stations instead of decorative houses/trees.
-P opens the plaza. City Market sells chosen tactical cards for game cash.
+EVENTS or P opens four big choices: Festival, Card Market, Challenges, News.
+City Market sells chosen tactical cards for game cash. Select a card and
+review its price before confirming. Successful offers return to the board.
 The festival rotates every eight turns: rent boost ($80), one added building
 level ($110), or a demolition shield ($60), applied to your chosen home.
 One plaza purchase per turn, before rolling. Playing a card is separate.
@@ -52,7 +58,7 @@ Publish the updated place using File > Publish (or Publish to Roblox).
 In Creator Dashboard, make it available to your intended players. A public
 lobby capacity of 12 is recommended; matches admit exactly 2 or 4 humans.
 Join the published experience in the Roblox app. Open MENU > Play Together,
-choose 2 or 4 players, and join the corresponding automatic queue.
+choose 2 or 4 players, then click PLAY ONLINE to start the automatic search.
 Online matches never add bots.
 
 Invite friends BEFORE queueing. Accepting the native invite brings friends
@@ -70,7 +76,8 @@ must be tested in a published experience using the Roblox app.
 BUY / UPGRADE YOUR HOME
 Land on an unowned lot and choose L0 Cottage, L1 Townhouse, L2 Garden villa,
 or L3 Grand villa. Compare the 3D preview, full price, rent and cash left.
-Confirm to replace the closed city display with your furnished home. Your roof, borders,
+Confirm to build your furnished home on the empty lot. SKIP leaves it empty.
+Your roof, borders,
 flag, mailbox and avatar ring show your color. Signs show your name.
 Select your home > Upgrade options to choose a higher level later.
 Only added building levels are charged; you do not need a district pair.
@@ -103,7 +110,8 @@ Use Top view, City view, Fit, + / -, and Close-up. MENU also has Day/Night.
 
 VISUAL REVIEW AND CHECKS
 docs/Play-screen-preview.png combines the actual exported client UI layout
-with a matching geometry render. It is NOT a Studio screenshot. Automated
+with a matching geometry render. Events, phone and play-menu previews are
+also in docs/. They are NOT Studio screenshots. Automated
 logic, compilation and four headless UI checks pass; native rendering,
 input, replication and live Roblox services require Studio/app playtests.
 

@@ -4,13 +4,21 @@ local Dice=require(game:GetService("ReplicatedStorage"):WaitForChild("Citymoney"
 function Motion.face(button,value,color)
     local layer=button:FindFirstChild("Pips")
     if not layer then
-        layer=Instance.new("Frame");layer.Name,layer.Size,layer.BackgroundTransparency,layer.Parent="Pips",UDim2.fromScale(1,1),1,button
+        local surface=Instance.new("Frame")
+        surface.Name,surface.Position,surface.Size,surface.BorderSizePixel,surface.Parent="DieFace",UDim2.fromOffset(3,2),UDim2.new(1,-6,1,-9),0,button
+        local round=Instance.new("UICorner");round.CornerRadius,round.Parent=UDim.new(0,12),surface
+        local edge=Instance.new("UIStroke");edge.Thickness,edge.Transparency,edge.Parent=1.4,0.55,surface
+        layer=Instance.new("Frame");layer.Name,layer.Position,layer.Size,layer.BackgroundTransparency,layer.Parent="Pips",UDim2.fromScale(0.07,0.015),UDim2.fromScale(0.86,0.86),1,button
         for i=1,6 do
             local dot=Instance.new("Frame")
             dot.Name,dot.AnchorPoint,dot.Size,dot.BorderSizePixel,dot.Parent=tostring(i),Vector2.new(0.5,0.5),UDim2.fromScale(0.13,0.13),0,layer
             local corner=Instance.new("UICorner");corner.CornerRadius,corner.Parent=UDim.new(1,0),dot
         end
     end
+    local face=button:FindFirstChild("DieFace")
+    local body=button.BackgroundColor3
+    face.BackgroundColor3=Color3.new(math.min(1,body.R+0.035),math.min(1,body.G+0.035),math.min(1,body.B+0.035))
+    face:FindFirstChildOfClass("UIStroke").Color=button:GetAttribute("RollReady") and Color3.fromHex("386BF0") or color
     local points=Dice.pips[value>0 and value or 3]
     for i=1,6 do
         local dot=layer:FindFirstChild(tostring(i));local point=points[i]

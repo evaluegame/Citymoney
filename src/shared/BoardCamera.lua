@@ -9,7 +9,7 @@ function Camera.cityBounds(config,architecture,state)
         local height=29
         if state then
             local property=state.properties[index]
-            height=({13,20,21,29})[property.ownerId and property.level+1 or 1]
+            height=property.ownerId and ({13,20,21,29})[property.level+1] or 2.2
         end
         for _,x in ipairs({-9.5,9.5}) do for _,y in ipairs({1.5,height}) do for _,z in ipairs({-9.5,9.5}) do table.insert(points,{site[1]+x,y,site[3]+z}) end end end
     end end

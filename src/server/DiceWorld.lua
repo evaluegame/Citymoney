@@ -6,7 +6,7 @@ World.__index=World
 function World.new(root,config)
     local self=setmetatable({config=config,models={},seq=0,generation=0},World)
     for side=1,2 do
-        local model=Scene.model(Dice.mesh("FFF8E8","294C40"),"InteractiveDie"..side,root)
+        local model=Scene.model(Dice.mesh("F9FCFF","224377"),"InteractiveDie"..side,root)
         model.PrimaryPart=model:FindFirstChild("DiceBody")
         model:SetAttribute("Interaction","dice")
         self.models[side]=model

@@ -105,31 +105,33 @@ local seats=Instance.new("Frame");place(seats,10,38,134,300);seats.BackgroundTra
 local turnChip=frame(root,24,294,188,37,C.mint)
 local roundText=text(turnChip,"WELCOME HOME",12,5,165,27,10,C.green,true)
 local inspector=frame(root,970,114,258,462)
+inspector.Name="PropertyCard"
 local district=text(inspector,"THE NEIGHBORHOOD",18,13,204,19,10,C.muted,true)
-local propertyName=text(inspector,"Your next address",18,35,220,52,23,C.ink,true)
-button(inspector,"×",220,12,25,25,C.paper,function() inspectorOpen=false;focusIndex=nil;render() end)
-local viewport=Instance.new("ViewportFrame");place(viewport,14,94,230,134)
+local propertyName=text(inspector,"Your next address",18,35,188,46,23,C.ink,true)
+button(inspector,"×",216,12,44,44,C.paper,function() inspectorOpen=false;focusIndex=nil;render() end)
+local viewport=Instance.new("ViewportFrame");place(viewport,14,88,230,116)
 viewport.BackgroundColor3,viewport.Ambient,viewport.LightColor=C.mint,Color3.fromRGB(180,180,165),Color3.fromRGB(255,235,206)
 viewport.LightDirection,viewport.BorderSizePixel,viewport.Parent=Vector3.new(-1,-2,-1),0,inspector;round(viewport,12)
 local viewWorld=Instance.new("WorldModel");viewWorld.Parent=viewport
 local viewCamera=Instance.new("Camera");viewCamera.FieldOfView,viewCamera.Parent=34,viewport;viewport.CurrentCamera=viewCamera
-local ownerText=text(inspector,"A place to call your own",18,237,222,20,12,C.muted)
+local ownerText=text(inspector,"A place to call your own",18,213,222,20,12,C.muted)
 truncate(ownerText)
-local rentText=text(inspector,"RENT  $0",18,263,110,28,18,C.ink,true)
-local levelText=text(inspector,"Cottage",139,263,103,28,13,C.green,true)
-local nextRent=text(inspector,"Buy this lot to build a furnished cottage.",18,296,222,34,12,C.muted)
-local upgradeButton=button(inspector,"Upgrade options",16,340,109,38,C.green,function() if selected and openPlans then openPlans("upgrade",selected) end end)
+local rentText=text(inspector,"RENT  $0",18,241,110,28,18,C.ink,true)
+local levelText=text(inspector,"Cottage",139,241,103,28,13,C.green,true)
+local nextRent=text(inspector,"Buy this lot to build a furnished cottage.",18,274,222,34,12,C.muted)
+local upgradeButton=button(inspector,"Upgrade options",16,316,109,44,C.green,function() if selected and openPlans then openPlans("upgrade",selected) end end)
 upgradeButton.TextSize=12
-local rentButton=button(inspector,"Rent options",133,340,109,38,C.green,function() if selected and openPlans then openPlans("rent",selected) end end)
+local rentButton=button(inspector,"Rent options",133,316,109,44,C.green,function() if selected and openPlans then openPlans("rent",selected) end end)
 rentButton.TextSize=12
-local sellButton=button(inspector,"Sell",95,432,70,28,C.paper,function() if requestSale then requestSale(selected) end end)
-local visitButton=button(inspector,"Walk through your home",16,386,226,39,C.green,function() if selected then send("Visit",selected) end end)
-local paintButton=button(inspector,"Repaint",16,432,70,28,C.paper,function() if selected then send("Paint",selected) end end)
+local sellButton=button(inspector,"Sell",95,424,70,32,C.paper,function() if requestSale then requestSale(selected) end end)
+local visitButton=button(inspector,"Walk through your home",16,370,226,44,C.green,function() if selected then send("Visit",selected) end end)
+local paintButton=button(inspector,"Repaint",16,424,70,32,C.paper,function() if selected then send("Paint",selected) end end)
 paintButton.TextSize=11
-local focusButton=button(inspector,"Close-up",173,432,69,28,C.paper,function() focusIndex=selected end);focusButton.TextSize=11
+local focusButton=button(inspector,"Close-up",173,424,69,32,C.paper,function() focusIndex=selected end);focusButton.TextSize=11
 sellButton.TextSize=11
-local ownerMark=frame(inspector,8,238,4,19,C.green)
+local ownerMark=frame(inspector,8,214,4,19,C.green)
 local portfolio=frame(root,920,114,308,440)
+portfolio.Name="PropertyCollection"
 text(portfolio,"Your collection",18,15,245,35,23,C.ink,true)
 text(portfolio,"Homes that work for you.",18,52,245,22,12,C.muted)
 button(portfolio,"×",264,15,26,26,C.paper,function() portfolioOpen=false;render() end)
@@ -141,14 +143,16 @@ local control=frame(root,235,670,810,112)
 control.Name="TurnDock"
 local dieA=button(control,"",16,18,48,48,C.paper,function() if mainCommand=="Roll" and mainAction then mainAction() end end)
 local dieB=button(control,"",72,18,48,48,C.paper,function() if mainCommand=="Roll" and mainAction then mainAction() end end)
+dieA.Name,dieB.Name="RollDieA","RollDieB"
 local dieTextA=text(dieA,"·",0,0,48,48,28,C.ink,true);dieTextA.TextXAlignment=Enum.TextXAlignment.Center
 local dieTextB=text(dieB,"·",0,0,48,48,28,C.ink,true);dieTextB.TextXAlignment=Enum.TextXAlignment.Center
+local diceTotal=text(control,"TAP TO ROLL",18,90,154,17,11,C.muted,true);diceTotal.TextXAlignment=Enum.TextXAlignment.Center
 local turnTitle=text(control,"A neighborhood of possibilities.",140,14,400,29,21,C.ink,true)
 truncate(turnTitle)
 local turnHint=text(control,"Start solo against City Bot, or invite your friends.",140,48,400,26,12,C.muted);truncate(turnHint)
 local actionButton=button(control,"Connecting…",574,17,220,54,C.green,function() if mainAction then mainAction() end end)
 local actionDepth=frame(control,574,21,220,54,Color3.fromHex("DCA031"));actionButton.ZIndex=2
-local passButton=button(control,"Pass",500,79,75,26,C.paper,function() send("Skip") end)
+local passButton=button(control,"SKIP",500,79,75,26,C.paper,function() send("Skip") end)
 local timeText=text(control,"",16,81,400,18,10,C.muted)
 local timeTrack=frame(control,16,104,778,3,C.paper)
 local timeFill=Instance.new("Frame");timeFill.Size,timeFill.BackgroundColor3,timeFill.BorderSizePixel,timeFill.Parent=UDim2.fromScale(1,1),C.green,0,timeTrack
@@ -214,35 +218,35 @@ local replay=button(resultCard,"Play again",26,360,292,44,C.green,function()
 end)
 button(resultCard,"Keep looking",330,360,164,44,C.paper,function() results.Visible=false end)
 local chooser,chooserCard=overlay(Layout.homeChooserWidth,Layout.homeChooserHeight)
-local chooserTitle=text(chooserCard,"Choose your home level",24,15,442,36,25,C.ink,true)
-local chooserSubtitle=text(chooserCard,"",24,52,472,24,12,C.muted)
+local chooserTitle=text(chooserCard,"Choose your home level",24,15,418,36,25,C.ink,true)
+local chooserSubtitle=text(chooserCard,"",24,52,472,24,15,C.muted)
 truncate(chooserSubtitle)
 local planIndex,planMode,planLevel,planTurn,planPending,planError
 local planRequestId=0
 local planPreviewKey
-local closeChooser=button(chooserCard,"×",468,17,28,28,C.paper,function() if not planPending then chooser.Visible=false end end)
-local planViewport=Instance.new("ViewportFrame");place(planViewport,24,88,472,174)
+local closeChooser=button(chooserCard,"×",452,17,44,44,C.paper,function() if not planPending then chooser.Visible=false end end)
+local planViewport=Instance.new("ViewportFrame");place(planViewport,24,88,472,144)
 planViewport.BackgroundColor3,planViewport.Ambient,planViewport.LightColor=C.mint,Color3.fromRGB(180,180,165),Color3.fromRGB(255,235,206)
 planViewport.LightDirection,planViewport.BorderSizePixel,planViewport.Parent=Vector3.new(-1,-2,-1),0,chooserCard;round(planViewport,12)
 local planWorld=Instance.new("WorldModel");planWorld.Parent=planViewport
 local planCamera=Instance.new("Camera");planCamera.FieldOfView,planCamera.Parent=34,planViewport;planViewport.CurrentCamera=planCamera
-local planDescription=text(chooserCard,"",24,270,472,30,12,C.muted)
+local planDescription=text(chooserCard,"",24,241,472,38,15,C.muted)
 local planCards={}
 for level=0,Config.maxLevel do
-    local x,y=24+(level%2)*242,309+math.floor(level/2)*76
-    local option=button(chooserCard,"",x,y,230,66,C.paper,function()
+    local x,y=24+(level%2)*242,290+math.floor(level/2)*96
+    local option=button(chooserCard,"",x,y,230,86,C.paper,function()
         if not planPending then planLevel=level;planError=nil;renderPlans() end
     end)
     local border=Instance.new("UIStroke");border.Color,border.Transparency,border.Parent=C.line,0.1,option
-    local name=text(option,"",12,5,208,21,14,C.ink,true)
-    local price=text(option,"",12,28,208,18,12,C.muted)
-    local status=text(option,"",12,47,208,14,10,C.muted)
+    local name=text(option,"",12,7,208,25,17,C.ink,true)
+    local price=text(option,"",12,35,208,22,15,C.muted)
+    local status=text(option,"",12,60,208,19,13,C.muted)
     planCards[level+1]={ button=option, border=border, name=name, price=price, status=status }
 end
-local planTotal=text(chooserCard,"",24,469,472,26,18,C.ink,true)
-local planBalance=text(chooserCard,"",24,499,472,22,13,C.green)
-local planNote=text(chooserCard,"",24,526,472,25,11,C.muted)
-local confirmPlan=button(chooserCard,"Confirm",24,564,332,40,C.green,function()
+local planTotal=text(chooserCard,"",24,487,472,30,20,C.ink,true)
+local planBalance=text(chooserCard,"",24,525,472,24,16,C.green)
+local planNote=text(chooserCard,"",24,558,472,33,14,C.muted)
+local confirmPlan=button(chooserCard,"Confirm",24,607,332,64,C.green,function()
     if planPending or not data then return end
     local options=Plans.options(Config,data.game,player.UserId,planIndex,planMode)
     local option=options[(planLevel or -1)+1]
@@ -262,7 +266,8 @@ local confirmPlan=button(chooserCard,"Confirm",24,564,332,40,C.green,function()
         end)
     end
 end)
-local cancelPlan=button(chooserCard,"Back",368,564,128,40,C.paper,function() if not planPending then chooser.Visible=false end end)
+local cancelPlan=button(chooserCard,"Back",368,607,128,64,C.paper,function() if not planPending then chooser.Visible=false end end)
+confirmPlan.TextSize=18;cancelPlan.TextSize=18
 local highlight=Instance.new("Highlight")
 highlight.Name,highlight.FillColor,highlight.OutlineColor="SelectedAddress",C.gold,C.green
 highlight.FillTransparency,highlight.OutlineTransparency,highlight.Parent=0.94,0.1,workspace
@@ -352,19 +357,28 @@ renderPlans=function()
     available(cancelPlan,not planPending,C.paper)
     available(closeChooser,not planPending,C.paper)
 end
+local function closePanels()
+    help.Visible=false;sale.Visible=false;chooser.Visible=false
+    inspectorOpen=false;portfolioOpen=false
+    inspector.Visible=false;portfolio.Visible=false
+    if menus then menus.lobby.Visible=false;menus.actions.Visible=false;menus.practiceSettings.Visible=false end
+    if boutique then boutique.shade.Visible=false end
+    if city then city.shade.Visible=false end
+    if commandMenu then commandMenu.shade.Visible=false end
+end
 openPlans=function(mode,index)
     if not data then return end
     if planIndex~=index or planMode~=mode or planTurn~=data.game.turnCount then
         planLevel=mode=="buy" and 0 or (mode=="rent" and math.min(#Config.rentTiers-1,data.game.properties[index].rentTier or 1) or math.min(Config.maxLevel,data.game.properties[index].level+1))
     end
     planIndex,planMode,planTurn,planPending,planError=index,mode,data.game.turnCount,false,nil
-    chooser.Visible=true;help.Visible=false;sale.Visible=false
+    closePanels();chooser.Visible=true
     renderPlans()
 end
 mainAction=function()
     if mainCommand=="Buy" and data then openPlans("buy",data.game.pendingTile)
-    elseif mainCommand=="Plaza" then openCity("festival")
-    elseif mainCommand=="Match" and menus then menus:openLobby()
+    elseif mainCommand=="Plaza" then openCity("overview")
+    elseif mainCommand=="Match" and menus then closePanels();menus:openLobby()
     elseif mainCommand=="Ready" and menus then menus:toggleReady()
     elseif mainCommand then send(mainCommand) end
 end
@@ -374,16 +388,16 @@ do
         focus=function(index) selected,focusIndex,inspectorOpen,portfolioOpen=index,nil,true,false;render() end,
         openGoals=function()
             if not data or data.game.status~="playing" or not resident(data.game,player.UserId) then notify("Start a match to receive cards and challenges.");return end
-            menus.lobby.Visible=false;menus.actions.Visible=true;boutique.shade.Visible=false;menus:render(data)
+            closePanels();menus.actions.Visible=true;menus:render(data);render()
         end,
-        openMatch=function() menus:openLobby() end,
-        openHomes=function() portfolioOpen=true;inspectorOpen=false;render() end,
-        openHelp=function() help.Visible=true end,
-        openCity=function() openCity("festival") end,
+        openMatch=function() closePanels();menus:openLobby() end,
+        openHomes=function() closePanels();portfolioOpen=true;render() end,
+        openHelp=function() closePanels();help.Visible=true;render() end,
+        openCity=function() openCity("overview") end,
         switchLight=function() night=not night;Lighting.ClockTime=night and 19.2 or 14.4 end,
-        openStyles=function() menus.lobby.Visible=false;menus.actions.Visible=false;help.Visible=false;boutique:open() end}
+        openStyles=function() closePanels();boutique:open();render() end}
     menus=Menus.new(ui);boutique=Boutique.new(ui);city=CityPlaza.new(ui);commandMenu=CommandMenu.new(ui);hover=HoverCard.new(ui,player)
-    openCity=function(tab) menus.lobby.Visible=false;menus.actions.Visible=false;boutique.shade.Visible=false;city:open(tab) end
+    openCity=function(tab) closePanels();city:open(tab);render() end
     boardView.onProperty=function(index) selected,inspectorOpen,portfolioOpen=index,true,false;render() end
     boardView.onInteraction=function(tab) openCity(tab) end
 end
@@ -426,23 +440,23 @@ render=function()
         local name=text(row,entry.name,44,4,84,18,12,entry.alive==false and C.muted or C.ink,true);truncate(name)
         text(row,entry.cash and ("$"..entry.cash..(entry.alive==false and " · out" or "")) or "READY",44,24,84,19,14,C.green,true)
     end
-    roster.Size=UDim2.fromOffset(154,44+math.min(#entries,6)*54)
+    roster.Size=UDim2.fromOffset(154,44+math.min(#entries,4)*54)
     roundText.Text=state.status=="playing" and ("TURN "..state.turnCount.." / "..Config.maxTurns) or "LOBBY OPEN"
     if layout then turnChip.Position,turnChip.Size=UDim2.fromOffset(20,layout.roster[2]+roster.Size.Y.Offset+10),UDim2.fromOffset(154,32) end
     dieTextA.Text,dieTextB.Text="",""
     local pipColor=Color3.fromHex(Cosmetics.get(data.club and data.club.styleId or "classic").pip)
-    Motion.face(dieA,state.dice[1],pipColor);Motion.face(dieB,state.dice[2],pipColor)
     passButton.Visible=false;mainCommand=nil
     if state.status~="playing" then
         turnTitle.Text=state.status=="finished" and "Your next city awaits." or "Build your city."
         local online=data.matchmaking and data.matchmaking.mode=="match"
-        turnHint.Text=online and data.matchmaking.status or "Choose a 2- or 4-player queue, invite friends, or practice with bots."
+        turnHint.Text=online and data.matchmaking.status or "Choose online play or practice with bots."
         mainCommand=online and (state.status=="finished" and "BackLobby" or "Match") or "Match"
         actionButton.Text=online and (state.status=="finished" and "Return to lobby" or "Connecting players...") or "PLAY NOW"
     else
         turnTitle.Text=myTurn and "YOUR TURN" or ((current and current.name or "A resident").."'s turn")
         if state.phase=="end" then turnTitle.Text=myTurn and "Turn complete." or ((current and current.name or "A resident").." has finished.") end
         turnHint.Text=state.notice or "A new address is waiting."
+        if myTurn then turnHint.Text=state.phase=="roll" and "Roll to move. Events are optional." or (state.phase=="buy" and "Choose a home level, or skip this lot." or "Next player starts automatically.") end
         if myTurn then
             if state.phase=="roll" then mainCommand="Roll";actionButton.Text=mine.detained and "Serve detention" or "ROLL DICE"
             elseif state.phase=="buy" then
@@ -459,9 +473,15 @@ render=function()
     end
     if rolling then mainCommand=nil;actionButton.Text="Rolling the dice…" end
     dieA.Active,dieB.Active=mainCommand=="Roll",mainCommand=="Roll"
+    dieA:SetAttribute("RollReady",dieA.Active);dieB:SetAttribute("RollReady",dieB.Active)
     dieA.AutoButtonColor,dieB.AutoButtonColor=dieA.Active,dieB.Active
     available(actionButton,mainCommand~=nil,C.gold)
     actionDepth.Visible=mainCommand~=nil and not rolling
+    diceTotal.Text=rolling and "ROLLING..." or (state.lastRoll and ("TOTAL "..(state.dice[1]+state.dice[2])) or "TAP TO ROLL")
+    if layout and layout.compact then
+        actionButton.Size=UDim2.fromOffset(layout.toolbar[3]-(passButton.Visible and 130 or 32),64)
+        actionDepth.Size=actionButton.Size
+    end
     portfolio.Visible=portfolioOpen and not visitIndex
     homeList:ClearAllChildren()
     local row=0
@@ -528,9 +548,14 @@ render=function()
     renderPlans()
     menus:render(data)
     boutique:render(data)
+    Motion.face(dieA,state.dice[1]>0 and state.dice[1] or 1,pipColor);Motion.face(dieB,state.dice[2]>0 and state.dice[2] or 6,pipColor)
     city:render(data)
     commandMenu.button.Visible=not visitIndex
-    commandMenu.button.Text=mine and mine.challenge and mine.challenge.ready and "REWARD READY" or "MENU  [M]"
+    commandMenu.button.Text="MENU  [M]"
+    commandMenu.quick.Visible=state.status=="playing" and not visitIndex
+    commandMenu.cards.Text=mine and mine.challenge and mine.challenge.ready and not state.challengeClaimed and "CLAIM REWARD" or "CARDS & GOALS"
+    commandMenu.homes.Text="MY HOMES · "..count
+    if layout then commandMenu:resize(layout,roster.Size.Y.Offset) end
     if layout then menus:resize(layout,roster.Size.Y.Offset) end
 end
 local function updateLayout()
@@ -553,33 +578,44 @@ local function updateLayout()
     end
     local r=layout.roster;place(roster,r[1],r[2],r[3],roster.Size.Y.Offset)
     local card=layout.inspector;place(inspector,card[1],card[2],card[3],462)
-    local fit=math.min(1,math.max(0.76,card[4]/462))
+    local fit=layout.compact and math.min(1.6,(layout.toolbar[2]-card[2]-16)/462) or math.min(1,math.max(0.76,card[4]/462))
     local inner=inspector:FindFirstChildOfClass("UIScale") or Instance.new("UIScale")
     inner.Scale,inner.Parent=fit,inspector
-    inspector.Position=UDim2.fromOffset(w-20-card[3]*fit,card[2])
+    inspector.Position=UDim2.fromOffset(layout.compact and (w-card[3]*fit)/2 or w-20-card[3]*fit,card[2])
     place(portfolio,w-328,92,308,math.min(440,h-layout.toolbar[4]-125))
+    local collectionScale=portfolio:FindFirstChildOfClass("UIScale") or Instance.new("UIScale")
+    collectionScale.Scale,collectionScale.Parent=layout.compact and 1.45 or 1,portfolio
+    if layout.compact then
+        portfolio.Position=UDim2.fromOffset((w-308*1.45)/2,92)
+        portfolio.Size=UDim2.fromOffset(308,math.min(440,(layout.toolbar[2]-112)/1.45))
+    end
     homeList.Size=UDim2.fromOffset(284,portfolio.Size.Y.Offset-102)
     local t=layout.toolbar;place(control,t[1],t[2],t[3],t[4])
     if layout.compact then
-        place(dieA,14,12,64,64);place(dieB,86,12,64,64)
-        place(turnTitle,164,14,t[3]-180,26);turnTitle.TextSize=19
-        place(turnHint,164,44,t[3]-180,24)
-        place(timeText,16,84,t[3]-32,17)
-        place(actionButton,14,110,t[3]-104,64);place(passButton,t[3]-80,110,66,64)
+        place(dieA,16,14,80,80);place(dieB,108,14,80,80)
+        place(diceTotal,16,104,172,22);diceTotal.TextSize=16
+        place(turnTitle,208,14,t[3]-224,30);turnTitle.TextSize=23
+        place(turnHint,208,50,t[3]-224,48);turnHint.TextSize=18
+        place(timeText,208,104,t[3]-224,22);timeText.TextSize=16
+        place(actionButton,16,144,t[3]-32,64);place(passButton,t[3]-98,144,82,64)
+        actionButton.TextSize=22
     else
-        place(dieA,16,16,48,48);place(dieB,72,16,48,48)
-        place(turnTitle,136,10,t[3]-390,28);turnTitle.TextSize=21
-        place(turnHint,136,39,t[3]-390,20)
-        place(timeText,136,63,t[3]-340,14);timeText.TextSize=10
-        place(actionButton,t[3]-190,16,174,48);place(passButton,t[3]-250,18,52,44)
+        place(dieA,18,14,72,72);place(dieB,102,14,72,72)
+        place(diceTotal,18,89,156,17);diceTotal.TextSize=11
+        place(turnTitle,194,13,t[3]-498,30);turnTitle.TextSize=22
+        place(turnHint,194,46,t[3]-498,36);turnHint.TextSize=14
+        place(timeText,194,84,t[3]-230,16);timeText.TextSize=12
+        place(actionButton,t[3]-208,25,190,58);place(passButton,t[3]-288,31,70,50)
+        actionButton.TextSize=18
     end
+    turnHint.TextWrapped=true
     place(dieTextA,0,0,48,48);place(dieTextB,0,0,48,48)
     actionDepth.Position,actionDepth.Size=actionButton.Position+UDim2.fromOffset(0,4),actionButton.Size
     place(timeTrack,16,t[4]-5,t[3]-32,3)
     place(toast,(w-400)/2,86,400,45)
     place(visitBanner,(w-440)/2,86,440,58)
     if menus then menus:resize(layout,roster.Size.Y.Offset) end
-    if commandMenu then commandMenu:resize(layout) end
+    if commandMenu then commandMenu:resize(layout,roster.Size.Y.Offset) end
     if data then render() end
 end
 safe:GetPropertyChangedSignal("AbsoluteSize"):Connect(updateLayout)
@@ -657,7 +693,7 @@ snapshot.OnClientEvent:Connect(function(incoming)
     end
     if state.status=="finished" and (not old or old.game.status~="finished") then
         results.Visible=true;help.Visible=false;sale.Visible=false
-        menus.lobby.Visible=false;menus.actions.Visible=false;boutique.shade.Visible=false
+        menus.lobby.Visible=false;menus.actions.Visible=false;menus.practiceSettings.Visible=false;boutique.shade.Visible=false
         city.shade.Visible=false;commandMenu.shade.Visible=false
         boutique:celebrate()
     end
@@ -690,7 +726,7 @@ Input.InputBegan:Connect(function(input,processed)
     if processed or help.Visible or sale.Visible or results.Visible or chooser.Visible or menus:isOpen() or boutique:isOpen() or city:isOpen() or commandMenu:isOpen() then return end
     if input.KeyCode==Enum.KeyCode.B and visitIndex then send("Return")
     elseif input.KeyCode==Enum.KeyCode.R and mainCommand=="Roll" then send("Roll")
-    elseif input.KeyCode==Enum.KeyCode.P and not visitIndex then openCity("festival")
+    elseif input.KeyCode==Enum.KeyCode.P and not visitIndex then openCity("overview")
     elseif input.KeyCode==Enum.KeyCode.Space and mainCommand and not visitIndex then mainAction() end
 end)
 Input.InputChanged:Connect(function(input,processed)
@@ -704,7 +740,8 @@ RunService.RenderStepped:Connect(function(dt)
     if data and data.game.status=="playing" then
         local handing=data.game.phase=="end"
         local seconds=math.max(0,(handing and data.handoffAt or data.deadline)-workspace:GetServerTimeNow())
-        timeText.Text=handing and ("NEXT TURN IN "..math.ceil(seconds).."s") or ("R  ROLL  ·  P  EVENTS  ·  "..math.ceil(seconds).."s")
+        local myTurn=data.game.players[data.game.turn].id==player.UserId
+        timeText.Text=handing and ("NEXT TURN IN "..math.ceil(seconds).."s") or (myTurn and (math.ceil(seconds).."s left"..(layout.compact and "" or " · Events [P]")) or "Your turn starts automatically")
         if chooser.Visible and not planError then
             local tile=Config.tiles[planIndex]
             planNote.Text=(planMode=="buy" and ("Land $"..tile.price.." + building $"..planLevel*tile.upgrade) or (planMode=="rent" and "This multiplier applies to future rent payments." or "Only the added levels are charged.")).."  ·  "..math.ceil(seconds).."s left"

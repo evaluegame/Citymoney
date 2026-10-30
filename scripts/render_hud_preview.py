@@ -55,7 +55,8 @@ for item in layout["elements"]:
 label=Image.new("RGBA",canvas.size)
 draw=ImageDraw.Draw(label)
 font=ImageFont.truetype(regular,11)
-draw.text((canvas.width-440,canvas.height-17),"LAYOUT PREVIEW · Client UI + scene geometry · Not a Studio screenshot",font=font,fill=(35,65,100,220))
+caption="LAYOUT PREVIEW · Not a Studio screenshot" if canvas.width<800 else "LAYOUT PREVIEW · Client UI + scene geometry · Not a Studio screenshot"
+draw.text((max(8,canvas.width-8-draw.textlength(caption,font=font)),canvas.height-17),caption,font=font,fill=(35,65,100,220))
 canvas=Image.alpha_composite(canvas,label).convert("RGB")
 destination=root/sys.argv[3]
 destination.parent.mkdir(parents=True,exist_ok=True)

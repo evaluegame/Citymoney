@@ -43,6 +43,20 @@ test("all HUD regions remain inside the safe area",function()
         end
     end
 end)
+test("direct shortcuts fit below the roster and leave the board and turn controls clear",function()
+    for _,screen in ipairs(screens) do for _,players in ipairs({2,4}) do
+        local l=Layout.calculate(table.unpack(screen));local rosterHeight=44+players*54
+        local q=P.shortcuts(l,rosterHeight);local board=Layout.board(l,false)
+        check(q[1]>=0 and q[2]>=0 and q[1]+q[3]<=l.width and q[2]+q[4]<=l.height)
+        if l.compact then
+            check(q[2]+q[4]<board[2],"Shortcuts cover the board")
+            check(q[4]*l.scale>=44,"Event shortcut is too small for touch")
+        else
+            check(q[2]>l.roster[2]+rosterHeight+32,"Shortcuts cover the player list")
+            check(q[2]+q[4]<l.toolbar[2] and q[1]+q[3]<board[1],"Shortcuts overlap play controls")
+        end
+    end end
+end)
 test("rounded platforms have no overlapping coplanar rectangular top surfaces",function()
     for _,size in ipairs({{181,5,181},{23,0.6,21},{40,0.45,28},{3.8,1.2,6.4}}) do
         local parts=Art.rounded("Platform",size,{0,0,0},math.min(size[1],size[3])*0.15,"FFFFFF")
@@ -59,18 +73,42 @@ test("rounded dice have curved edges and corners while retaining all 21 face pip
     for _,part in ipairs(Dice.mesh("FFFFFF","224377")) do
         if part.name=="DiceEdge" then edges=edges+1 end
         if part.name=="DiceCorner" then corners=corners+1 end
-        if string.match(part.name,"^Pip") then pips=pips+1 end
+        if string.match(part.name,"^Pip") then
+            pips=pips+1
+            check(part.shape=="Cylinder" and part.size[1]<0.2 and part.size[2]>=1,"Pips must be large, flat face markings")
+            local r=part.rotation or {1,0,0,0,1,0,0,0,1}
+            local normal=Dice.faces[tonumber(string.match(part.name,"%d"))].normal
+            check(math.abs(math.abs(r[1]*normal[1]+r[4]*normal[2]+r[7]*normal[3])-1)<1e-6,"Pip disc is sideways")
+        end
     end
-    check(edges==12 and corners==8 and pips==21)
+    check(Dice.size>=8 and edges==12 and corners==8 and pips==21)
 end)
-test("unowned properties have city display homes without ownership or interactive doors",function()
+test("enlarged dice and flat pips stay above the tray throughout the complete tumble",function()
+    local identity={1,0,0,0,1,0,0,0,1}
+    for value=1,6 do for step=0,60 do
+        local p,r=Dice.pose(value,1,step/60,1,3)
+        for _,part in ipairs(Dice.mesh("FFFFFF","224377")) do
+            local a=part.rotation or identity
+            local y={r[4]*a[1]+r[5]*a[4]+r[6]*a[7],r[4]*a[2]+r[5]*a[5]+r[6]*a[8],r[4]*a[3]+r[5]*a[6]+r[6]*a[9]}
+            local half
+            if part.shape=="Ball" then half=part.size[1]/2
+            elseif part.shape=="Cylinder" then half=math.abs(y[1])*part.size[1]/2+math.sqrt(y[2]^2+y[3]^2)*part.size[2]/2
+            else half=(math.abs(y[1])*part.size[1]+math.abs(y[2])*part.size[2]+math.abs(y[3])*part.size[3])/2 end
+            local center=p[2]+r[4]*part.position[1]+r[5]*part.position[2]+r[6]*part.position[3]
+            check(center-half>=2.175-1e-6,"The die intersects the felt while tumbling")
+        end
+    end end
+end)
+test("unowned properties stay empty and show only a priced lot",function()
     for index,tile in ipairs(Config.tiles) do if tile.kind=="property" then
-        local display=0
+        local sale=false
         for _,part in ipairs(A.property(Config,index,false,tile.group,0,0)) do
             check(not part.door and part.name~="OwnerFlag" and part.name~="OwnerSign")
-            if string.sub(part.name,1,8)=="Display_" then display=display+1 end
+            check(string.sub(part.name,1,8)~="Display_" and part.name~="BackWall" and part.name~="FrontRoof" and part.name~="Floor","An unbought home is visible")
+            check(part.position[2]+part.size[2]/2<2.2,"An empty lot contains a tall object")
+            if part.name=="SaleSign" then sale=string.find(part.text,"$"..tile.price,1,true)~=nil end
         end
-        check(display>50,"The district has no city silhouette")
+        check(sale,"The empty lot has no price")
     end end
 end)
 test("owned homes retain wider facades, shutters and walkable doors at every level",function()

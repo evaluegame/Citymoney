@@ -11,7 +11,7 @@ function View:update(dt,root,safe,layout,data,focus,inspector,visit,player)
     if data and self.revision~=data.revision then
         self.revision=data.revision
         local heights={}
-        for _,property in ipairs(data.game.properties) do table.insert(heights,property.ownerId and property.level or 0) end
+        for _,property in ipairs(data.game.properties) do table.insert(heights,property.ownerId and property.level+1 or 0) end
         local signature=table.concat(heights,":")
         if signature~=self.heights then self.heights=signature;self.bounds=Fit.cityBounds(Config,Architecture,data.game);self.key=nil end
     end

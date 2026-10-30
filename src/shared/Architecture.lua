@@ -164,8 +164,8 @@ function Architecture.property(config, index, ownerName, ownerTint, level, paint
     end
     add("ParcelPlinth",{18.9,0.35,18.9},0,-0.35,0,"DCE6F4")
     add("Lawn", { 18.6, 0.3, 18.6 }, 0, -0.1, 0, ownerName and "72D394" or "EDF4FF", { material = ownerName and "Grass" or "SmoothPlastic" })
-    add("GardenPath", { 3.5, 0.12, 8 }, 0, 0.12, -5.2, "F6FAFF", { material = "Concrete" })
     if ownerName then
+    add("GardenPath", { 3.5, 0.12, 8 }, 0, 0.12, -5.2, "F6FAFF", { material = "Concrete" })
     for _, x in ipairs({ -8.4, 8.4 }) do
         add("Hedge", { 0.85, 1.3, 16.5 }, x, 0.6, 0.2, "557D5A", { material = "Grass" })
         for z = -7, 7, 7 do add("FencePost", { 0.35, 1.8, 0.35 }, x, 0.8, z, "EEE3CC") end
@@ -173,8 +173,10 @@ function Architecture.property(config, index, ownerName, ownerTint, level, paint
     add("BackHedge", { 17.6, 1.3, 0.85 }, 0, 0.6, 8.1, "557D5A", { material = "Grass" })
     else
         add("DeedAccent",{17.8,0.2,2},0,0.15,7.6,config.groups[tile.group].color)
-        for x=-5,5,5 do add("BlueprintGrid",{0.09,0.06,10},x,0.08,0,"D3E1F4") end
-        for z=-5,5,5 do add("BlueprintGrid",{10,0.06,0.09},0,0.08,z,"D3E1F4") end
+        for _,x in ipairs({-7.6,7.6}) do for _,z in ipairs({-7.6,7.6}) do
+            add("LotCorner",{2.4,0.08,0.22},x-(x>0 and 1 or -1),0.13,z,"B8CDE8")
+            add("LotCorner",{0.22,0.08,2.4},x,0.13,z-(z>0 and 1 or -1),"B8CDE8")
+        end end
     end
     if ownerName then
         for _,x in ipairs({-9,9}) do add("OwnershipBorder",{0.3,0.35,18.3},x,0.22,0,ownerTint) end
@@ -220,15 +222,9 @@ function Architecture.property(config, index, ownerName, ownerTint, level, paint
         add("GardenTreeTrunk", { 0.35, 2.5, 0.35 }, 7.8, 1.25, 6.8, "AA8869", { material = "Wood" })
         add("GardenTree", { 2.4, 2.7, 2.4 }, 7.8, 3.7, 6.8, "67C98F", { shape = "Ball", material = "Grass" })
     else
-        -- City-owned display homes give each district a silhouette before purchase.
-        -- They have no owner, interactive door, premium effects, or visit permission.
-        local preview=Architecture.house(origin,yaw,config.groups[tile.group].color,0,config.groups[tile.group].color,0,true,"classic")
-        for _,entry in ipairs(preview) do
-            entry.name="Display_"..entry.name;entry.door=nil;entry.light=nil;entry.tileIndex=index
-            table.insert(entries,entry)
-        end
-        add("SaleSign", { 7.2, 0.16, 2.4 }, 0, 0.55, -8, "386BF0",
-            { text = "$" .. tile.price, textFace = "Top", textColor = "FFFFFF", textSize = 56,canCollide=false })
+        -- Empty lots stay empty until a player buys the selected home level.
+        add("SaleSign", { 13.6, 0.12, 8.2 }, 0, 0.23, -0.4, "FFFFFF",
+            { text = "FOR SALE\n$" .. tile.price, textFace = "Top", textColor = "3555A5", textSize = 64,canCollide=false })
     end
     return entries
 end

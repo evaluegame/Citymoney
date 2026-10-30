@@ -9,30 +9,35 @@ function Menus.new(ui)
     local self=setmetatable({ui=ui,kind="demolish",tile=nil,targetId=nil,pending=nil,error=nil},Menus)
     local C,config=ui.colors,ui.config
     local frame,text,button,overlay=ui.frame,ui.text,ui.button,ui.overlay
-    self.lobby,self.lobbyCard=overlay(520,632)
+    self.lobby,self.lobbyCard=overlay(520,676)
     text(self.lobbyCard,"Play together",24,16,436,36,26,C.ink,true)
-    text(self.lobbyCard,"Choose your match, player color and readiness.",24,55,472,30,13,C.muted)
-    self.leaveParty=button(self.lobbyCard,"Leave party",338,18,120,28,C.paper,function() ui.send("LeaveParty") end)
-    button(self.lobbyCard,"×",468,18,28,28,C.paper,function() self.lobby.Visible=false end)
-    self.two=button(self.lobbyCard,"2 players",24,100,230,44,C.green,function() ui.send("Seats",2) end)
-    self.four=button(self.lobbyCard,"4 players",266,100,230,44,C.paper,function() ui.send("Seats",4) end)
-    self.bots=button(self.lobbyCard,"Fill empty seats with bots",24,154,472,38,C.paper,function()
+    text(self.lobbyCard,"Choose 2 or 4 players, then start playing.",24,58,472,28,16,C.muted)
+    self.leaveParty=button(self.lobbyCard,"Leave party",334,18,108,36,C.paper,function() ui.send("LeaveParty") end)
+    button(self.lobbyCard,"×",452,17,44,44,C.paper,function() self.lobby.Visible=false end)
+    self.two=button(self.lobbyCard,"2 PLAYERS",24,101,230,56,C.green,function() ui.send("Seats",2) end)
+    self.four=button(self.lobbyCard,"4 PLAYERS",266,101,230,56,C.paper,function() ui.send("Seats",4) end)
+    self.practiceSettings,self.settingsCard=overlay(480,340)
+    text(self.settingsCard,"Practice settings",24,20,386,36,25,C.ink,true)
+    button(self.settingsCard,"×",412,17,44,44,C.paper,function() self.practiceSettings.Visible=false;self.lobby.Visible=true end)
+    self.bots=button(self.settingsCard,"Fill empty seats with bots",24,83,432,58,C.paper,function()
         local data=ui.data();if data then ui.send("Bots",not data.lobbyConfig.fillBots) end
     end)
-    text(self.lobbyCard,"PRACTICE DEMOLITION RULE · ONLINE ALWAYS DESTROYS THE HOUSE",24,204,472,20,10,C.muted,true)
-    self.downgrade=button(self.lobbyCard,"Remove one level",24,232,230,36,C.paper,function() ui.send("AttackRule","downgrade") end)
-    self.destroy=button(self.lobbyCard,"Destroy whole house",266,232,230,36,C.paper,function() ui.send("AttackRule","destroy") end)
+    text(self.settingsCard,"DEMOLITION RULE",24,157,432,20,13,C.muted,true)
+    self.downgrade=button(self.settingsCard,"Remove one level",24,190,210,54,C.paper,function() ui.send("AttackRule","downgrade") end)
+    self.destroy=button(self.settingsCard,"Destroy whole house",246,190,210,54,C.paper,function() ui.send("AttackRule","destroy") end)
+    text(self.settingsCard,"Online matches always use full-house demolition.",24,264,432,48,15,C.muted)
+    text(self.lobbyCard,"YOUR COLOR · pick one if you like",24,173,472,23,13,C.muted,true)
+    text(self.lobbyCard,"YOUR PARTY",24,260,472,22,13,C.muted,true)
     self.members=Instance.new("ScrollingFrame")
-    self.members.Position,self.members.Size=UDim2.fromOffset(24,286),UDim2.fromOffset(472,118)
+    self.members.Position,self.members.Size=UDim2.fromOffset(24,290),UDim2.fromOffset(472,96)
     self.members.BackgroundTransparency,self.members.BorderSizePixel,self.members.ScrollBarThickness,self.members.Parent=1,0,3,self.lobbyCard
-    text(self.lobbyCard,"YOUR PLAYER COLOR · colors already taken are locked",24,414,472,20,10,C.muted,true)
     self.colorButtons={}
     for index,hex in ipairs(config.playerColors) do
-        local choose=button(self.lobbyCard,tostring(index),24+(index-1)*78,442,66,32,Color3.fromHex(hex),function() ui.send("Color",index) end)
+        local choose=button(self.lobbyCard,tostring(index),24+(index-1)*78,205,66,42,Color3.fromHex(hex),function() ui.send("Color",index) end)
         choose.TextColor3=C.ink;table.insert(self.colorButtons,choose)
     end
-    self.ready=button(self.lobbyCard,"Ready",24,490,230,40,C.green,function() self:toggleReady() end)
-    self.invite=button(self.lobbyCard,"Invite friends",266,490,230,40,C.paper,function()
+    self.ready=button(self.lobbyCard,"Ready",24,404,230,48,C.green,function() self:toggleReady() end)
+    self.invite=button(self.lobbyCard,"INVITE FRIENDS",266,404,230,48,C.paper,function()
         task.spawn(function()
             if RunService:IsStudio() or game.PlaceId==0 then self.error="Publish the place, then invite friends from a live Roblox server.";self:render(ui.data());return end
             local data=ui.data()
@@ -46,53 +51,56 @@ function Menus.new(ui)
             if not opened then self.error="The invite prompt could not open. Try the Roblox experience page.";self:render(ui.data()) end
         end)
     end)
-    self.lobbyStatus=text(self.lobbyCard,"",24,536,472,29,12,C.muted)
-    self.queue=button(self.lobbyCard,"Join online queue",24,576,230,40,C.green,function()
+    self.lobbyStatus=text(self.lobbyCard,"",24,465,472,36,15,C.muted)
+    self.queue=button(self.lobbyCard,"PLAY ONLINE",24,514,472,64,C.green,function()
         local data=ui.data()
         if data and data.matchmaking and data.matchmaking.mode=="match" then ui.send("BackLobby")
         elseif data and data.matchmaking and data.matchmaking.queued then ui.send("QueueCancel")
         else ui.send("Queue") end
     end)
-    self.start=button(self.lobbyCard,"Practice",266,576,230,40,C.paper,function() ui.send("Start") end)
-    self.actions,self.actionCard=overlay(520,660)
+    self.start=button(self.lobbyCard,"PRACTICE WITH BOTS",24,592,302,64,C.paper,function() ui.send("Start") end)
+    self.settings=button(self.lobbyCard,"SETTINGS",338,592,158,64,C.paper,function() self.lobby.Visible=false;self.practiceSettings.Visible=true end)
+    self.queue.TextSize=18;self.start.TextSize=16
+    self.actions,self.actionCard=overlay(520,700)
     text(self.actionCard,"Cards & challenges",24,16,436,36,25,C.ink,true)
     button(self.actionCard,"×",468,18,28,28,C.paper,function() self.actions.Visible=false end)
     local challenge=frame(self.actionCard,24,66,472,101,C.mint)
     self.goalName=text(challenge,"Your challenge",12,7,310,24,15,C.ink,true)
     self.goalText=text(challenge,"",12,34,310,40,12,C.muted)
     self.goalProgress=text(challenge,"",12,78,310,15,10,C.green,true)
-    self.claim=button(challenge,"Claim reward",338,12,122,34,C.green,function()
+    self.claim=button(challenge,"Claim reward",338,12,122,44,C.green,function()
         local data=ui.data();if data then ui.send("Claim",nil,nil,data.game.turnCount) end
-    end);self.claim.TextSize=11
-    self.newGoal=button(challenge,"New goal $50",338,55,122,30,C.paper,function()
+    end);self.claim.TextSize=14
+    self.newGoal=button(challenge,"New goal $50",338,63,122,30,C.paper,function()
         local data=ui.data();if data then ui.send("NewGoal",nil,nil,data.game.turnCount) end
     end);self.newGoal.TextSize=10
     self.cardStatus=text(self.actionCard,"ONE TACTICAL CARD PER TURN",24,178,472,18,10,C.muted,true)
     self.cardButtons={}
     local short={demolish="Demolish",collect="Demand rent",boost="Rent boost",shield="Shield",repair="Renovate"}
     for index,kind in ipairs(config.cardTypes) do
-        local select=button(self.actionCard,short[kind],24+((index-1)%3)*160,202+math.floor((index-1)/3)*44,152,36,C.paper,function()
+        local select=button(self.actionCard,short[kind],24+((index-1)%3)*160,194+math.floor((index-1)/3)*52,152,44,C.paper,function()
             if not self.pending then self.kind=kind;self.tile=nil;self.targetId=nil;self.error=nil;self:render(ui.data()) end
         end)
-        select.TextSize=11;self.cardButtons[kind]=select
+        select.TextSize=14;self.cardButtons[kind]=select
     end
-    self.description=text(self.actionCard,"",24,293,472,42,12,C.muted)
-    text(self.actionCard,"CHOOSE THE PROPERTY",24,339,472,18,10,C.muted,true)
+    self.description=text(self.actionCard,"",24,298,472,42,15,C.muted)
+    text(self.actionCard,"CHOOSE THE PROPERTY",24,339,472,18,12,C.muted,true)
     self.properties=Instance.new("ScrollingFrame")
     self.properties.Position,self.properties.Size=UDim2.fromOffset(24,365),UDim2.fromOffset(472,112)
     self.properties.BackgroundTransparency,self.properties.BorderSizePixel,self.properties.ScrollBarThickness,self.properties.Parent=1,0,3,self.actionCard
     self.targetCaption=text(self.actionCard,"",24,483,472,18,10,C.muted,true)
     self.opponents=Instance.new("Frame")
-    self.opponents.Position,self.opponents.Size,self.opponents.BackgroundTransparency,self.opponents.Parent=UDim2.fromOffset(24,507),UDim2.fromOffset(472,32),1,self.actionCard
-    self.effect=text(self.actionCard,"",24,544,472,25,13,C.ink,true)
-    self.play=button(self.actionCard,"Choose a property",24,580,332,42,C.green,function() self:playCard() end)
-    button(self.actionCard,"Back",368,580,128,42,C.paper,function() self.actions.Visible=false end)
-    self.actionStatus=text(self.actionCard,"",24,629,472,20,10,C.red)
+    self.opponents.Position,self.opponents.Size,self.opponents.BackgroundTransparency,self.opponents.Parent=UDim2.fromOffset(24,507),UDim2.fromOffset(472,52),1,self.actionCard
+    self.effect=text(self.actionCard,"",24,566,472,32,15,C.ink,true)
+    self.play=button(self.actionCard,"Choose a property",24,606,332,64,C.green,function() self:playCard() end)
+    self.play.TextSize=17
+    button(self.actionCard,"Back",368,606,128,64,C.paper,function() self.actions.Visible=false end)
+    self.actionStatus=text(self.actionCard,"",24,675,472,20,12,C.red)
     self.shortNames=short
     return self
 end
-function Menus:isOpen() return self.lobby.Visible or self.actions.Visible end
-function Menus:openLobby() self.lobby.Visible=true;self.actions.Visible=false;self.error=nil;self:render(self.ui.data()) end
+function Menus:isOpen() return self.lobby.Visible or self.actions.Visible or self.practiceSettings.Visible end
+function Menus:openLobby() self.lobby.Visible=true;self.actions.Visible=false;self.practiceSettings.Visible=false;self.error=nil;self:render(self.ui.data()) end
 function Menus:toggleReady()
     local data=self.ui.data()
     if not data then return end
@@ -108,9 +116,11 @@ function Menus:resize(layout,_rosterHeight)
     local r=layout.camera
     bar.Position,bar.Size=UDim2.fromOffset(r[1],r[2]),UDim2.fromOffset(r[3],r[4])
     local specs={{"TableView",4,100},{"Fit",108,60},{"ZoomOut",172,36},{"ZoomIn",212,36}}
+    if layout.compact then specs={{"TableView",4,144},{"Fit",156,80},{"ZoomOut",244,64},{"ZoomIn",316,64}} end
     for _,spec in ipairs(specs) do
         local object=bar:FindFirstChild(spec[1])
-        object.Position,object.Size=UDim2.fromOffset(spec[2],2),UDim2.fromOffset(spec[3],30)
+        object.Position,object.Size=UDim2.fromOffset(spec[2],2),UDim2.fromOffset(spec[3],layout.compact and 64 or 30)
+        object.TextSize=layout.compact and 18 or 14
     end
 end
 function Menus:playCard()
@@ -135,7 +145,7 @@ function Menus:render(data)
     if self.revision~=data.revision then self.error=nil;self.revision=data.revision end
     local state,settings=data.game,data.lobbyConfig
     if state.status=="playing" and self.lastStatus~="playing" then
-        self.lobby.Visible=false;self.actions.Visible=false;self.pending=nil
+        self.lobby.Visible=false;self.actions.Visible=false;self.practiceSettings.Visible=false;self.pending=nil
     end
     self.lastStatus=state.status
     local me,current
@@ -155,15 +165,15 @@ function Menus:render(data)
     ui.available(self.two,editable,settings.seats==2 and C.green or C.paper)
     ui.available(self.four,editable,settings.seats==4 and C.green or C.paper)
     ui.available(self.bots,editable,C.paper)
-    self.bots.Text="Practice fills empty seats with bots: "..(settings.fillBots and "ON" or "OFF")
+    self.bots.Text="Fill empty seats with bots: "..(settings.fillBots and "ON" or "OFF")
     ui.available(self.downgrade,editable,settings.attackMode=="downgrade" and C.green or C.paper)
     ui.available(self.destroy,editable,settings.attackMode=="destroy" and C.green or C.paper)
     self.members:ClearAllChildren()
     for index,entry in ipairs(data.lobby) do
-        local name=ui.text(self.members,(entry.ready and "✓ " or "○ ")..entry.name..(entry.id==data.hostId and " · host" or ""),8,(index-1)*28,450,26,13,Color3.fromHex(config.playerColors[entry.colorIndex] or "798579"),entry.id==ui.id)
+        local name=ui.text(self.members,(entry.ready and "READY · " or "WAITING · ")..entry.name..(entry.id==data.hostId and " · host" or ""),8,(index-1)*32,450,30,16,C.ink,entry.id==ui.id)
         name.TextWrapped,name.TextTruncate=false,Enum.TextTruncate.AtEnd
     end
-    self.members.CanvasSize=UDim2.fromOffset(0,#data.lobby*28)
+    self.members.CanvasSize=UDim2.fromOffset(0,#data.lobby*32)
     for index,button in ipairs(self.colorButtons) do
         local taken=false
         for _,entry in ipairs(data.lobby) do if entry.id~=ui.id and entry.colorIndex==index then taken=true end end
@@ -171,16 +181,19 @@ function Menus:render(data)
         button.BackgroundTransparency=taken and 0.6 or 0
         button.Text=mine and mine.colorIndex==index and "✓" or tostring(index)
     end
-    self.ready.Text=mine and mine.ready and "Ready ✓ · click to unready" or "I'm ready to play"
+    self.ready.Text=mine and mine.ready and "READY · tap to unready" or "I'M READY TO PLAY"
+    self.ready.Visible=#data.lobby>1 or not (mine and mine.ready)
+    self.invite.Position,self.invite.Size=UDim2.fromOffset(self.ready.Visible and 266 or 24,404),UDim2.fromOffset(self.ready.Visible and 230 or 472,48)
     ui.available(self.ready,mine~=nil and not queue.queued and queue.mode~="match",mine and mine.ready and C.green or C.paper)
     local enough=readyCount>=settings.seats or settings.fillBots
-    self.lobbyStatus.Text=self.error or ((queue.queued or queue.mode=="match") and queue.status or (queue.status.." · "..#data.lobby.." in party · "..readyCount.." ready"))
+    self.lobbyStatus.Text=self.error or ((queue.queued or queue.mode=="match") and queue.status or (readyCount<#data.lobby and "Waiting for your friends to tap Ready." or (#data.lobby==1 and "Play online, or try a quick practice game." or "Everyone is ready. The host can start!")))
     self.lobbyStatus.TextColor3=self.error and C.red or C.muted
     ui.available(self.start,editable and state.status~="playing" and mine~=nil and mine.ready and enough,C.paper)
-    self.start.Text="Practice with "..settings.seats.." players"
+    self.start.Text=settings.fillBots and "PRACTICE WITH BOTS" or "PRACTICE WITH PARTY"
     local partyReady=readyCount==#data.lobby and #data.lobby<=settings.seats
     ui.available(self.queue,queue.mode=="match" or (queue.queued and not queue.connecting) or (host and not active and mine~=nil and mine.ready and partyReady),C.green)
-    self.queue.Text=queue.mode=="match" and "Return to lobby" or (queue.queued and (queue.connecting and "Connecting…" or "Cancel queue") or ("Join "..settings.seats.."-player queue"))
+    self.queue.Text=queue.mode=="match" and "RETURN TO LOBBY" or (queue.queued and (queue.connecting and "CONNECTING..." or "CANCEL SEARCH") or ("PLAY ONLINE · "..settings.seats.." PLAYERS"))
+    self.leaveParty.Visible=#data.lobby>1 or queue.mode=="match"
     self.leaveParty.Text=queue.mode=="match" and "Leave match" or "Leave party"
     ui.available(self.leaveParty,not queue.connecting,C.paper)
     if not self.actions.Visible then return end
@@ -218,13 +231,13 @@ function Menus:render(data)
         local property=state.properties[index]
         local owner
         for _,entry in ipairs(state.players) do if entry.id==property.ownerId then owner=entry end end
-        local select=ui.button(self.properties,config.tiles[index].name.." · "..(owner and owner.name or "").." · L"..property.level,2,(row-1)*33,466,28,self.tile==index and C.green or C.paper,function()
+        local select=ui.button(self.properties,config.tiles[index].name.." · "..(owner and owner.name or "").." · L"..property.level,2,(row-1)*70,466,64,self.tile==index and C.green or C.paper,function()
             if not self.pending then self.tile=index;self.error=nil;self:render(ui.data()) end
         end)
-        select.TextSize=11
+        select.TextSize=17
     end
     if #candidates==0 then ui.text(self.properties,definition.target=="rival" and "No opponent owns a house yet." or "Buy a property before using this card.",8,8,450,45,13,C.muted) end
-    self.properties.CanvasSize=UDim2.fromOffset(0,#candidates*33)
+    self.properties.CanvasSize=UDim2.fromOffset(0,#candidates*70)
     self.targetCaption.Text=definition.target=="demand" and "CHOOSE WHO MUST PAY" or (settings.attackMode=="destroy" and "ATTACK RULE: FULL HOUSE DEMOLITION" or "ATTACK RULE: REMOVE ONE LEVEL; L0 HOMES ARE DEMOLISHED")
     local activeOpponent=false
     if definition.target=="demand" then
@@ -232,8 +245,8 @@ function Menus:render(data)
         for _,entry in ipairs(state.players) do
             if entry.alive and entry.id~=ui.id then
                 if entry.id==self.targetId then activeOpponent=true end
-                local select=ui.button(self.opponents,entry.name, row*157,0,150,30,entry.id==self.targetId and C.green or C.paper,function() self.targetId=entry.id;self.error=nil;self:render(ui.data()) end)
-                select.TextSize=11;row=row+1
+                local select=ui.button(self.opponents,entry.name, row*157,0,150,52,entry.id==self.targetId and C.green or C.paper,function() self.targetId=entry.id;self.error=nil;self:render(ui.data()) end)
+                select.TextSize=15;row=row+1
             end
         end
     end

@@ -90,13 +90,13 @@ test("every final dice pose displays the server's exact rolled value on top",fun
         near(r[1]*n[1]+r[2]*n[2]+r[3]*n[3],0)
         near(r[4]*n[1]+r[5]*n[2]+r[6]*n[3],1)
         near(r[7]*n[1]+r[8]*n[2]+r[9]*n[3],0)
-        near(p[2],4.8)
+        near(p[2],Dice.restHeight)
     end end end
 end)
 test("dice animation bounces above its tray and has finite orthonormal transforms",function()
     for value=1,6 do for step=0,60 do
         local p,r=Dice.pose(value,1,step/60,1,3)
-        check(p[2]>=4.8 and p[2]<20)
+        check(p[2]>=Dice.restHeight and p[2]<20)
         for a=0,2 do for b=0,2 do
             local dot=0;for c=1,3 do dot=dot+r[a*3+c]*r[b*3+c] end
             near(dot,a==b and 1 or 0)
