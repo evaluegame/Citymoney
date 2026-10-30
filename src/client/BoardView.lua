@@ -29,7 +29,7 @@ function View:update(dt,root,safe,layout,data,focus,inspector,visit,player)
     self.wasVisiting=false
     camera.CameraType,camera.FieldOfView=Enum.CameraType.Scriptable,36
     local size,offset=camera.ViewportSize,safe.AbsolutePosition
-    local mode=root:GetAttribute("ViewMode") or "city"
+    local mode=root:GetAttribute("ViewMode") or Presentation.defaultView
     local rotate,zoom=root:GetAttribute("Rotate") or 0,root:GetAttribute("Zoom") or 1
     local key=table.concat({size.X,size.Y,layout.width,layout.height,layout.scale,offset.X,offset.Y,mode,rotate,zoom,tostring(focus),tostring(inspector),data and data.game.properties[focus or 0] and data.game.properties[focus].level or 0},":")
     if self.key~=key then
@@ -37,8 +37,7 @@ function View:update(dt,root,safe,layout,data,focus,inspector,visit,player)
         local rectangle=Layout.board(layout,inspector)
         local rect={offset.X+rectangle[1]*layout.scale,offset.Y+rectangle[2]*layout.scale,rectangle[3]*layout.scale,rectangle[4]*layout.scale}
         self.rect=rect
-        local yaw=rotate*math.pi/2+(mode=="city" and Presentation.defaultYaw or 0)
-        local elevation=mode=="city" and Presentation.defaultElevation or math.rad(76)
+        local yaw,elevation=Presentation.viewAngles(mode,rotate)
         local bounds=self.bounds
         if focus then
             local p,angle=Architecture.site(focus)

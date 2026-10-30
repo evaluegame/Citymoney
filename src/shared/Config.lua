@@ -5,7 +5,8 @@ local Config = {
     turnSeconds = 55,
     autoAdvanceSeconds = 4,
     diceSeconds = 1.1,
-    stepSeconds = 0.18,
+    stepSeconds = 0.38, -- One complete board step, including a pause on the space.
+    stepPauseSeconds = 0.13,
     opportunityEvery = 2,
     opportunities = {
         {name="Builder's Deal",description="A city investor likes your plans. Choose your guaranteed reward.",choices={{label="Take $90",detail="Add $90 to your balance now.",cash=90},{label="Renovation card",detail="Upgrade one of your homes for free when you play this card.",card="repair"}}},

@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 """Bake the shared scene into the Studio place, so the editor opens on the city."""
 import json
-import math
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -57,18 +56,11 @@ for index, entry in enumerate(scene):
         }
     board[entry["name"] if entry["name"].startswith("Tile") else f"{entry['name']}_{index:04}"] = node
 project["tree"]["Workspace"]["CitymoneyBoard"] = board
-# Camera basis uses right/up/back columns, matching Roblox CFrame.lookAt.
-position = [58, 278, 178]
-target = [0, 5, 0]
-direction = [a-b for a,b in zip(position,target)]
-length = math.sqrt(sum(value * value for value in direction))
-back = [value / length for value in direction]
-horizontal = math.hypot(back[0], back[2])
-right = [back[2] / horizontal, 0, -back[0] / horizontal]
-up = [back[1] * right[2] - back[2] * right[1], back[2] * right[0] - back[0] * right[2], back[0] * right[1] - back[1] * right[0]]
-rotation = [component for row in zip(right, up, back) for component in row]
+# Use the same aligned top view as the runtime camera, including full-board fit.
+camera = json.loads((ROOT / "build/board-camera.json").read_text())
+rotation = [component for row in zip(camera["right"], camera["up"], camera["back"]) for component in row]
 project["tree"]["Workspace"]["CityPreviewCamera"] = {"$className": "Camera", "$properties": {
-    "CFrame": position + rotation, "FieldOfView": 38, "CameraType": "Scriptable",
+    "CFrame": camera["position"] + rotation, "FieldOfView": camera["fov"], "CameraType": "Scriptable",
 }}
 destination = ROOT / "build/Citymoney.project.json"
 destination.write_text(json.dumps(project, indent=2))

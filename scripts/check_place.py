@@ -53,4 +53,9 @@ for index in range(1, 25):
     assert tile.find("Item[@class='SurfaceGui']") is not None, "Missing editor tile caption"
 camera = child(child(place, "Workspace", "Workspace"), "CityPreviewCamera", "Camera")
 assert child(place, "Workspace", "Workspace").findtext("Properties/Ref[@name='CurrentCamera']") == camera.attrib["referent"]
+expected_camera = json.loads((ROOT / "build/board-camera.json").read_text())
+camera_frame = camera.find("Properties/CoordinateFrame[@name='CFrame']")
+rotation = [value for row in zip(expected_camera["right"], expected_camera["up"], expected_camera["back"]) for value in row]
+for axis, value in zip(("X", "Y", "Z", "R00", "R01", "R02", "R10", "R11", "R12", "R20", "R21", "R22"), expected_camera["position"] + rotation):
+    assert math.isclose(float(camera_frame.findtext(axis)), value, abs_tol=1e-4), ("Editor top view", axis)
 print(f"Editor preview verified: {len(board.findall('Item'))} scene parts, including all 24 tiles.")

@@ -2,6 +2,7 @@ local Config=require("../src/shared/Config")
 local Engine=require("../src/shared/Engine")
 local Flow=require("../src/shared/TurnFlow")
 local Camera=require("../src/shared/BoardCamera")
+local Presentation=require("../src/shared/Presentation")
 local Layout=require("../src/shared/Layout")
 local Architecture=require("../src/shared/Architecture")
 local Board=require("../src/shared/Board")
@@ -31,7 +32,7 @@ local function assertFits(frame,rectangle,point)
     check(x>=rectangle[1]+9.9 and x<=rectangle[1]+rectangle[3]-9.9,"Board clips a horizontal HUD edge")
     check(y>=rectangle[2]+9.9 and y<=rectangle[2]+rectangle[4]-9.9,"Board clips a vertical HUD edge")
 end
-local function fitAll(elevation,inspector,zoom)
+local function fitAll(elevation,inspector,zoom,yaw)
     for _,size in ipairs(sizes) do
         for _,inset in ipairs({0,36,58}) do
             local l=Layout.calculate(size[1],size[2])
@@ -39,16 +40,16 @@ local function fitAll(elevation,inspector,zoom)
             local rect={r[1]*l.scale,r[2]*l.scale+inset,r[3]*l.scale,r[4]*l.scale}
             check(r[1]>=0 and r[2]>=0 and r[1]+r[3]<=l.width and r[2]+r[4]<=l.height,"Board rectangle leaves the safe area")
             for rotation=0,3 do
-                local frame=Camera.fit(size[1],size[2]+inset,rect,rotation*math.pi/2,elevation,zoom)
+                local frame=Camera.fit(size[1],size[2]+inset,rect,rotation*math.pi/2+(yaw or 0),elevation,zoom)
                 for _,x in ipairs({-88,88}) do for _,y in ipairs({0,32}) do for _,z in ipairs({-88,88}) do assertFits(frame,rect,{x,y,z}) end end end
                 for index=1,24 do assertFits(frame,rect,Architecture.position(index)) end
             end
         end
     end
 end
-test("table camera keeps all 24 tiles and tall homes inside the safe board area",function() fitAll(math.rad(76),false,1) end)
-test("city camera fits every rotation with the property inspector open",function() fitAll(math.rad(52),true,1) end)
-test("zooming out preserves the complete board across desktop and portrait screens",function() fitAll(math.rad(76),true,1.4) end)
+test("table camera keeps all 24 tiles and tall homes inside the safe board area",function() fitAll(Presentation.defaultElevation,false,1) end)
+test("city camera fits every rotation with the property inspector open",function() fitAll(Presentation.cityElevation,true,1,Presentation.cityYaw) end)
+test("zooming out preserves the complete board across desktop and portrait screens",function() fitAll(Presentation.defaultElevation,true,1.4) end)
 test("property closeups fit all levels without hiding beneath HUD panels",function()
     local l=Layout.calculate(1337,720);local rect=Layout.board(l,true)
     for index,tile in ipairs(Config.tiles) do if tile.kind=="property" then

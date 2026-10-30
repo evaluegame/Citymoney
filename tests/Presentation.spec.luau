@@ -22,6 +22,14 @@ local function luminance(hex)
 end
 local function contrast(a,b) local x,y=luminance(a),luminance(b);return (math.max(x,y)+0.05)/(math.min(x,y)+0.05) end
 local screens={{1440,900},{1192,642},{800,560},{390,760}}
+test("play opens on an aligned overhead board, with the angled city available separately",function()
+    check(P.defaultView=="table")
+    local yaw,elevation=P.viewAngles(P.defaultView,0)
+    check(yaw==0 and elevation>=math.rad(75),"Default view makes the route harder to follow")
+    local cityYaw,cityElevation=P.viewAngles("city",0)
+    check(cityYaw~=yaw and cityElevation<elevation)
+    for rotation=0,3 do local y,e=P.viewAngles("table",rotation);check(y==rotation*math.pi/2 and e==elevation) end
+end)
 test("primary controls and text have strong light-theme contrast",function()
     check(contrast(P.colors.gold,P.colors.ink)>7)
     check(contrast(P.colors.green,P.colors.white)>4)

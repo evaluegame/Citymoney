@@ -44,6 +44,7 @@ safe.Size,safe.BackgroundTransparency,safe.Parent=UDim2.fromScale(1,1),1,gui
 local root=Instance.new("Frame")
 root.Name="CityRoot"
 root.BackgroundTransparency,root.Parent=1,safe
+root:SetAttribute("ViewMode",Presentation.defaultView)
 local uiScale=Instance.new("UIScale"); uiScale.Parent=root
 local function round(object,radius)
     local value=Instance.new("UICorner");value.CornerRadius,value.Parent=UDim.new(0,radius or 15),object
@@ -163,8 +164,8 @@ local timeTrack=frame(control,16,104,778,3,C.paper)
 local timeFill=Instance.new("Frame");timeFill.Size,timeFill.BackgroundColor3,timeFill.BorderSizePixel,timeFill.Parent=UDim2.fromScale(1,1),C.green,0,timeTrack
 local cameraBar=frame(root,24,510,188,84)
 cameraBar.Name,cameraBar.ZIndex="CameraDock",2
-button(cameraBar,"Top view",6,6,86,30,C.paper,function() focusIndex=nil;root:SetAttribute("ViewMode",(root:GetAttribute("ViewMode") or "city")=="city" and "table" or "city");root:SetAttribute("Zoom",1);render() end).Name="TableView"
-button(cameraBar,"Fit",39,45,44,30,C.paper,function() focusIndex=nil;inspectorOpen=false;root:SetAttribute("Rotate",0);root:SetAttribute("Zoom",1);render() end).Name="Fit"
+button(cameraBar,"3D view",6,6,86,30,C.paper,function() focusIndex=nil;root:SetAttribute("ViewMode",(root:GetAttribute("ViewMode") or Presentation.defaultView)=="city" and "table" or "city");root:SetAttribute("Zoom",1);render() end).Name="TableView"
+button(cameraBar,"Fit",39,45,44,30,C.paper,function() focusIndex=nil;inspectorOpen=false;root:SetAttribute("ViewMode",Presentation.defaultView);root:SetAttribute("Rotate",0);root:SetAttribute("Zoom",1);render() end).Name="Fit"
 button(cameraBar,"-",121,45,27,30,C.paper,function() root:SetAttribute("Zoom",math.min(1.5,(root:GetAttribute("Zoom") or 1)+0.1)) end).Name="ZoomOut"
 button(cameraBar,"+",153,45,28,30,C.paper,function() root:SetAttribute("Zoom",math.max(0.75,(root:GetAttribute("Zoom") or 1)-0.1)) end).Name="ZoomIn"
 local visitBanner=frame(root,420,110,440,58,C.green)
@@ -548,7 +549,7 @@ render=function()
     roster.Visible=not visitIndex and not (layout and layout.compact)
     turnChip.Visible=roster.Visible
     cameraBar.Visible=not visitIndex
-    cameraBar.TableView.Text=(root:GetAttribute("ViewMode") or "city")=="city" and "Top view" or "City view"
+    cameraBar.TableView.Text=(root:GetAttribute("ViewMode") or Presentation.defaultView)=="city" and "Top view" or "3D view"
     replay.Visible=isHost or (data.matchmaking and data.matchmaking.mode=="match")
     replay.Text=data.matchmaking and data.matchmaking.mode=="match" and "Return to matchmaking" or "Play again"
     if state.status=="finished" then

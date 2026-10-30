@@ -41,7 +41,7 @@ for item in layout["elements"]:
                         line=candidate
                 lines.append(line)
             else:
-                while len(paragraph)>1 and draw.textlength(paragraph,font=font)>w-3:
+                while len(paragraph)>1 and draw.textlength(paragraph,font=font)>w-2:
                     paragraph=paragraph[:-2]+"…"
                 lines.append(paragraph)
         line_height=font.size+2

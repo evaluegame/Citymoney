@@ -122,10 +122,44 @@ test('detention movement records the route to the detention event before returni
  e:player(1).position=13;check(e:act(1,'Roll'))
  local roll=e.state.lastRoll;equal(roll.landedTile,19);equal(roll.to,7);check(e:player(1).detained)
 end)
+test('a board step slows at both ends without overshooting or a large jump',function()
+ local travel=(Config.stepSeconds-Config.stepPauseSeconds)/Config.stepSeconds
+ local previous=-1
+ for sample=0,100 do
+  local progress,height=Journey.step(Config,travel*sample/100)
+  check(progress>=previous and progress>=0 and progress<=1);check(height>=0 and height<=0.55+1e-6);previous=progress
+ end
+ local first=Journey.step(Config,travel*0.01)
+ local middle=Journey.step(Config,travel*0.51)-Journey.step(Config,travel*0.50)
+ local last=1-Journey.step(Config,travel*0.99)
+ check(first<middle/10 and last<middle/10,'Step should settle at each space')
+ local start,height=Journey.step(Config,0);equal(start,0);equal(height,0)
+end)
+test('every space has a real stationary pause across all one-to-twelve-space routes',function()
+ for steps=1,12 do for space=1,steps do
+  local travel=Config.stepSeconds-Config.stepPauseSeconds
+  for _,fraction in ipairs({0.1,0.5,0.99}) do
+   local index,progress,height=Journey.sample(Config,steps,(space-1)*Config.stepSeconds+travel+Config.stepPauseSeconds*fraction)
+   equal(index,space);equal(progress,1);equal(height,0)
+  end
+ end end
+end)
+test('one route timeline reaches each space boundary and the exact final space',function()
+ for steps=1,12 do
+  for space=1,steps do
+   local elapsed=(space-1)*Config.stepSeconds
+   local index,progress,height=Journey.sample(Config,steps,elapsed+1e-9)
+   equal(index,space);near(progress,0);near(height,0)
+  end
+  local index,progress,height=Journey.sample(Config,steps,steps*Config.stepSeconds)
+  equal(index,steps);equal(progress,1);equal(height,0)
+  check(Journey.duration(Config,{steps=steps})>=Config.diceSeconds+steps*Config.stepSeconds)
+ end
+end)
 test('automatic handoff leaves four seconds to read the result after a twelve-space journey',function()
  local e=game(function(_,high) return high==6 and 6 or 1 end);local f=Flow.new(Config)
  f:observe(e.state,99);check(e:act(1,'Roll'));f:observe(e.state,100)
- near(f.journeyUntil,103.41);near(f.handoffAt,107.41);equal(f:due(e.state,107.40),nil);equal(f:due(e.state,107.41),'End')
+ near(f.journeyUntil,105.81);near(f.handoffAt,109.81);equal(f:due(e.state,109.80),nil);equal(f:due(e.state,109.81),'End')
 end)
 test('buy and offer decision clocks start after the dice and token have arrived',function()
  for _,phase in ipairs({'buy','offer'}) do
@@ -145,7 +179,7 @@ test('early finish, purchase and reward requests wait until the token arrives',f
 end)
 test('an early purchase cannot advance the next player before the visible landing',function()
  local e=game();local f=Flow.new(Config);e.state.phase='buy';e.state.lastRoll={seq=1,turn=1,steps=12};f:observe(e.state,100)
- e.state.phase='end';f:observe(e.state,100.2);near(f.handoffAt,107.41)
+ e.state.phase='end';f:observe(e.state,100.2);near(f.handoffAt,109.81)
 end)
 test('historic rolls do not animate again on the next turn or after a match finishes',function()
  local e=game();e.state.phase='end';e.state.lastRoll={seq=1,turn=1,steps=8};local f=Flow.new(Config);f:observe(e.state,100)

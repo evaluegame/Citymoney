@@ -24,6 +24,13 @@ encode = function(value: any): string
     error("Unsupported scene data: " .. type(value))
 end
 local mode = ...
+if mode=="camera" then
+    local Camera=require("../src/shared/BoardCamera")
+    local P=require("../src/shared/Presentation")
+    local A=require("../src/shared/Architecture")
+    print(encode(Camera.fit(1440,900,{24,24,1392,852},P.defaultYaw,P.defaultElevation,1,Camera.cityBounds(Config,A))))
+    return
+end
 local scene = Board.generate(Config)
 if mode == "showcase" or mode == "home" or mode=="clubhome" or mode=="clubshowcase" or mode=="table" then
     local Architecture = require("../src/shared/Architecture")

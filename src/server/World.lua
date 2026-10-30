@@ -6,6 +6,7 @@ local Cosmetics=require(shared.Cosmetics)
 local DiceWorld=require(script.Parent.DiceWorld)
 local Plaza=require(shared.Plaza)
 local Effects=require(script.Parent.WorldEffects)
+local Journey=require(shared.Journey)
 local World = {}
 World.__index = World
 
@@ -343,16 +344,17 @@ function World:sync(state)
                     local animated=true
                     if self.club then local _,effects=self.club:visual(resident.id);animated=effects end
                     if not old or (not route and detained) or steps>12 or not animated or not resident.alive then model:PivotTo(self:tokenFrame(destination,seat,model)); return end
-                    for step=1,steps do
-                        if self.generations[resident.id]~=generation or not model.Parent then return end
+                    if steps>0 then
+                        local frames={model:GetPivot()}
+                        for step=1,steps do table.insert(frames,self:tokenFrame((old+step-1)%#self.config.tiles+1,seat,model)) end
                         local value=Instance.new("NumberValue")
                         value.Value=0
-                        local start=model:GetPivot()
-                        local target=self:tokenFrame((old+step-1)%#self.config.tiles+1,seat,model)
-                        local connection=value.Changed:Connect(function(alpha)
-                            if model.Parent then model:PivotTo(start:Lerp(target,alpha)+Vector3.new(0,math.sin(math.pi*alpha)*1.6,0)) end
+                        local connection=value.Changed:Connect(function(elapsed)
+                            local step,progress,height=Journey.sample(self.config,steps,elapsed)
+                            if model.Parent then model:PivotTo(frames[step]:Lerp(frames[step+1],progress)+Vector3.new(0,height,0)) end
                         end)
-                        local tween=TweenService:Create(value,TweenInfo.new(self.config.stepSeconds,Enum.EasingStyle.Linear),{Value=1})
+                        local duration=steps*Journey.stepSeconds(self.config)
+                        local tween=TweenService:Create(value,TweenInfo.new(duration,Enum.EasingStyle.Linear),{Value=duration})
                         self.motions[resident.id]={value=value,connection=connection,tween=tween}
                         tween:Play();tween.Completed:Wait()
                         if self.generations[resident.id]~=generation then return end

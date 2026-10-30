@@ -583,7 +583,8 @@ local Config = {
     turnSeconds = 55,
     autoAdvanceSeconds = 4,
     diceSeconds = 1.1,
-    stepSeconds = 0.18,
+    stepSeconds = 0.38, -- One complete board step, including a pause on the space.
+    stepPauseSeconds = 0.13,
     opportunityEvery = 2,
     opportunities = {
         {name="Builder's Deal",description="A city investor likes your plans. Choose your guaranteed reward.",choices={{label="Take $90",detail="Add $90 to your balance now.",cash=90},{label="Renovation card",detail="Upgrade one of your homes for free when you play this card.",card="repair"}}},
@@ -1265,9 +1266,28 @@ return Engine
           <string name="Name">Journey</string>
           <string name="Source">-- Shared timeline for the dice, board movement, result reveal and turn clock.
 local Journey={}
+function Journey.stepSeconds(config) return config.stepSeconds or 0.38 end
+-- The tween spans a whole step. Reach the exact space early, then hold still
+-- there so a board move reads as individual spaces instead of a continuous run.
+function Journey.step(config,alpha)
+    local seconds=Journey.stepSeconds(config)
+    local pause=math.clamp(config.stepPauseSeconds or 0.13,0,seconds*0.75)
+    local travel=math.clamp(alpha*seconds/(seconds-pause),0,1)
+    local progress=travel*travel*(3-2*travel)
+    local height=travel&lt;1 and math.sin(math.pi*travel)*0.55 or 0
+    return progress,height
+end
+-- One tween drives the complete route, avoiding a scheduler delay at every
+-- space. Each boundary is still the exact center of the next board space.
+function Journey.sample(config,steps,elapsed)
+    local seconds=Journey.stepSeconds(config)
+    local index=math.clamp(math.floor(elapsed/seconds)+1,1,steps)
+    local progress,height=Journey.step(config,(elapsed-(index-1)*seconds)/seconds)
+    return index,progress,height
+end
 function Journey.duration(config,roll)
     if not roll then return 0 end
-    return config.diceSeconds+math.clamp(roll.steps or 0,0,12)*(config.stepSeconds or 0.18)+0.15
+    return config.diceSeconds+math.clamp(roll.steps or 0,0,12)*Journey.stepSeconds(config)+0.15
 end
 function Journey.progress(config,roll,remaining)
     return math.clamp(1-remaining/math.max(0.01,Journey.duration(config,roll)),0,1)
@@ -1634,8 +1654,13 @@ return Plaza
 local P={
     colors={card="FFFFFF",paper="F0F5FC",ink="1B2C48",muted="687B94",line="D9E4F2",green="386BF0",gold="FFC34D",mint="E9F1FF",red="ED627B",white="FFFFFF"},
     board={water="59CBE8",deepWater="3895D2",sand="F5DDA0",grass="70D594",path="F7FAFE",navy="3555A5",gold="FFC34D"},
-    defaultYaw=math.rad(18),defaultElevation=math.rad(56),
+    defaultView="table",defaultYaw=0,defaultElevation=math.rad(78),
+    cityYaw=math.rad(18),cityElevation=math.rad(56),
 }
+function P.viewAngles(mode,rotate)
+    local city=mode=="city"
+    return (rotate or 0)*math.pi/2+(city and P.cityYaw or P.defaultYaw),city and P.cityElevation or P.defaultElevation
+end
 function P.layout(width,height)
     local compact=width&lt;800 or width/height&lt;1.15
     local scale=compact and math.min(width/560,height/860) or math.min(height/720,1.3)
@@ -2835,6 +2860,7 @@ local Cosmetics=require(shared.Cosmetics)
 local DiceWorld=require(script.Parent.DiceWorld)
 local Plaza=require(shared.Plaza)
 local Effects=require(script.Parent.WorldEffects)
+local Journey=require(shared.Journey)
 local World = {}
 World.__index = World
 
@@ -3172,16 +3198,17 @@ function World:sync(state)
                     local animated=true
                     if self.club then local _,effects=self.club:visual(resident.id);animated=effects end
                     if not old or (not route and detained) or steps&gt;12 or not animated or not resident.alive then model:PivotTo(self:tokenFrame(destination,seat,model)); return end
-                    for step=1,steps do
-                        if self.generations[resident.id]~=generation or not model.Parent then return end
+                    if steps&gt;0 then
+                        local frames={model:GetPivot()}
+                        for step=1,steps do table.insert(frames,self:tokenFrame((old+step-1)%#self.config.tiles+1,seat,model)) end
                         local value=Instance.new("NumberValue")
                         value.Value=0
-                        local start=model:GetPivot()
-                        local target=self:tokenFrame((old+step-1)%#self.config.tiles+1,seat,model)
-                        local connection=value.Changed:Connect(function(alpha)
-                            if model.Parent then model:PivotTo(start:Lerp(target,alpha)+Vector3.new(0,math.sin(math.pi*alpha)*1.6,0)) end
+                        local connection=value.Changed:Connect(function(elapsed)
+                            local step,progress,height=Journey.sample(self.config,steps,elapsed)
+                            if model.Parent then model:PivotTo(frames[step]:Lerp(frames[step+1],progress)+Vector3.new(0,height,0)) end
                         end)
-                        local tween=TweenService:Create(value,TweenInfo.new(self.config.stepSeconds,Enum.EasingStyle.Linear),{Value=1})
+                        local duration=steps*Journey.stepSeconds(self.config)
+                        local tween=TweenService:Create(value,TweenInfo.new(duration,Enum.EasingStyle.Linear),{Value=duration})
                         self.motions[resident.id]={value=value,connection=connection,tween=tween}
                         tween:Play();tween.Completed:Wait()
                         if self.generations[resident.id]~=generation then return end
@@ -3343,6 +3370,7 @@ safe.Size,safe.BackgroundTransparency,safe.Parent=UDim2.fromScale(1,1),1,gui
 local root=Instance.new("Frame")
 root.Name="CityRoot"
 root.BackgroundTransparency,root.Parent=1,safe
+root:SetAttribute("ViewMode",Presentation.defaultView)
 local uiScale=Instance.new("UIScale"); uiScale.Parent=root
 local function round(object,radius)
     local value=Instance.new("UICorner");value.CornerRadius,value.Parent=UDim.new(0,radius or 15),object
@@ -3462,8 +3490,8 @@ local timeTrack=frame(control,16,104,778,3,C.paper)
 local timeFill=Instance.new("Frame");timeFill.Size,timeFill.BackgroundColor3,timeFill.BorderSizePixel,timeFill.Parent=UDim2.fromScale(1,1),C.green,0,timeTrack
 local cameraBar=frame(root,24,510,188,84)
 cameraBar.Name,cameraBar.ZIndex="CameraDock",2
-button(cameraBar,"Top view",6,6,86,30,C.paper,function() focusIndex=nil;root:SetAttribute("ViewMode",(root:GetAttribute("ViewMode") or "city")=="city" and "table" or "city");root:SetAttribute("Zoom",1);render() end).Name="TableView"
-button(cameraBar,"Fit",39,45,44,30,C.paper,function() focusIndex=nil;inspectorOpen=false;root:SetAttribute("Rotate",0);root:SetAttribute("Zoom",1);render() end).Name="Fit"
+button(cameraBar,"3D view",6,6,86,30,C.paper,function() focusIndex=nil;root:SetAttribute("ViewMode",(root:GetAttribute("ViewMode") or Presentation.defaultView)=="city" and "table" or "city");root:SetAttribute("Zoom",1);render() end).Name="TableView"
+button(cameraBar,"Fit",39,45,44,30,C.paper,function() focusIndex=nil;inspectorOpen=false;root:SetAttribute("ViewMode",Presentation.defaultView);root:SetAttribute("Rotate",0);root:SetAttribute("Zoom",1);render() end).Name="Fit"
 button(cameraBar,"-",121,45,27,30,C.paper,function() root:SetAttribute("Zoom",math.min(1.5,(root:GetAttribute("Zoom") or 1)+0.1)) end).Name="ZoomOut"
 button(cameraBar,"+",153,45,28,30,C.paper,function() root:SetAttribute("Zoom",math.max(0.75,(root:GetAttribute("Zoom") or 1)-0.1)) end).Name="ZoomIn"
 local visitBanner=frame(root,420,110,440,58,C.green)
@@ -3847,7 +3875,7 @@ render=function()
     roster.Visible=not visitIndex and not (layout and layout.compact)
     turnChip.Visible=roster.Visible
     cameraBar.Visible=not visitIndex
-    cameraBar.TableView.Text=(root:GetAttribute("ViewMode") or "city")=="city" and "Top view" or "City view"
+    cameraBar.TableView.Text=(root:GetAttribute("ViewMode") or Presentation.defaultView)=="city" and "Top view" or "3D view"
     replay.Visible=isHost or (data.matchmaking and data.matchmaking.mode=="match")
     replay.Text=data.matchmaking and data.matchmaking.mode=="match" and "Return to matchmaking" or "Play again"
     if state.status=="finished" then
@@ -4120,7 +4148,7 @@ function View:update(dt,root,safe,layout,data,focus,inspector,visit,player)
     self.wasVisiting=false
     camera.CameraType,camera.FieldOfView=Enum.CameraType.Scriptable,36
     local size,offset=camera.ViewportSize,safe.AbsolutePosition
-    local mode=root:GetAttribute("ViewMode") or "city"
+    local mode=root:GetAttribute("ViewMode") or Presentation.defaultView
     local rotate,zoom=root:GetAttribute("Rotate") or 0,root:GetAttribute("Zoom") or 1
     local key=table.concat({size.X,size.Y,layout.width,layout.height,layout.scale,offset.X,offset.Y,mode,rotate,zoom,tostring(focus),tostring(inspector),data and data.game.properties[focus or 0] and data.game.properties[focus].level or 0},":")
     if self.key~=key then
@@ -4128,8 +4156,7 @@ function View:update(dt,root,safe,layout,data,focus,inspector,visit,player)
         local rectangle=Layout.board(layout,inspector)
         local rect={offset.X+rectangle[1]*layout.scale,offset.Y+rectangle[2]*layout.scale,rectangle[3]*layout.scale,rectangle[4]*layout.scale}
         self.rect=rect
-        local yaw=rotate*math.pi/2+(mode=="city" and Presentation.defaultYaw or 0)
-        local elevation=mode=="city" and Presentation.defaultElevation or math.rad(76)
+        local yaw,elevation=Presentation.viewAngles(mode,rotate)
         local bounds=self.bounds
         if focus then
             local p,angle=Architecture.site(focus)
@@ -5254,16 +5281,22 @@ return Motion
             <string name="Name">TileLabels</string>
             <string name="Source">-- Upright, screen-sized labels keep the tabletop readable on every board edge.
 local shared=game:GetService("ReplicatedStorage"):WaitForChild("Citymoney")
+local Players=game:GetService("Players")
 local Config,Architecture,Plans=require(shared.Config),require(shared.Architecture),require(shared.PropertyPlans)
 local Labels={}
 Labels.__index=Labels
+local special={start={"GATE","+$200"},visit={"JAIL","VISIT"},park={"PARK","CARD"},detention={"JAIL","GO TO"},event={"NEWS",""},tax={"TAX","$120"}}
+local function position(index)
+    local p=Architecture.position(index)
+    return Vector3.new(p[1],1.9,p[3])
+end
 function Labels.new(root,onSelect,onInteraction)
-    local self=setmetatable({buttons={},revision=nil,enabled=nil},Labels)
+    local self=setmetatable({buttons={},captions={},revision=nil,enabled=nil},Labels)
     for index,tile in ipairs(Config.tiles) do
         local button=Instance.new("TextButton")
         button.Name,button.AnchorPoint,button.ZIndex="DeedLabel"..index,Vector2.new(0.5,0.5),5
-        button.BackgroundColor3,button.BackgroundTransparency,button.BorderSizePixel=Color3.fromHex("FFF9E9"),0.12,0
-        button.TextColor3,button.Font,button.TextWrapped=Color3.fromHex("263E34"),Enum.Font.GothamBold,true
+        button.BackgroundColor3,button.BackgroundTransparency,button.BorderSizePixel=Color3.fromHex("FFFFFF"),0.04,0
+        button.TextColor3,button.Font,button.TextWrapped=Color3.fromHex("1B2C48"),Enum.Font.GothamBold,false
         button.Text=tile.name;button.Parent=root
         local corner=Instance.new("UICorner");corner.CornerRadius,corner.Parent=UDim.new(0,5),button
         local outline=Instance.new("UIStroke");outline.Color,outline.Thickness,outline.ApplyStrokeMode,outline.Parent=Color3.fromHex(tile.group and Config.groups[tile.group].color or "85A393"),1.5,Enum.ApplyStrokeMode.Border,button
@@ -5292,27 +5325,69 @@ function Labels:update(camera,safe,scale,data,enabled,rect)
             local property=data.game.properties[index]
             local owner
             for _,resident in ipairs(data.game.players) do if resident.id==property.ownerId then owner=resident end end
-            local value=tile.kind=="property" and (owner and ("Rent $"..Plans.projectedRent(Config,data.game,owner.id,index,property.level)) or ("$"..tile.price)) or ""
-            self.buttons[index].Text=tile.name..(value~="" and ("\n"..value) or "")
-            self.buttons[index]:FindFirstChildOfClass("UIStroke").Color=Color3.fromHex(owner and Config.playerColors[owner.colorIndex] or (tile.group and Config.groups[tile.group].color or "85A393"))
+            local value=tile.kind=="property" and ("$"..(owner and Plans.projectedRent(Config,data.game,owner.id,index,property.level) or tile.price)) or ""
+            self.captions[index]={name=tile.name,value=value,owned=owner~=nil}
+            local stroke=self.buttons[index]:FindFirstChildOfClass("UIStroke")
+            stroke.Color=Color3.fromHex(owner and Config.playerColors[owner.colorIndex] or (tile.group and Config.groups[tile.group].color or "85A393"))
+            stroke.Thickness=owner and 2.5 or 1.5
         end
     end
     local offset=safe.AbsolutePosition
+    local figures={}
+    if enabled and data and board then
+        for _,resident in ipairs(data.game.players) do if resident.alive then
+            local player=type(resident.id)=="number" and Players:GetPlayerByUserId(resident.id)
+            local model=player and player.Character or board:FindFirstChild("Figure_"..resident.id)
+            local head=model and model:FindFirstChild("Head")
+            if head then
+                local point,visible=camera:WorldToScreenPoint(head.Position)
+                if visible then table.insert(figures,point) end
+            end
+        end end
+    end
     for index,button in ipairs(self.buttons) do
         button.Visible=enabled
         if enabled then
-            local p=Architecture.position(index)
-            local q=Architecture.position(index%24+1)
-            local screen,visible=camera:WorldToScreenPoint(Vector3.new(p[1],1.9,p[3]))
-            local nextScreen=camera:WorldToScreenPoint(Vector3.new(q[1],1.9,q[3]))
+            local screen,visible=camera:WorldToScreenPoint(position(index))
+            local nextScreen=camera:WorldToScreenPoint(position(index%24+1))
+            local previousScreen=camera:WorldToScreenPoint(position((index-2)%24+1))
             local dx,dy=math.abs(nextScreen.X-screen.X),math.abs(nextScreen.Y-screen.Y)
-            local spacing=math.sqrt(dx*dx+dy*dy)
-            local width=dx&gt;=dy and math.clamp(spacing*0.9,34,88) or math.clamp(spacing*1.4,50,86)
-            local height=dx&gt;=dy and 40 or math.clamp(spacing*0.88,26,40)
+            local px,py=previousScreen.X-screen.X,previousScreen.Y-screen.Y
+            local spacing=math.min(math.sqrt(dx*dx+dy*dy),math.sqrt(px*px+py*py))
+            local corner=(index-1)%6==0
+            -- Corners need compact badges; an oversized corner would obscure
+            -- the neighboring space. Every badge scales down with the route.
+            local width=corner and math.min(44,spacing*0.8) or math.min(96,spacing*(dx&gt;=dy and 0.96 or 1.7))
+            local height=math.min(corner and 44 or (dx&gt;=dy and 44 or 38),spacing*(corner and 0.8 or (dx&gt;=dy and 0.88 or 0.8)))
+            local caption=self.captions[index]
+            if caption then
+                -- Short map names stay legible; the property card gives the full name.
+                local name=string.match(caption.name,"^%S+")
+                local short=special[Config.tiles[index].kind]
+                if short then name=short[1] end
+                local value=short and short[2] or caption.value
+                if caption.owned then value=(width&lt;48 and "RENT\n" or "Rent ")..value end
+                if width&lt;48 then
+                    if not short then name=""
+                    elseif Config.tiles[index].kind=="start" then name,value="GO",""
+                    elseif Config.tiles[index].kind=="visit" or Config.tiles[index].kind=="park" then value=""
+                    elseif Config.tiles[index].kind=="detention" then name,value="TO","JAIL" end
+                end
+                button.Text=name..(value~="" and ((name~="" and "\n" or "")..value) or "")
+                local longest=math.max(#name,#value)
+                button.TextSize=math.max(9,math.min(12,height/2.8,(width-3)/math.max(1,longest*0.85)))/scale
+            end
             button.Size,button.Position=UDim2.fromOffset(width/scale,height/scale),UDim2.fromOffset((screen.X-offset.X)/scale,(screen.Y-offset.Y)/scale)
-            button.TextSize=math.min(11,height/3.25)/scale
             button.Visible=visible and (not rect or (screen.X-width/2&gt;=rect[1] and screen.X+width/2&lt;=rect[1]+rect[3] and screen.Y-height/2&gt;=rect[2] and screen.Y+height/2&lt;=rect[2]+rect[4]))
+            -- A screen label must never cover a pawn. Reveal the underlying
+            -- floor caption while a real avatar or bot crosses its space.
+            for _,figure in ipairs(figures) do
+                if math.abs(figure.X-screen.X)&lt;width/2+14 and math.abs(figure.Y-screen.Y)&lt;height/2+14 then button.Visible=false;break end
+            end
         end
+        local tile=board and board:FindFirstChild("Tile"..index)
+        local caption=tile and tile:FindFirstChild("Caption")
+        if caption then caption.Enabled=not button.Visible end
     end
 end
 return Labels
@@ -5333,21 +5408,21 @@ return Labels
       <Properties>
         <string name="Name">CityPreviewCamera</string>
         <CoordinateFrame name="CFrame">
-          <X>58</X>
-          <Y>278</Y>
-          <Z>178</Z>
-          <R00>0.9507983</R00>
-          <R01>-0.25550494</R01>
-          <R02>0.1752138</R02>
+          <X>0</X>
+          <Y>302.25052</Y>
+          <Z>66.21624</Z>
+          <R00>1</R00>
+          <R01>0</R01>
+          <R02>0</R02>
           <R10>0</R10>
-          <R11>0.56555116</R11>
-          <R12>0.8247132</R12>
-          <R20>-0.30981067</R20>
-          <R21>-0.7841359</R21>
-          <R22>0.5377251</R22>
+          <R11>0.20791169</R11>
+          <R12>0.9781476</R12>
+          <R20>0</R20>
+          <R21>-0.9781476</R21>
+          <R22>0.20791169</R22>
         </CoordinateFrame>
         <token name="CameraType">6</token>
-        <float name="FieldOfView">38</float>
+        <float name="FieldOfView">36</float>
       </Properties>
     </Item>
     <Item class="Folder" referent="54">

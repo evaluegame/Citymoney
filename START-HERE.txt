@@ -12,10 +12,11 @@ Studio: https://create.roblox.com/
 
 BRIGHT CITY VIEW AND INTERACTIVE DICE
 The colorful city board has empty lots, a card market, festival stage,
-challenge hall and broadcast tower. The default City view fits the whole
-board around the HUD. Hover a house for its owner, level and price/rent;
-click or tap to inspect. Top view adds upright clickable board labels.
-Use Fit to reset, and + / - to zoom. MENU [M] contains all game menus.
+challenge hall and broadcast tower. Play starts in an aligned Top view.
+Upright badges show short names and prices; RENT marks an owned home's rent.
+Tap a badge for the full name, owner and details. 3D view switches to the
+angled city. Fit restores Top view and resets the zoom; + / - zoom in/out.
+MENU [M] contains all game menus.
 EVENTS, CARDS & GOALS and MY HOMES are direct shortcuts. On phones they
 are above the board. The larger turn dock explains your next step.
 Unbought lots have no houses; choose a level and buy to build your home.
@@ -24,7 +25,8 @@ Rounded dice with flat pips show the result; the HUD also shows the total.
 The shared dice settle on the server's values before your avatar moves.
 
 AUTOMATIC TURNS
-The token hops along its rolled path before showing the result. The
+The token moves one space at a time: 0.25 seconds moving, then a 0.13-second
+pause at the center of each space. It finishes its path before the result. The
 four-second next-turn countdown starts after arrival and resolution.
 Next player / Space advances sooner after arrival. Buying and opportunity
 choices give you a full 55 seconds AFTER movement. Use cards, upgrades and plaza offers BEFORE rolling.
