@@ -1,14 +1,14 @@
 # Publish Citymoney and enable the Club pass
 
-The ZIP contains the finished place and source. Publishing it and creating a pass require your Roblox account in Studio/Creator Dashboard. No Roblox account credentials are included or needed by the cloud build.
+The ZIP contains a ready-to-open place and its source. Publishing it and creating a pass require your Roblox account in Studio/Creator Dashboard. No Roblox account credentials are included or needed by the cloud build.
 
 ## 1. Open and try the place
 
 1. Install [Roblox Studio](https://create.roblox.com/) on Windows or macOS and sign in.
 2. Extract **Citymoney-Waterfront.zip**.
 3. In Studio, choose **File → Open from File**. Open **Citymoney/build/Citymoney.rbxlx** from the extracted folder.
-4. Press **Play (F5)**. Open **Match / invite**, select 2 or 4 players, keep practice bots on, and click **Practice**.
-5. Open **Club collection** to preview/equip all three paid collections in Studio. Studio labels this as a preview and never opens a payment prompt or grants a real pass.
+4. Press **Play (F5)**. Open **MENU → Play Together**, select 2 or 4 players, keep practice bots on, and click **Practice**.
+5. Open **MENU → Style Studio** to preview/equip all three paid collections in Studio. Studio labels this as a preview and never opens a payment prompt or grants a real pass.
 6. Click **Stop** before editing scripts or publishing, so you edit the saved place rather than a temporary Play session.
 
 For local multiplayer, use **Server & Clients** with 2 or 4 clients. On each client, select the same match size and join its queue. Matching starts a local table once enough clients are queued.
@@ -16,7 +16,7 @@ For local multiplayer, use **Server & Clients** with 2 or 4 clients. On each cli
 ## 2. Publish to your account
 
 1. Choose **File → Publish**. Some Studio versions label this **Publish to Roblox**. For an existing experience, select the intended start place when using **Publish As / Publish to Roblox As**.
-2. Give the game a name such as **Citymoney — Waterfront Club**, add a description, choose supported devices, and save/publish. This uploads the place to Roblox; it does not necessarily make it public yet.
+2. Give the game a name such as **Citymoney — Build Your City**, add a description, choose supported devices, and save/publish. This uploads the place to Roblox; it does not necessarily make it public yet.
 3. Open [Creator Dashboard → Creations](https://create.roblox.com/dashboard/creations) and select that game.
 4. In its start-place settings, a **Maximum Player Count of 12** is recommended for the public lobby. Each reserved Citymoney match still admits exactly 2 or 4 matched people.
 5. Open **Publish settings → Manage Audience → Manage access**. Choose the appropriate audience, and enable **Public** access when ready. Disable the **Friends** restriction if you want everyone eligible to join. Dashboard labels can change; use the game's audience/access settings shown in your account.
@@ -59,12 +59,12 @@ Official reference: [Passes](https://create.roblox.com/docs/production/monetizat
 Use the **Roblox app**, not just Studio, for live-service checks:
 
 - **Queues:** join with two accounts; choose a 2-player queue and confirm both reach the same reserved match. Repeat with four people. Invite a friend before queueing, mark ready on each party member, and verify the party stays together.
-- **Free account:** open Club collection. Preview paid styles and confirm they cannot be equipped without ownership. The checkout button should show Roblox's current price. Open the native prompt and cancel to verify that cancellation leaves access locked.
+- **Free account:** open MENU → Style Studio. Preview paid styles and confirm they cannot be equipped without ownership. The checkout button should show Roblox's current price. Open the native prompt and cancel to verify that cancellation leaves access locked.
 - **Owner account:** use an account that owns the pass, equip each collection, and buy a home. Check the decorations, owner color, dice colors, aura, and walking trail. Try reduced motion and visiting a home.
 - **Saved appearance:** wait for **Style saved for your next visit**, leave, and rejoin. Verify the selected collection/effects return and remain selected when traveling from lobby to match. Use **Check ownership** if a purchase made outside the game is not reflected yet.
 - **Real purchase:** when you choose to test an actual sale, Roblox checkout charges real Robux. After a successful purchase, the collection should unlock; choose a style and press Equip. The server verifies ownership. Studio previews do not simulate a real transaction.
-- **Gameplay:** check buying at different starting levels, later upgrades, rental tiers, targeted demolition/shields, rent demands, challenge claims, doors, and the end-of-match screen.
-- **Tabletop:** confirm all board edges fit in Table view, including with a property card open. Check upright labels and Table/City/Fit controls. Click both HUD dice and the 3D tray; every client should see the same final values before the avatar moves.
+- **Gameplay:** check buying at different starting levels, later upgrades, rental tiers, targeted demolition/shields, rent demands, challenge claims, doors, and the end-of-match screen. Unowned homes should stay closed; purchases should replace the display with owner colors, name and chosen level. Verify purchase/upgrade reveals, cash feedback and reduced motion. Confirm real players load their avatar portraits and still show a colored initial if loading fails.
+- **City view:** confirm all board edges and tall homes fit, including with a property card open. Check the property hover card, Top/City/Fit controls, MENU navigation, and phone-sized layout. Top view adds upright labels. Click both HUD dice and the 3D tray; every client should see the same final values before the avatar moves.
 - **Automatic turns and plaza:** buy or decline a home and wait for the four-second automatic handoff. Check that a pending purchase still gives 55 seconds. Before rolling, try City Market or the current festival; inspect the shared one-purchase allowance, cash deduction, effect on the chosen home, and festival change after eight turns.
 
 Citymoney uses Roblox's own MemoryStore, TeleportService, DataStore, and MarketplaceService. Live play needs no HTTP flag or external API keys. Studio preview uses session-only cosmetic preferences and does not require enabling **Studio Access to API Services**.

@@ -27,53 +27,54 @@
     },
     "Lighting": {
       "$properties": {
-        "ClockTime": 16.2,
-        "Brightness": 2.4,
+        "ClockTime": 14.4,
+        "Brightness": 2.8,
         "GlobalShadows": true,
         "Ambient": [
-          0.43,
-          0.45,
-          0.41
+          0.59,
+          0.64,
+          0.73
         ],
         "OutdoorAmbient": [
-          0.62,
-          0.63,
-          0.57
+          0.78,
+          0.83,
+          0.91
         ],
-        "EnvironmentDiffuseScale": 0.6,
-        "EnvironmentSpecularScale": 0.65,
-        "ExposureCompensation": 0.1,
-        "Technology": "ShadowMap"
+        "EnvironmentDiffuseScale": 0.75,
+        "EnvironmentSpecularScale": 0.7,
+        "ExposureCompensation": 0.05,
+        "Technology": "ShadowMap",
+        "ShadowSoftness": 0.4
       },
       "WarmAir": {
         "$className": "Atmosphere",
         "$properties": {
-          "Density": 0.22,
+          "Density": 0.12,
           "Offset": 0.15,
           "Color": [
-            0.85,
-            0.87,
-            0.81
+            0.76,
+            0.9,
+            1
           ],
           "Decay": [
-            0.72,
-            0.77,
-            0.76
+            0.73,
+            0.83,
+            0.97
           ],
-          "Glare": 0.15,
-          "Haze": 0.7
+          "Glare": 0.04,
+          "Haze": 0.3
         }
       },
       "ColorGrade": {
         "$className": "ColorCorrectionEffect",
         "$properties": {
-          "Brightness": 0.015,
-          "Contrast": 0.08,
-          "Saturation": 0.06,
+          "Brightness": 0.02,
+          "Contrast": 0.04,
+          "Saturation": 0.12,
           "TintColor": [
             1,
-            0.97,
-            0.91
+            0.995,
+            0.98
           ]
         }
       },
@@ -88,7 +89,7 @@
       "AfternoonSun": {
         "$className": "SunRaysEffect",
         "$properties": {
-          "Intensity": 0.035,
+          "Intensity": 0.02,
           "Spread": 0.75
         }
       }

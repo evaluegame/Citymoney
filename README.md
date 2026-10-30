@@ -1,6 +1,6 @@
-# Citymoney · The Waterfront Club
+# Citymoney · Build Your City
 
-A Roblox property board game with a clear tabletop view, interactive 3D dice, automatic turn handoffs, furnished homes, and an interactive city plaza. Play through **2- or 4-player online queues**, invite friends, choose your property's rent, and decide which rival house to demolish.
+A bright, stylized Roblox property board game with colorful houses, a rounded city board, interactive 3D dice, automatic turn handoffs, and four playable city destinations. Play through **2- or 4-player online queues**, invite friends, choose your property's rent, and decide which rival house to demolish.
 
 Now includes an optional **Waterfront Club cosmetic game pass** with three luxury collections, a 3D showroom, styled dice, player auras, walking trails, saved preferences, and reduced motion. **[Publishing and pass setup guide](docs/PUBLISHING.md)**.
 
@@ -8,13 +8,21 @@ Now includes an optional **Waterfront Club cosmetic game pass** with three luxur
 
 The download files are at the repository root. On a GitHub file page, use **Download raw file** (the download-arrow button). The ZIP includes a ready-to-open place, source, and instructions.
 
-![The full tabletop board with an open event plaza and dice tray](docs/Neighborhood-preview.png)
+![Citymoney's bright city board and simplified play screen](docs/Play-screen-preview.png)
 
-*A geometry render showing example purchases. The live table view also adds upright, clickable labels with prices/rent. This is a model preview, not a Roblox Studio screenshot.*
+*Layout preview: the actual client GUI's exported positions, text and colors over a matching geometry render, with example purchases. This is an offline review image, not a Roblox Studio screenshot. Native rendering, avatars and live services still need Studio/app playtests.*
 
-## Table view, dice, and automatic turns
+## A clearer city and play screen
 
-**Table view** is now the default: a flatter, square board with the entire route and tall homes fitted into the area left by the HUD. The camera recalibrates when you resize the window, rotate the board, or open a property card. It accounts for Roblox's top bar and device safe areas. Every space has an upright label; purchased deeds display rent and their owner's color. **City view** offers an angled 3D view. **Fit** restores the full board. Purchases and upgrades no longer zoom the camera away automatically; **Close-up** still lets you inspect a chosen home.
+The default **City view** fits the complete route and current buildings into the area left by the HUD, using the available height rather than leaving an empty band. It recalibrates for window size, building upgrades, the property card, Roblox's top bar and device safe areas. **Top view** offers upright, clickable space labels; **Fit** resets the full board. Hover a home in City view to see its owner, level and price/rent; click or tap to inspect it. Purchases and upgrades keep the board in view; **Close-up** lets you inspect a chosen home.
+
+The persistent interface has a wallet header, a slim color-coded roster, one **MENU [M]** button, and a turn dock with pip dice and one large gold action. Real players use Roblox avatar thumbnails with a colored initial while loading; bots use initials. The menu opens **Play Together**, **Cards & Goals**, **City Events**, **Your Properties**, **Style Studio**, and **How to Play**. Day/night lighting is also in the menu. Buttons respond to hover/press, cash changes float beside the wallet, and purchases/upgrades reveal the home with a short owner-colored celebration. Reduced motion disables movement effects.
+
+![The colorful city, display homes and four event buildings](docs/Neighborhood-preview.png)
+
+*Model preview of the shared scene geometry. The market has striped awnings and a clock tower; the festival has a domed stage, the challenge hall a trophy, and City News a broadcast tower.*
+
+## Dice and automatic turns
 
 During your roll phase, click/tap **either HUD die**, the **3D dice**, or their central **tray**, or press **R**. Everyone sees the same server-selected values. The dice tumble, bounce, and settle with the exact rolled faces on top before the avatar moves. Reduced motion settles the dice immediately. Dice skins remain cosmetic.
 
@@ -22,7 +30,7 @@ After a resolved landing, purchase, or pass, the turn hands off **automatically 
 
 ## The interactive city plaza
 
-The center's decorative houses and trees have been replaced with four low, clickable destinations. Press **P**, click a station, or use **Explore city plaza** while another resident takes a turn:
+The city center has four colorful, clickable destinations. Press **P**, click a station, choose **MENU → City Events**, or use **Explore city plaza** while another resident takes a turn:
 
 | Destination | What it does |
 | --- | --- |
@@ -38,7 +46,7 @@ Festivals rotate every **eight total turns**. The festival pavilion displays the
 1. Install [Roblox Studio](https://create.roblox.com/) on Windows or macOS and sign in.
 2. Download and extract **Citymoney-Waterfront.zip**.
 3. Choose **File → Open from File** (Ctrl+O / Cmd+O) and open **Citymoney/build/Citymoney.rbxlx**.
-4. Press **Play (F5)**. Open **Match / invite**, choose **2 players** or **4 players**, keep practice bots on, and click **Practice**.
+4. Press **Play (F5)**. Click **PLAY NOW** or **MENU → Play Together**, choose **2 players** or **4 players**, keep practice bots on, and click **Practice**.
 
 The neighborhood is visible in the editor; menus appear during Play. The place contains its models and scripts. No paid assets, API keys, plugins, or HTTP access are needed to play it.
 
@@ -46,7 +54,7 @@ The neighborhood is visible in the editor; menus appear during Play. The place c
 
 1. Open the updated place and use **File → Publish** (called **Publish to Roblox** in some Studio versions) in your account.
 2. In Creator Dashboard, make the experience available to your intended players. A **12-player server capacity** allows several parties to wait in the public lobby. Each reserved match admits exactly **2 or 4 matched humans**.
-3. Join the published experience using the Roblox app. Open **Match / invite**, choose a size and color, then click **Join 2-player queue** or **Join 4-player queue**.
+3. Join the published experience using the Roblox app. Open **MENU → Play Together**, choose a size and color, then click **Join 2-player queue** or **Join 4-player queue**.
 4. To play together, click **Invite friends before joining the queue**. A friend accepting that invitation is brought to your public server and joins your party. Guests click **I'm ready to play**. The party leader queues everyone together.
 5. Parties contain up to four people and are never split: two pairs can fill a four-player match, or three friends can wait for one solo player. Online queues never fill seats with bots.
 
@@ -64,7 +72,7 @@ Matching uses Roblox **MemoryStoreService** and **TeleportService** to create a 
 
 *A geometry preview of a purchased cottage.*
 
-Land on an unowned property and choose **Cottage (L0), Townhouse (L1), Garden villa (L2), or Grand villa (L3)**. The selector shows a 3D preview, total price, rent, affordability, and remaining cash. Buying immediately builds that furnished home with a porch, mailbox, garden, owner sign, and your color.
+Unowned lots have closed city display homes in their district colors. Land on one and choose **Cottage (L0), Townhouse (L1), Garden villa (L2), or Grand villa (L3)**. The selector shows a 3D preview, total price, rent, affordability, and remaining cash. Buying immediately replaces the display with your furnished home, porch, mailbox, garden, owner sign, and player color. Wider facades, shutters, porch rails, dormers and level-specific roof details give the levels distinct silhouettes. Only an owned home permits a walk-through.
 
 Purchase price is `land price + selected level × build cost`. Later, select your home during your turn and open **Upgrade options**. Choose any higher level and pay `(target level − current level) × build cost`. You do not need a district pair to upgrade. Houses gain floors, stairs, bedrooms, balconies, or rooftop gardens as their level rises.
 
@@ -103,18 +111,19 @@ Seven rotating challenges reward collecting homes, adding building levels, earni
 
 | Action | Control |
 | --- | --- |
-| Matchmaking, party, color, practice | **Match / invite** |
-| Cards, targets, challenges | **Cards & goals** |
+| Main menu | **MENU [M]** or **M** |
+| Matchmaking, party, color, practice | **MENU → Play Together**; **PLAY NOW** in the lobby |
+| Cards, targets, challenges | **MENU → Cards & Goals** |
 | Roll | Click/tap a HUD die, 3D die, or dice tray; bottom action button or **R** also works |
 | Buy / finish early | Bottom action button; **Space** performs the current action. Resolved turns advance automatically |
-| City plaza | Click a station, press **P**, or use **Explore city plaza** while waiting |
-| Inspect a property | Click/tap its plot or house, or open **Your homes** |
+| City plaza | Click a station, press **P**, or choose **MENU → City Events** |
+| Inspect a property | Click/tap its plot or house, or choose **MENU → Your Properties** |
 | Upgrade / set rent | Select your home during your turn → **Upgrade options / Rent options** |
 | Repaint / sell | Property card during your turn; repainting is free, sales ask for confirmation |
 | Visit your home | Property card → **Walk through your home**, including during another player's turn |
 | Walk / door / return | Roblox walking controls; **E** operates your door; **B** or **Back to board** returns |
-| Camera | **Table view / City view / Fit**, rotate buttons, + / −, mouse wheel; **Close-up** on a property card |
-| Lighting | **Golden hour / Night stroll** in the desktop header |
+| Camera | **Top view / City view / Fit**, + / −, mouse wheel; **Close-up** on a property card |
+| Lighting | **Day / Night** in the main menu |
 
 Visits do not change your game position, cash, or turn. The match continues while you explore. Rolling/ending your turn returns you to the board. Selling or losing a visited home returns you; upgrades/repainting move you safely onto its front path.
 
@@ -124,13 +133,13 @@ Visits do not change your game position, cash, or turn. The match continues whil
 
 *A render of the actual Golden Estate geometry. The showroom previews every collection before purchase.*
 
-Open **Club collection** under the player list. Preview **Golden Estate**, **Aurora Residence**, and **Rose Conservatory**, then equip a collection you own. Each adds coordinated metal trim, marble foundations, garden lanterns, planters, ornaments, a Club plaque, dice colors, and a player aura with a walking trail. Your player-colored roof, borders, flag, and owner sign stay visible. Changing styles also updates existing houses and their 3D property previews.
+Open **MENU → Style Studio**. Preview **Golden Estate**, **Aurora Residence**, and **Rose Conservatory**, then equip a collection you own. Each adds coordinated metal trim, marble foundations, garden lanterns, planters, ornaments, a Club plaque, dice colors, and a player aura with a walking trail. Your player-colored roof, borders, flag, and owner sign stay visible. Changing styles also updates existing houses and their 3D property previews.
 
-One **permanent cosmetic game pass** unlocks all three collections. Waterfront Classic is free. The pass adds appearance only: no extra game cash, cards, rent, turn time, or dice advantages. It is separate from a Roblox Premium subscription. Roblox handles payment and supplies the price; the server verifies pass ownership on join and after purchases. **Check ownership** retries verification, including passes bought outside the game. Only the active collection and effects preference are saved in DataStore; ownership always comes from Roblox. Selections are carried through matchmaking teleports and validated again at the destination.
+One **permanent cosmetic game pass** unlocks all three collections. City Original is free. The pass adds appearance only: no extra game cash, cards, rent, turn time, or dice advantages. It is separate from a Roblox Premium subscription. Roblox handles payment and supplies the price; the server verifies pass ownership on join and after purchases. **Check ownership** retries verification, including passes bought outside the game. Only the active collection and effects preference are saved in DataStore; ownership always comes from Roblox. Selections are carried through matchmaking teleports and validated again at the destination.
 
 **Creator setup is required to sell the pass:** create it under this game's **Monetization → Passes**, put it on sale, and replace `clubPassId = 0` in **ReplicatedStorage → Citymoney → Config** with its numeric asset ID. Republish the place. Until then, the live showroom allows previews and shows **Club pass coming soon**; it cannot charge Robux. See the [full guide](docs/PUBLISHING.md). A ready-to-upload **512×512 PNG** icon is included at `docs/Club-pass-icon.png`.
 
-In Studio, all collections can be equipped for a clearly labeled **test-session preview**; it makes no purchases or permanent unlocks and needs no DataStore/API-access setting. In a published game, only verified pass owners can equip paid collections. **Reduced motion** stops the rotating showroom, dice animation, victory confetti, and your walking trail. Cosmetic menus do not pause the turn timer.
+In Studio, all collections can be equipped for a clearly labeled **test-session preview**; it makes no purchases or permanent unlocks and needs no DataStore/API-access setting. In a published game, only verified pass owners can equip paid collections. **Reduced motion** stops the rotating showroom, dice animation, button movement, cash movement, house reveal effects, victory confetti, and your walking trail. Cosmetic menus do not pause the turn timer.
 
 ## Core rules
 
@@ -138,7 +147,7 @@ Start with **$1,500**, roll two six-sided dice, and collect **$200** for passing
 
 Rolls and unresolved purchases allow **55 seconds**, then the server rolls or declines the property automatically. Resolved turns hand off after **four seconds**. Opening menus, visiting, playing cards, claiming goals, and improving properties do not extend the current deadline. Server checks enforce ownership, targets, funds, inventory, and turn/phase restrictions. Stale and repeated purchases cannot double-charge.
 
-Selling returns half the land, building, and paid rental investment. Cash shortfalls automatically sell deeds in board order; insolvency eliminates a resident. Sold, demolished, abandoned, and repossessed homes disappear physically. A departing resident's deeds return to the city. Temporary boosts and shields add no resale value.
+Selling returns half the land, building, and paid rental investment. Cash shortfalls automatically sell deeds in board order; insolvency eliminates a resident. Sold, demolished, abandoned, and repossessed player homes are removed and replaced with closed city display homes. A departing resident's deeds return to the city. Temporary boosts and shields add no resale value.
 
 The last resident standing wins. At **120 total turns**, the surviving resident with the highest cash plus full property/building/rental investment wins; ties go to the earlier seat. Progress belongs to the current match. Persistent profiles, trading, and auctions are not included.
 
@@ -159,7 +168,8 @@ For source editing alongside Studio, use `rojo serve default.project.json --addr
 
 | Source | Purpose |
 | --- | --- |
-| `Architecture`, `Board`, `Scene`, `Layout` | Homes, neighborhood, Roblox geometry adapter, responsive HUD |
+| `Architecture`, `Board`, `CityArt`, `CityDistricts`, `Scene` | Homes, rounded city geometry, destination buildings, Roblox scene adapter |
+| `Presentation`, `Layout`, `client/CommandMenu`, `client/HoverCard`, `client/Motion` | Shared theme, responsive HUD, navigation, property previews and feedback |
 | `Engine`, `PropertyPlans`, `Config` | Authoritative economy, turns, home/rental quotes, settings |
 | `Tactics` | Cards, targets, challenges, bots' tactical choices |
 | `BoardCamera`, `client/BoardView`, `client/TileLabels` | Screen-safe table/city camera fitting and upright interactive deed labels |
@@ -168,11 +178,11 @@ For source editing alongside Studio, use `rojo serve default.project.json --addr
 | `Cosmetics`, `CosmeticProfiles`, `server/ClubService`, `client/Boutique` | Cosmetic catalogue, verified ownership, saved appearance, Roblox checkout, 3D showroom |
 | `Lobby`, `Parties`, `QueuePlanner`, `MatchProtocol` | Parties, exact-size packing, colors, atomic reservations and recovery |
 | `server/Matchmaker` | MemoryStore, reserved teleports, invitations, Studio queue adapter |
-| `server/World`, `server/init.server` | Physical lifecycle, avatar visits, doors, validated remotes, timers |
+| `server/World`, `server/WorldEffects`, `server/init.server` | Physical lifecycle, home reveals, avatar visits, doors, validated remotes, timers |
 | `client/Menus`, `client/init.client` | Match/card/goal menus, rent selector, HUD, cameras, input |
 
-Checks include **155 numbered cases and 600 complete simulated matches**: 35 core engine cases (200 matches), 18 purchase/upgrade cases, 23 strategy/rent cases (200 tactical matches), 25 party/matchmaking cases, 23 cosmetic/ownership/profile cases, and 31 tabletop cases (200 automatic matches). New cases cover camera projections across desktop/portrait/inset/rotation combinations, tall homes and closeups, exact dice faces, automatic handoff and stale clocks, market prices/caps, festival rotation/targets, and bots. Cosmetic cases cover verification/storage failures, concurrent saves, reconnects, and all **256 plot/style/level combinations**. Additional scene, home and layout checks run; pure modules are analyzed, all Roblox source compiles, and built-place scripts, interactive attributes and geometry are checked against source.
+Checks include **165 numbered cases and 600 complete simulated matches**: 35 core engine cases (200 matches), 18 purchase/upgrade cases, 23 strategy/rent cases (200 tactical matches), 25 party/matchmaking cases, 23 cosmetic/ownership/profile cases, 31 tabletop cases (200 automatic matches), and 10 presentation cases. New cases cover camera projections across desktop/portrait/inset/rotation combinations, tall homes and closeups, exact dice faces, automatic handoff and stale clocks, market prices/caps, festival rotation/targets, and bots. Cosmetic cases cover verification/storage failures, concurrent saves, reconnects, and all **256 plot/style/level combinations**. Four headless client integration checks load the actual shared/client source through a limited Roblox API adapter at desktop, Studio, short-window and mobile sizes. They exercise roll, menu, card, plaza and property flows and export the visible GUI layout for review. Additional scene, home and layout checks run; pure modules are analyzed, all Roblox source compiles, and built-place scripts, interactive attributes and geometry are checked against source.
 
-Reservation and cosmetic service tests use in-memory adapters. **Cloud checks do not run Roblox Studio or live Roblox services.** Rendering, movement, input, doors, replication, native invites, cross-server joins, actual game-pass checkout, and DataStore persistence still require Studio and published-game playtests.
+Reservation and cosmetic service tests use in-memory adapters. **Cloud checks do not run Roblox Studio or live Roblox services.** Native rendering, thumbnails, movement, input, doors, replication, native invites, cross-server joins, actual game-pass checkout, and DataStore persistence still require Studio and published-game playtests.
 
-`scripts/render_preview.py` optionally renders exported geometry with Blender. These are model previews, not Studio screenshots; Blender is not needed to play or build.
+`scripts/render_preview.py` optionally renders exported geometry with Blender. `scripts/client_smoke.py` exports GUI geometry from the actual client; `scripts/render_hud_preview.py` composites it over a matching scene camera. These previews do not reproduce native Roblox rendering, fonts, avatars or service behavior. Blender and Pillow are needed only for offline preview generation, not to play or build.

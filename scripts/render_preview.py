@@ -14,6 +14,7 @@ entries = json.loads(source.read_text())
 close_up = "home" in source.stem.lower()
 pass_icon = "pass-icon" in output.stem.lower()
 table_view = "table" in source.stem.lower()
+bright_city = "bright" in source.stem.lower()
 bpy.ops.object.select_all(action="SELECT")
 bpy.ops.object.delete(use_global=False)
 materials = {}
@@ -39,56 +40,53 @@ def material(entry):
     return mat
 
 
+# Share unit geometry by material instead of repeatedly invoking Blender operators.
+# This keeps review renders fast even when every property has a display home.
+bpy.ops.mesh.primitive_cube_add(size=1)
+cube=bpy.context.object.data.copy();bpy.data.objects.remove(bpy.context.object,do_unlink=True)
+bpy.ops.mesh.primitive_ico_sphere_add(subdivisions=2,radius=0.5)
+ball=bpy.context.object.data.copy();bpy.data.objects.remove(bpy.context.object,do_unlink=True)
+bpy.ops.mesh.primitive_cylinder_add(vertices=32,radius=0.5,depth=1)
+bpy.context.object.rotation_euler[1]=math.pi/2
+bpy.ops.object.transform_apply(location=False,rotation=True,scale=False)
+cylinder=bpy.context.object.data.copy();bpy.data.objects.remove(bpy.context.object,do_unlink=True)
+unit_meshes={"Block":cube,"Ball":ball,"Cylinder":cylinder}
+mesh_cache={}
+font_path=Path("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf")
+world_font=bpy.data.fonts.load(str(font_path)) if font_path.exists() else None
 for entry in entries:
-    if entry.get("transparency",0) >= 1:
+    if entry.get("transparency",0)>=1:
         continue
-    p, size = entry["position"], entry["size"]
-    if entry.get("shape") == "Ball":
-        bpy.ops.mesh.primitive_ico_sphere_add(subdivisions=2,radius=0.5)
-    else:
-        bpy.ops.mesh.primitive_cube_add(size=1)
-    obj = bpy.context.object
-    obj.name = entry["name"]
-    obj.scale = (size[0],size[2],size[1])
-    bpy.ops.object.transform_apply(location=False,rotation=False,scale=True)
-    r = entry.get("rotation",[1,0,0,0,1,0,0,0,1])
-    rotation = Matrix((r[:3],r[3:6],r[6:]))
-    obj.matrix_world = (transform @ rotation @ transform.transposed()).to_4x4()
-    obj.location = (p[0],-p[2],p[1])
-    obj.data.materials.append(material(entry))
-    if entry.get("shape") != "Ball" and min(size)>0.2 and max(size)<190:
-        bevel = obj.modifiers.new("Soft edges","BEVEL")
-        bevel.width, bevel.segments = min(0.055,min(size)*0.15), 2
-        obj.modifiers.new("Weighted normals","WEIGHTED_NORMAL")
+    p,size=entry["position"],entry["size"]
+    shape=entry.get("shape","Block")
+    mat=material(entry)
+    key=(shape,mat.name)
+    if key not in mesh_cache:
+        mesh=unit_meshes.get(shape,cube).copy();mesh.materials.clear();mesh.materials.append(mat);mesh_cache[key]=mesh
+    obj=bpy.data.objects.new(entry["name"],mesh_cache[key]);bpy.context.collection.objects.link(obj)
+    r=entry.get("rotation",[1,0,0,0,1,0,0,0,1])
+    rotation=Matrix((r[:3],r[3:6],r[6:]))
+    obj.matrix_world=(transform @ rotation @ transform.transposed()).to_4x4() @ Matrix.Diagonal((size[0],size[2],size[1],1))
+    obj.location=(p[0],-p[2],p[1])
     if entry.get("text"):
-        bpy.ops.object.text_add()
-        text = bpy.context.object
-        text.data.body = entry["text"]
-        text.data.align_x, text.data.align_y = "CENTER", "CENTER"
-        text.data.size = 1
-        text.data.space_line = 1.1
-        text.data.extrude = 0
-        front = entry.get("textFace") == "Front"
-        local = Vector((0,0,-size[2]/2-0.03)) if front else Vector((0,size[1]/2+0.03,0))
-        world = Vector(p) + rotation @ local
-        if front:
-            basis = Matrix(((-1,0,0),(0,1,0),(0,0,-1)))
-        else:
-            basis = Matrix(((1,0,0),(0,0,1),(0,-1,0)))
-        text.matrix_world = (transform @ rotation @ basis).to_4x4()
-        text.location = transform @ world
-        bpy.context.view_layer.update()
-        max_height = size[1]*0.72 if front else size[2]*0.68
-        bounds = [Vector(point) for point in text.bound_box]
-        local_width = max(point.x for point in bounds)-min(point.x for point in bounds)
-        local_height = max(point.y for point in bounds)-min(point.y for point in bounds)
-        fit = min(size[0]*0.85/max(0.1,local_width), max_height/max(0.1,local_height))
-        text.scale = (fit,fit,fit)
-        text.data.materials.append(material({"color":entry.get("textColor","475C50")}))
+        curve=bpy.data.curves.new("Caption","FONT")
+        curve.body=entry["text"];curve.align_x="CENTER";curve.align_y="CENTER";curve.size=1;curve.space_line=1.1
+        if world_font: curve.font=world_font
+        text=bpy.data.objects.new("Caption",curve);bpy.context.collection.objects.link(text)
+        front=entry.get("textFace")=="Front"
+        back=entry.get("textFace")=="Back"
+        local=Vector((0,0,(size[2]/2+0.03)*(1 if back else -1))) if front or back else Vector((0,size[1]/2+0.03,0))
+        world=Vector(p)+rotation @ local
+        basis=Matrix(((-1,0,0),(0,1,0),(0,0,-1))) if front else Matrix(((1,0,0),(0,1,0),(0,0,1))) if back else Matrix(((1,0,0),(0,0,1),(0,-1,0)))
+        text.matrix_world=(transform @ rotation @ basis).to_4x4();text.location=transform @ world
+        max_height=size[1]*0.72 if front or back else size[2]*0.68
+        lines=entry["text"].splitlines()
+        fit=min(size[0]*0.85/max(0.1,max(len(line) for line in lines)*0.66),max_height/max(0.1,len(lines)*1.1))
+        text.scale=(fit,fit,fit);curve.materials.append(material({"color":entry.get("textColor","475C50")}))
 
 scene = bpy.context.scene
 scene.render.engine = "CYCLES"
-scene.cycles.samples = 48
+scene.cycles.samples = 32
 scene.cycles.use_denoising = False
 scene.render.resolution_x, scene.render.resolution_y = 1440, 1050
 if pass_icon: scene.render.resolution_x, scene.render.resolution_y = 512, 512
@@ -99,11 +97,12 @@ scene.world.color = (0.62,0.69,0.70)
 scene.world.use_nodes = True
 scene.world.node_tree.nodes["Background"].inputs[0].default_value = (0.70,0.78,0.80,1)
 scene.world.node_tree.nodes["Background"].inputs[1].default_value = 0.5
-scene.view_settings.view_transform = "AgX"
+scene.view_settings.view_transform = "Standard"
+scene.view_settings.exposure = -0.6
 bpy.ops.object.light_add(type="SUN",location=(70,-30,130))
 sun = bpy.context.object
-sun.data.energy, sun.data.angle = 2.8, math.radians(12)
-sun.data.color = (1,0.88,0.71)
+sun.data.energy, sun.data.angle = 2.2, math.radians(16)
+sun.data.color = (1,0.96,0.89)
 sun.rotation_euler = (math.radians(28),math.radians(-25),math.radians(-35))
 bpy.ops.object.camera_add()
 camera = bpy.context.object
@@ -111,6 +110,10 @@ if close_up:
     camera.location = (51,-41,26)
     target = Vector((40,-74,7))
     camera.data.type, camera.data.ortho_scale = "ORTHO", 42 if pass_icon else 33
+elif bright_city:
+    camera.location = (68,-200,340)
+    target = Vector((0,0,8))
+    camera.data.type, camera.data.ortho_scale = "ORTHO", 276
 elif table_view:
     camera.location = (0,-90,330)
     target = Vector((0,0,8))
@@ -120,11 +123,11 @@ else:
     target = Vector((0,-6,3))
     camera.data.type, camera.data.ortho_scale = "ORTHO", 260
 camera.rotation_euler = (target-camera.location).to_track_quat("-Z","Y").to_euler()
-if close_up:
+if close_up or bright_city:
     # Fit the actual upgraded home, including its pergola, into the frame.
     # Orthographic width must also account for the shorter vertical field on wide images.
     inverse=camera.rotation_euler.to_matrix().transposed()
-    corners=[inverse @ (obj.matrix_world @ Vector(corner)) for obj in scene.objects if obj.type=="MESH" for corner in obj.bound_box]
+    corners=[inverse @ (obj.matrix_world @ Vector(corner)) for obj in scene.objects if obj.type=="MESH" and (not bright_city or obj.name!="Sea") for corner in obj.bound_box]
     lo=Vector(tuple(min(p[axis] for p in corners) for axis in range(3)))
     hi=Vector(tuple(max(p[axis] for p in corners) for axis in range(3)))
     center=(lo+hi)/2
@@ -133,6 +136,18 @@ if close_up:
     aspect=scene.render.resolution_x/scene.render.resolution_y
     camera.data.ortho_scale=max(hi.x-lo.x,(hi.y-lo.y)*aspect)*(1.3 if pass_icon else 1.12)
 scene.camera = camera
+if len(args)>2 and args[2].endswith(".json"):
+    # A layout export supplies the same perspective camera as the game camera fitter.
+    # This background can be composited with actual client GUI geometry for review.
+    review=json.loads(Path(args[2]).read_text())
+    frame=review["camera"]
+    rotation=Matrix(tuple(zip(frame["right"],frame["up"],frame["back"])))
+    camera.matrix_world=(transform @ rotation).to_4x4()
+    camera.location=transform @ Vector(frame["position"])
+    camera.data.type,camera.data.sensor_fit="PERSP","VERTICAL"
+    camera.data.sensor_height=36
+    camera.data.lens=36/(2*math.tan(math.radians(frame["fov"])/2))
+    scene.render.resolution_x,scene.render.resolution_y=review["width"],review["height"]
 if close_up:
     bpy.ops.mesh.primitive_plane_add(size=200,location=(40,-74,0.9))
     bpy.context.object.data.materials.append(material({"color":"344B43" if pass_icon else "D9DECB"}))

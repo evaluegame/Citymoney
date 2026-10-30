@@ -9,9 +9,6 @@ function Menus.new(ui)
     local self=setmetatable({ui=ui,kind="demolish",tile=nil,targetId=nil,pending=nil,error=nil},Menus)
     local C,config=ui.colors,ui.config
     local frame,text,button,overlay=ui.frame,ui.text,ui.button,ui.overlay
-    self.matchButton=button(ui.root,"Match / invite",24,320,188,38,C.paper,function() self.lobby.Visible=true;self.actions.Visible=false;self.error=nil;self:render(ui.data()) end)
-    self.cardsButton=button(ui.root,"Cards & goals",24,366,188,38,C.green,function() self.actions.Visible=true;self.lobby.Visible=false;self.error=nil;self:render(ui.data()) end)
-    self.styleButton=button(ui.root,"Club collection",24,412,188,38,C.paper,function() if ui.openStyles then ui.openStyles() end end)
     self.lobby,self.lobbyCard=overlay(520,632)
     text(self.lobbyCard,"Play together",24,16,436,36,26,C.ink,true)
     text(self.lobbyCard,"Choose your match, player color and readiness.",24,55,472,30,13,C.muted)
@@ -105,23 +102,15 @@ function Menus:feedback(message)
     self.pending=nil;self.error=message
     self:render(self.ui.data())
 end
-function Menus:resize(layout,rosterHeight)
-    local y=layout.compact and layout.headerHeight+32 or math.min(layout.roster[2]+rosterHeight+60,layout.toolbar[2]-232)
-    for index,button in ipairs({self.matchButton,self.cardsButton,self.styleButton}) do
-        button.Position=UDim2.fromOffset(layout.compact and 24+(index-1)*172 or 24,layout.compact and y or y+(index-1)*46)
-        button.Size=UDim2.fromOffset(layout.compact and 164 or 188,38)
-    end
-    if self.ui.cameraBar then
-        local bar=self.ui.cameraBar
-        bar.Position=UDim2.fromOffset(layout.compact and (layout.width-412)/2 or 24,layout.compact and y+46 or y+138)
-        bar.Size=UDim2.fromOffset(layout.compact and 412 or 188,layout.compact and 42 or 84)
-        local compact={{"TableView",6,86},{"CityView",96,86},{"RotateLeft",188,28},{"Fit",222,50},{"RotateRight",278,28},{"ZoomOut",312,40},{"ZoomIn",358,48}}
-        local desktop={{"TableView",6,6,86},{"CityView",96,6,86},{"RotateLeft",6,45,28},{"Fit",39,45,44},{"RotateRight",88,45,28},{"ZoomOut",121,45,27},{"ZoomIn",153,45,28}}
-        for index,spec in ipairs(desktop) do
-            local object=bar:FindFirstChild(spec[1])
-            object.Position=UDim2.fromOffset(layout.compact and compact[index][2] or spec[2],layout.compact and 6 or spec[3])
-            object.Size=UDim2.fromOffset(layout.compact and compact[index][3] or spec[4],30)
-        end
+function Menus:resize(layout,_rosterHeight)
+    if not self.ui.cameraBar then return end
+    local bar=self.ui.cameraBar
+    local r=layout.camera
+    bar.Position,bar.Size=UDim2.fromOffset(r[1],r[2]),UDim2.fromOffset(r[3],r[4])
+    local specs={{"TableView",4,100},{"Fit",108,60},{"ZoomOut",172,36},{"ZoomIn",212,36}}
+    for _,spec in ipairs(specs) do
+        local object=bar:FindFirstChild(spec[1])
+        object.Position,object.Size=UDim2.fromOffset(spec[2],2),UDim2.fromOffset(spec[3],30)
     end
 end
 function Menus:playCard()
@@ -162,13 +151,6 @@ function Menus:render(data)
         if entry.id==ui.id then mine=entry end
         if entry.ready then readyCount=readyCount+1 end
     end
-    local visiting=false
-    for _,visitor in ipairs(data.visitors or {}) do if visitor.id==ui.id then visiting=true end end
-    self.matchButton.Visible,self.cardsButton.Visible,self.styleButton.Visible=not visiting,not visiting,not visiting
-    local total=0
-    for _,count in pairs(me and me.cards or {}) do total=total+count end
-    self.cardsButton.Text=me and me.challenge and me.challenge.ready and "Challenge reward ready!" or ("Cards & goals · "..total)
-    ui.available(self.cardsButton,state.status=="playing" and me~=nil and me.alive,C.green)
     if not settings then return end
     ui.available(self.two,editable,settings.seats==2 and C.green or C.paper)
     ui.available(self.four,editable,settings.seats==4 and C.green or C.paper)

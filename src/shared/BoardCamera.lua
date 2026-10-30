@@ -1,29 +1,50 @@
 -- Perspective fitting into a HUD-free screen rectangle, including tall houses.
 local Camera={}
 local function dot(a,b) return a[1]*b[1]+a[2]*b[2]+a[3]*b[3] end
+function Camera.cityBounds(config,architecture,state)
+    local points={}
+    for _,x in ipairs({-91,91}) do for _,y in ipairs({-4,2}) do for _,z in ipairs({-91,91}) do table.insert(points,{x,y,z}) end end end
+    for index,tile in ipairs(config.tiles) do if tile.kind=="property" then
+        local site=architecture.site(index)
+        local height=29
+        if state then
+            local property=state.properties[index]
+            height=({13,20,21,29})[property.ownerId and property.level+1 or 1]
+        end
+        for _,x in ipairs({-9.5,9.5}) do for _,y in ipairs({1.5,height}) do for _,z in ipairs({-9.5,9.5}) do table.insert(points,{site[1]+x,y,site[3]+z}) end end end
+    end end
+    for _,x in ipairs({-39,39}) do for _,z in ipairs({-39,39}) do table.insert(points,{x,21,z}) end end
+    return {min={-92,-4,-92},max={92,29,92},target={0,5,0},points=points}
+end
 function Camera.fromSlopes(slopes,yaw,elevation,zoom,bounds)
     local left,right,bottom,top=table.unpack(slopes)
-    local cx,cy=(left+right)/2,(bottom+top)/2
     local back={math.sin(yaw)*math.cos(elevation),math.sin(elevation),math.cos(yaw)*math.cos(elevation)}
     local rightAxis={math.cos(yaw),0,-math.sin(yaw)}
     local up={-math.sin(yaw)*math.sin(elevation),math.cos(elevation),-math.cos(yaw)*math.sin(elevation)}
-    bounds=bounds or {min={-88,0,-88},max={88,32,88}}
+    bounds=bounds or {min={-92,-4,-92},max={92,33,92}}
     local target={}
     for axis=1,3 do target[axis]=(bounds.min[axis]+bounds.max[axis])/2 end
-    local distance=1
-    for _,x in ipairs({bounds.min[1],bounds.max[1]}) do
-        for _,y in ipairs({bounds.min[2],bounds.max[2]}) do
-            for _,z in ipairs({bounds.min[3],bounds.max[3]}) do
-                local p={x-target[1],y-target[2],z-target[3]}
-                local r,u,b=dot(p,rightAxis),dot(p,up),dot(p,back)
-                distance=math.max(distance,b+1,(r+right*b)/(right-cx),(-r-left*b)/(cx-left),
-                    (u+top*b)/(top-cy),(-u-bottom*b)/(cy-bottom))
-            end
-        end
+    target=bounds.target or target
+    local points=bounds.points
+    if not points then
+        points={}
+        for _,x in ipairs({bounds.min[1],bounds.max[1]}) do for _,y in ipairs({bounds.min[2],bounds.max[2]}) do for _,z in ipairs({bounds.min[3],bounds.max[3]}) do table.insert(points,{x,y,z}) end end end
     end
-    distance=distance*(zoom or 1)
+    -- Solve the smallest perspective frustum containing the city. Allowing the
+    -- target to shift within the free rectangle avoids wasted space above it.
+    local rMax,rMin,uMax,uMin,near=-math.huge,math.huge,-math.huge,math.huge,1
+    for _,point in ipairs(points) do
+        local p={point[1]-target[1],point[2]-target[2],point[3]-target[3]}
+        local r,u,b=dot(p,rightAxis),dot(p,up),dot(p,back)
+        rMax,rMin=math.max(rMax,r+right*b),math.min(rMin,r+left*b)
+        uMax,uMin=math.max(uMax,u+top*b),math.min(uMin,u+bottom*b)
+        near=math.max(near,b+1)
+    end
+    local distance=math.max(near,(rMax-rMin)/(right-left),(uMax-uMin)/(top-bottom))*(zoom or 1)
+    local offsetR=(rMax+rMin-(right+left)*distance)/2
+    local offsetU=(uMax+uMin-(top+bottom)*distance)/2
     local position={}
-    for axis=1,3 do position[axis]=target[axis]+back[axis]*distance-rightAxis[axis]*cx*distance-up[axis]*cy*distance end
+    for axis=1,3 do position[axis]=target[axis]+back[axis]*distance+rightAxis[axis]*offsetR+up[axis]*offsetU end
     return {position=position,right=rightAxis,up=up,back=back,fov=36}
 end
 function Camera.fit(width,height,rect,yaw,elevation,zoom,bounds)

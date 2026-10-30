@@ -27,7 +27,22 @@ function Dice.pose(value,side,elapsed,duration,sequence)
     return position,Architecture.rotation(yaw+remain*math.pi*4,pitch+remain*math.pi*6,roll+remain*math.pi*4)
 end
 function Dice.mesh(body,pip)
-    local entries={{name="DiceBody",size={Dice.size,Dice.size,Dice.size},position={0,0,0},color=body,material="SmoothPlastic",reflectance=0.08,interaction="dice"}}
+    local r=0.38
+    local inner=Dice.size-r*2
+    local entries={}
+    local function shell(name,size,p,shape,rotation)
+        table.insert(entries,{name=name,size=size,position=p,color=body,shape=shape,rotation=rotation,material="SmoothPlastic",reflectance=0.08,interaction="dice"})
+    end
+    shell("DiceBody",{Dice.size,inner,inner},{0,0,0})
+    shell("DiceShell",{inner,Dice.size,inner},{0,0,0})
+    shell("DiceShell",{inner,inner,Dice.size},{0,0,0})
+    local edge=Dice.size/2-r
+    for _,a in ipairs({-1,1}) do for _,b in ipairs({-1,1}) do
+        shell("DiceEdge",{inner,r*2,r*2},{0,a*edge,b*edge},"Cylinder")
+        shell("DiceEdge",{inner,r*2,r*2},{a*edge,0,b*edge},"Cylinder",Architecture.rotation(0,0,math.pi/2))
+        shell("DiceEdge",{inner,r*2,r*2},{a*edge,b*edge,0},"Cylinder",Architecture.rotation(0,math.pi/2,0))
+        for _,c in ipairs({-1,1}) do shell("DiceCorner",{r*2,r*2,r*2},{a*edge,b*edge,c*edge},"Ball") end
+    end end
     for value,face in ipairs(Dice.faces) do
         for _,point in ipairs(Dice.pips[value]) do
             local p={}
@@ -43,7 +58,12 @@ function Dice.preview(value,side)
     for _,entry in ipairs(entries) do
         local old=entry.position
         entry.position={p[1]+r[1]*old[1]+r[2]*old[2]+r[3]*old[3],p[2]+r[4]*old[1]+r[5]*old[2]+r[6]*old[3],p[3]+r[7]*old[1]+r[8]*old[2]+r[9]*old[3]}
-        entry.rotation=r
+        local oldR=entry.rotation or {1,0,0,0,1,0,0,0,1}
+        local combined={}
+        for a=0,2 do for b=1,3 do
+            combined[a*3+b]=r[a*3+1]*oldR[b]+r[a*3+2]*oldR[b+3]+r[a*3+3]*oldR[b+6]
+        end end
+        entry.rotation=combined
     end
     return entries
 end

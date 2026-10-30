@@ -34,7 +34,7 @@ function World:sync(state,club)
     local style=Cosmetics.get(styleId)
     for _,model in ipairs(self.models) do
         for _,part in ipairs(model:GetChildren()) do
-            if part:IsA("BasePart") then part.Color=Color3.fromHex(part.Name=="DiceBody" and style.dice or style.pip) end
+            if part:IsA("BasePart") then part.Color=Color3.fromHex(string.sub(part.Name,1,4)=="Dice" and style.dice or style.pip) end
         end
     end
     if not effects then self:place(roll.values,1,1,roll.seq);return true end

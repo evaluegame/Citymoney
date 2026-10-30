@@ -1,7 +1,7 @@
 -- Appearance only. The engine never reads this catalogue or pass ownership.
 local Cosmetics={}
 Cosmetics.styles={
-    {id="classic",name="Waterfront Classic",label="CLASSIC",premium=false,accent="3E6C57",trim="F8F0DF",glass="96C2CE",stone="D7D1C4",door="556F66",light="FFE4BA",dice="EFEBDD",pip="2E443A",
+    {id="classic",name="City Original",label="ORIGINAL",premium=false,accent="386BF0",trim="FFFFFF",glass="69D5ED",stone="E7EDF5",door="3555A5",light="FFE4A4",dice="EAF1FF",pip="224377",
         description="The original waterfront home, with your player-colored roof and garden."},
     {id="gilded",name="Golden Estate",label="GOLDEN ESTATE",premium=true,accent="D6B36C",trim="E9D5A8",glass="ACCFD1",stone="EBE6D9",door="344B43",light="FFE2A2",dice="293E37",pip="E9C778",
         description="Brass-framed windows, marble steps, pearl topiary and warm garden lanterns."},

@@ -1,12 +1,20 @@
 local shared=game:GetService("ReplicatedStorage"):WaitForChild("Citymoney")
-local Fit,Layout,Architecture=require(shared.BoardCamera),require(shared.Layout),require(shared.Architecture)
+local Fit,Layout,Architecture,Config=require(shared.BoardCamera),require(shared.Layout),require(shared.Architecture),require(shared.Config)
 local Labels=require(script.Parent.TileLabels)
+local Presentation=require(shared.Presentation)
 local View={}
 View.__index=View
-function View.new() return setmetatable({frame=nil,key=nil,wasVisiting=false},View) end
+function View.new() return setmetatable({frame=nil,key=nil,wasVisiting=false,bounds=Fit.cityBounds(Config,Architecture)},View) end
 function View:update(dt,root,safe,layout,data,focus,inspector,visit,player)
     local camera=workspace.CurrentCamera
     if not camera or not layout then return end
+    if data and self.revision~=data.revision then
+        self.revision=data.revision
+        local heights={}
+        for _,property in ipairs(data.game.properties) do table.insert(heights,property.ownerId and property.level or 0) end
+        local signature=table.concat(heights,":")
+        if signature~=self.heights then self.heights=signature;self.bounds=Fit.cityBounds(Config,Architecture,data.game);self.key=nil end
+    end
     if visit then
         if self.labels then self.labels:update(camera,safe,layout.scale,data,false) end
         local humanoid=player.Character and player.Character:FindFirstChildOfClass("Humanoid")
@@ -21,7 +29,7 @@ function View:update(dt,root,safe,layout,data,focus,inspector,visit,player)
     self.wasVisiting=false
     camera.CameraType,camera.FieldOfView=Enum.CameraType.Scriptable,36
     local size,offset=camera.ViewportSize,safe.AbsolutePosition
-    local mode=root:GetAttribute("ViewMode") or "table"
+    local mode=root:GetAttribute("ViewMode") or "city"
     local rotate,zoom=root:GetAttribute("Rotate") or 0,root:GetAttribute("Zoom") or 1
     local key=table.concat({size.X,size.Y,layout.width,layout.height,layout.scale,offset.X,offset.Y,mode,rotate,zoom,tostring(focus),tostring(inspector),data and data.game.properties[focus or 0] and data.game.properties[focus].level or 0},":")
     if self.key~=key then
@@ -29,9 +37,9 @@ function View:update(dt,root,safe,layout,data,focus,inspector,visit,player)
         local rectangle=Layout.board(layout,inspector)
         local rect={offset.X+rectangle[1]*layout.scale,offset.Y+rectangle[2]*layout.scale,rectangle[3]*layout.scale,rectangle[4]*layout.scale}
         self.rect=rect
-        local yaw=rotate*math.pi/2+(mode=="city" and math.pi/4 or 0)
-        local elevation=math.rad(mode=="city" and 52 or 76)
-        local bounds
+        local yaw=rotate*math.pi/2+(mode=="city" and Presentation.defaultYaw or 0)
+        local elevation=mode=="city" and Presentation.defaultElevation or math.rad(76)
+        local bounds=self.bounds
         if focus then
             local p,angle=Architecture.site(focus)
             local level=data and data.game.properties[focus].level or 0

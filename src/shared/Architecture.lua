@@ -37,11 +37,11 @@ function Architecture.house(origin, yaw, theme, level, tint, paint, owned, style
         table.insert(parts, value)
         return value
     end
-    local wall = ({ theme, tint, "F0E7D5", "56636A" })[(paint or 0) + 1] or theme
+    local wall = ({ theme, tint, "FFF6DE", "6F89B4" })[(paint or 0) + 1] or theme
     local style=Cosmetics.get(styleId)
     local roof, trim, glass = owned and tint or "40535B", style.trim, style.glass
     local floors = level == 0 and 1 or (level == 3 and 3 or 2)
-    local height, width, depth = floors * 6.5, level >= 2 and 11.5 or 10, 9
+    local height, width, depth = floors * 6.5, ({12,13,14.2,14.8})[level+1], 9
     add("Foundation", { width+1, 0.5, depth+1 }, 0, 0.25, 0.8, style.stone, { material = style.premium and "Marble" or "Concrete" })
     add("Floor", { width, 0.25, depth }, 0, 0.65, 0.8, "C9AE89", { material = "WoodPlanks" })
     add("BackWall", { width, height, 0.4 }, 0, 0.7+height/2, 5.1, wall)
@@ -62,6 +62,11 @@ function Architecture.house(origin, yaw, theme, level, tint, paint, owned, style
     end
     add("PorchCanopy", { width+1, 0.35, 3.1 }, 0, 6.7, -5.1, roof)
     add("OwnerFascia", { width+1.05, 0.2, 0.25 }, 0, 6.65, -6.65, tint)
+    for _,x in ipairs({-width/2,width/2}) do
+        add("FacadeCorner",{0.28,height,0.5},x,0.7+height/2,-3.9,trim)
+        add("PorchRail",{0.2,1.4,2.1},x,1.8,-5.2,trim)
+        add("PorchRailCap",{0.36,0.18,2.3},x,2.55,-5.2,tint)
+    end
     for floor = 0, floors-1 do
         local base = 0.7 + floor * 6.5
         if floor > 0 then
@@ -83,6 +88,7 @@ function Architecture.house(origin, yaw, theme, level, tint, paint, owned, style
             add("Window", { 2.25, 2.8, 0.1 }, x, base+3.45, -4.16, glass, { material = "Glass", canCollide = false })
             add("WindowMullion", { 0.12, 2.8, 0.12 }, x, base+3.45, -4.25, trim)
             add("WindowCrossbar", { 2.3, 0.12, 0.12 }, x, base+3.45, -4.25, trim)
+            for _,side in ipairs({-1,1}) do add("WindowShutter",{0.55,3.1,0.18},x+side*1.64,base+3.45,-4.08,tint) end
             if floor == 0 then
                 add("FlowerBox", { 3, 0.5, 0.7 }, x, base+1.6, -4.45, "9D8069", { material = "WoodPlanks" })
                 add("Flowers", { 2.6, 0.35, 0.6 }, x, base+1.9, -4.45, "64815C", { canCollide = false })
@@ -105,6 +111,16 @@ function Architecture.house(origin, yaw, theme, level, tint, paint, owned, style
         add("BackRoof", { width+2, 0.5, 6.3 }, 0, roofY, 3.25, roof, { pitch = math.rad(27), material = "Slate" })
         add("RoofRidge", { width+2.1, 0.4, 0.45 }, 0, roofY+1.4, 0.8, tint)
         add("Chimney", { 1.1, 3.3, 1.1 }, width/2-1.2, height+2.2, 2, "B88B72", { material = "Brick" })
+        add("ChimneyCap",{1.5,0.35,1.5},width/2-1.2,height+3.8,2,trim)
+        for _,x in ipairs({-(width+1.6)/2,(width+1.6)/2}) do
+            add("RoofBarge",{0.2,0.65,6.4},x,roofY,-1.65,trim,{pitch=math.rad(-27)})
+            add("RoofBarge",{0.2,0.65,6.4},x,roofY,3.25,trim,{pitch=math.rad(27)})
+        end
+        if level==1 then
+            add("DormerWall",{3.8,2.1,1.4},0,roofY+0.9,-1.8,trim)
+            add("DormerGlass",{2.6,1.5,0.12},0,roofY+1,-2.58,glass,{material="Glass",canCollide=false})
+            add("DormerRoof",{4.4,0.3,1.9},0,roofY+2.1,-1.9,tint)
+        end
     else
         add("PenthouseRoof", { width+1.1, 0.5, depth+1.1 }, 0, height+0.95, 0.8, owned and tint or trim)
         add("RoofGarden", { width-1, 0.25, depth-1 }, 0, height+1.35, 0.8, "7E9D76", { material = "Grass" })
@@ -120,6 +136,12 @@ function Architecture.house(origin, yaw, theme, level, tint, paint, owned, style
         add("Balcony", { width+0.6, 0.3, 2.3 }, 0, 7.1, -4.6, trim)
         add("BalconyGlass", { width+0.6, 1.9, 0.15 }, 0, 8.15, -5.65, glass, { transparency = 0.4, material = "Glass" })
         for _, x in ipairs({ -width/2, width/2 }) do add("BalconyPost", { 0.12, 2, 0.2 }, x, 8.1, -5.65, roof) end
+        if level==3 then
+            for _,x in ipairs({-width/2+0.5,width/2-0.5}) do
+                add("VillaTower",{height+0.3,1.4,1.4},x,height/2+0.8,4.5,trim,{shape="Cylinder",roll=math.pi/2})
+                add("VillaFinial",{1.8,1.8,1.8},x,height+1.8,4.5,tint,{shape="Ball"})
+            end
+        end
     end
     -- Interior details visible through the doorway in walking mode.
     add("Rug", { 5, 0.06, 4 }, 0, 0.81, 0.3, "D8BD9C", { canCollide = false })
@@ -140,13 +162,20 @@ function Architecture.property(config, index, ownerName, ownerTint, level, paint
         for key, entry in pairs(extra or {}) do value[key] = entry end
         table.insert(entries, value)
     end
-    add("Lawn", { 18.6, 0.3, 18.6 }, 0, -0.1, 0, "91AA7E", { material = "Grass" })
-    add("GardenPath", { 3.5, 0.12, 8 }, 0, 0.12, -5.2, "E2D7BF", { material = "Cobblestone" })
+    add("ParcelPlinth",{18.9,0.35,18.9},0,-0.35,0,"DCE6F4")
+    add("Lawn", { 18.6, 0.3, 18.6 }, 0, -0.1, 0, ownerName and "72D394" or "EDF4FF", { material = ownerName and "Grass" or "SmoothPlastic" })
+    add("GardenPath", { 3.5, 0.12, 8 }, 0, 0.12, -5.2, "F6FAFF", { material = "Concrete" })
+    if ownerName then
     for _, x in ipairs({ -8.4, 8.4 }) do
         add("Hedge", { 0.85, 1.3, 16.5 }, x, 0.6, 0.2, "557D5A", { material = "Grass" })
         for z = -7, 7, 7 do add("FencePost", { 0.35, 1.8, 0.35 }, x, 0.8, z, "EEE3CC") end
     end
     add("BackHedge", { 17.6, 1.3, 0.85 }, 0, 0.6, 8.1, "557D5A", { material = "Grass" })
+    else
+        add("DeedAccent",{17.8,0.2,2},0,0.15,7.6,config.groups[tile.group].color)
+        for x=-5,5,5 do add("BlueprintGrid",{0.09,0.06,10},x,0.08,0,"D3E1F4") end
+        for z=-5,5,5 do add("BlueprintGrid",{10,0.06,0.09},0,0.08,z,"D3E1F4") end
+    end
     if ownerName then
         for _,x in ipairs({-9,9}) do add("OwnershipBorder",{0.3,0.35,18.3},x,0.22,0,ownerTint) end
         for _,z in ipairs({-9,9}) do add("OwnershipBorder",{18.3,0.35,0.3},0,0.22,z,ownerTint) end
@@ -162,10 +191,10 @@ function Architecture.property(config, index, ownerName, ownerTint, level, paint
         add("OwnerFlag",{1.8,1.1,0.12},6.7,3.7,-7.6,ownerTint)
         if style.premium then
             -- Decorations are queryable for inspection, but never obstruct the doorway or stairs.
-            for _,x in ipairs({-6.7,6.7}) do
-                add("ClubPlanter",{1.35,0.9,1.8},x,0.5,2.4,style.stone,{material="Marble",canCollide=false})
-                add("ClubPlanterBand",{1.4,0.15,1.85},x,0.95,2.4,style.accent,{material="Metal",canCollide=false})
-                add("ClubTopiary",{1.65,2.4,1.65},x,2.2,2.4,style.id=="rose" and "D49BAD" or "6F9478",{shape="Ball",material="Grass",canCollide=false})
+            for _,x in ipairs({-8.2,8.2}) do
+                add("ClubPlanter",{1.05,0.9,1.8},x,0.5,2.4,style.stone,{material="Marble",canCollide=false})
+                add("ClubPlanterBand",{1.1,0.15,1.85},x,0.95,2.4,style.accent,{material="Metal",canCollide=false})
+                add("ClubTopiary",{1.1,2.4,1.5},x,2.2,2.4,style.id=="rose" and "F298BD" or "69CC96",{shape="Ball",material="Grass",canCollide=false})
                 add("ClubLanternPost",{0.18,2.4,0.18},x,1.2,-5.6,style.accent,{material="Metal",canCollide=false})
                 add("ClubLanternBase",{0.7,0.2,0.7},x,2.45,-5.6,style.accent,{material="Metal",canCollide=false})
                 add("ClubLantern",{0.45,0.8,0.45},x,2.9,-5.6,style.light,{material="Neon",light=true,canCollide=false})
@@ -188,13 +217,18 @@ function Architecture.property(config, index, ownerName, ownerTint, level, paint
         if effects and (effects.rentTier or 1)>1 then
             add("RentRateSign",{4,0.9,0.16},2.5,2.6,-8,"DCE4CF",{text=tostring(config.rentTiers[effects.rentTier]).."× RENT",textFace="Front",textColor="3D583D",textSize=22,canCollide=false})
         end
-        add("GardenTreeTrunk", { 0.35, 2.5, 0.35 }, 6.8, 1.25, 5.6, "9C8366", { material = "Wood" })
-        add("GardenTree", { 2.6, 2.7, 2.6 }, 6.8, 3.7, 5.6, "7C9B70", { shape = "Ball", material = "Grass" })
+        add("GardenTreeTrunk", { 0.35, 2.5, 0.35 }, 7.8, 1.25, 6.8, "AA8869", { material = "Wood" })
+        add("GardenTree", { 2.4, 2.7, 2.4 }, 7.8, 3.7, 6.8, "67C98F", { shape = "Ball", material = "Grass" })
     else
-        add("SaleSign", { 5.8, 3, 0.2 }, 0, 2, 0, "F5F0E5",
-            { text = "FOR SALE\n$" .. tile.price, textFace = "Front", textColor = "35564A", textSize = 38 })
-        add("SaleSignPost", { 0.3, 2, 0.3 }, 0, 0.7, 0, "A58C6E", { material = "Wood" })
-        add("FlowerBed", { 4, 0.5, 2.5 }, 5, 0.3, 5, "B7C899", { material = "Grass" })
+        -- City-owned display homes give each district a silhouette before purchase.
+        -- They have no owner, interactive door, premium effects, or visit permission.
+        local preview=Architecture.house(origin,yaw,config.groups[tile.group].color,0,config.groups[tile.group].color,0,true,"classic")
+        for _,entry in ipairs(preview) do
+            entry.name="Display_"..entry.name;entry.door=nil;entry.light=nil;entry.tileIndex=index
+            table.insert(entries,entry)
+        end
+        add("SaleSign", { 7.2, 0.16, 2.4 }, 0, 0.55, -8, "386BF0",
+            { text = "$" .. tile.price, textFace = "Top", textColor = "FFFFFF", textSize = 56,canCollide=false })
     end
     return entries
 end

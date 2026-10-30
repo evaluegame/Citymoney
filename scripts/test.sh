@@ -8,6 +8,7 @@ cd "$project_dir"
 .tools/luau tests/Matchmaking.spec.luau
 .tools/luau tests/Cosmetics.spec.luau
 .tools/luau tests/Tabletop.spec.luau
+.tools/luau tests/Presentation.spec.luau
 .tools/luau tests/Board.spec.luau
 .tools/luau tests/Homes.spec.luau
 pure_sources=()
@@ -20,3 +21,4 @@ while IFS= read -r -d '' source_file; do
   .tools/luau-compile "$source_file" > /dev/null
 done < <(find src -name '*.lua' -print0)
 printf 'All Roblox source files compiled successfully.\n'
+python3 scripts/client_smoke.py

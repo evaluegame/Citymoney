@@ -13,6 +13,10 @@ local Boutique=require(script:WaitForChild("Boutique"))
 local Cosmetics=require(shared.Cosmetics)
 local BoardView=require(script:WaitForChild("BoardView"))
 local CityPlaza=require(script:WaitForChild("CityPlaza"))
+local Presentation=require(shared.Presentation)
+local Motion=require(script:WaitForChild("Motion"))
+local CommandMenu=require(script:WaitForChild("CommandMenu"))
+local HoverCard=require(script:WaitForChild("HoverCard"))
 local boardView=BoardView.new()
 local remotes=shared:WaitForChild("Remotes")
 local action,snapshot,feedback=remotes:WaitForChild("Action"),remotes:WaitForChild("Snapshot"),remotes:WaitForChild("Feedback")
@@ -26,14 +30,15 @@ task.spawn(function()
         task.wait(0.5)
     end
 end)
-local C={ card=Color3.fromHex("FAF7EF"),paper=Color3.fromHex("EFEBDD"),ink=Color3.fromHex("2E443A"),muted=Color3.fromHex("798579"),
-    line=Color3.fromHex("DDDCCF"),green=Color3.fromHex("3E6C57"),gold=Color3.fromHex("DCC098"),mint=Color3.fromHex("DCE8DA"),red=Color3.fromHex("B66758"),white=Color3.new(1,1,1) }
+local C={}
+for key,hex in pairs(Presentation.colors) do C[key]=Color3.fromHex(hex) end
 local gui=Instance.new("ScreenGui")
 gui.Name,gui.ResetOnSpawn,gui.IgnoreGuiInset,gui.ZIndexBehavior="Citymoney",false,false,Enum.ZIndexBehavior.Sibling
 gui.Parent=player:WaitForChild("PlayerGui")
 local safe=Instance.new("Frame")
 safe.Size,safe.BackgroundTransparency,safe.Parent=UDim2.fromScale(1,1),1,gui
 local root=Instance.new("Frame")
+root.Name="CityRoot"
 root.BackgroundTransparency,root.Parent=1,safe
 local uiScale=Instance.new("UIScale"); uiScale.Parent=root
 local function round(object,radius)
@@ -43,8 +48,8 @@ local function place(object,x,y,w,h) object.Position,object.Size=UDim2.fromOffse
 local function frame(parent,x,y,w,h,tint)
     local object=Instance.new("Frame");place(object,x,y,w,h)
     object.BackgroundColor3,object.BorderSizePixel,object.Parent=tint or C.card,0,parent
-    round(object)
-    local stroke=Instance.new("UIStroke");stroke.Color,stroke.Transparency,stroke.Parent=C.line,0.2,object
+    round(object,16)
+    local stroke=Instance.new("UIStroke");stroke.Color,stroke.Transparency,stroke.Parent=C.line,0.42,object
     return object
 end
 local function text(parent,value,x,y,w,h,size,tint,bold)
@@ -57,20 +62,22 @@ end
 local function button(parent,value,x,y,w,h,tint,callback)
     local object=Instance.new("TextButton");place(object,x,y,w,h)
     object.Text,object.TextSize,object.Font=value,14,Enum.Font.GothamBold
-    object.BackgroundColor3,object.TextColor3,object.BorderSizePixel=tint or C.green,tint==C.paper and C.ink or C.white,0
+    object.BackgroundColor3,object.TextColor3,object.BorderSizePixel=tint or C.green,(tint==C.paper or tint==C.card or tint==C.gold) and C.ink or C.white,0
     object.Parent=parent;round(object,11)
     object.Activated:Connect(function() if object.Active then callback() end end)
+    Motion.button(object,root)
     return object
 end
 local function available(object,enabled,tint)
     object.Active,object.AutoButtonColor=enabled,enabled
     object.BackgroundColor3=enabled and tint or C.paper
-    object.TextColor3=enabled and (tint==C.paper and C.ink or C.white) or C.muted
+    object.TextColor3=enabled and ((tint==C.paper or tint==C.card or tint==C.gold) and C.ink or C.white) or C.muted
 end
 local function truncate(object) object.TextWrapped,object.TextTruncate=false,Enum.TextTruncate.AtEnd end
 local data,selected,focusIndex,mainCommand,visitIndex,layout
 local inspectorOpen,portfolioOpen,rolling,locked=false,false,false,false
-local notify,render,requestSale,openPlans,renderPlans,mainAction,menus,boutique,city,openCity
+local notify,render,requestSale,openPlans,renderPlans,mainAction,menus,boutique,city,openCity,commandMenu,hover
+local portraits={}
 local function send(command,index,level,expectedTurn)
     if locked or (rolling and command~="Return") then return false end
     locked=true;action:FireServer(command,index,level,expectedTurn)
@@ -78,9 +85,11 @@ local function send(command,index,level,expectedTurn)
     return true
 end
 local header=frame(root,24,16,1200,68)
-local mark=frame(header,19,21,24,24,C.green);mark.Rotation=45
+header.Name="Header"
+local mark=frame(header,14,12,32,32,C.green)
+local logo=text(mark,"C",0,0,32,32,24,C.white,true);logo.TextXAlignment=Enum.TextXAlignment.Center
 local brand=text(header,"citymoney",60,7,210,32,27,C.ink,true)
-local strap=text(header,"T H E   W A T E R F R O N T   C L U B",62,40,240,15,8,C.muted,true)
+local strap=text(header,"BUILD YOUR CITY",62,40,240,15,9,C.muted,true)
 local cashLabel=text(header,"$1,500",360,8,190,30,23,C.ink,true)
 local worthLabel=text(header,"YOUR BALANCE",360,39,230,16,10,C.muted)
 local homesButton=button(header,"Your homes",800,14,142,40,C.green,function() portfolioOpen=not portfolioOpen;inspectorOpen=false;render() end)
@@ -89,9 +98,10 @@ local dayButton=button(header,"Golden hour",960,14,110,40,C.paper,function()
     night=not night;Lighting.ClockTime=night and 19.2 or 16.2
 end)
 local helpButton
-local roster=frame(root,24,114,188,164)
-text(roster,"AROUND THE NEIGHBORHOOD",14,12,160,25,9,C.muted,true)
-local seats=Instance.new("Frame");place(seats,10,44,168,290);seats.BackgroundTransparency,seats.Parent=1,roster
+local roster=frame(root,20,96,154,164)
+roster.Name="PlayerList"
+text(roster,"AT THE TABLE",12,8,130,24,10,C.muted,true)
+local seats=Instance.new("Frame");place(seats,10,38,134,300);seats.BackgroundTransparency,seats.Parent=1,roster
 local turnChip=frame(root,24,294,188,37,C.mint)
 local roundText=text(turnChip,"WELCOME HOME",12,5,165,27,10,C.green,true)
 local inspector=frame(root,970,114,258,462)
@@ -128,23 +138,24 @@ homeList.BackgroundTransparency,homeList.BorderSizePixel,homeList.ScrollBarThick
 homeList.ScrollBarImageColor3=C.green
 local emptyHomes=text(portfolio,"Your first address is waiting.\nLand on a property and buy it to\nsee your new home appear.",22,135,264,130,16,C.muted)
 local control=frame(root,235,670,810,112)
+control.Name="TurnDock"
 local dieA=button(control,"",16,18,48,48,C.paper,function() if mainCommand=="Roll" and mainAction then mainAction() end end)
 local dieB=button(control,"",72,18,48,48,C.paper,function() if mainCommand=="Roll" and mainAction then mainAction() end end)
 local dieTextA=text(dieA,"·",0,0,48,48,28,C.ink,true);dieTextA.TextXAlignment=Enum.TextXAlignment.Center
 local dieTextB=text(dieB,"·",0,0,48,48,28,C.ink,true);dieTextB.TextXAlignment=Enum.TextXAlignment.Center
 local turnTitle=text(control,"A neighborhood of possibilities.",140,14,400,29,21,C.ink,true)
+truncate(turnTitle)
 local turnHint=text(control,"Start solo against City Bot, or invite your friends.",140,48,400,26,12,C.muted);truncate(turnHint)
 local actionButton=button(control,"Connecting…",574,17,220,54,C.green,function() if mainAction then mainAction() end end)
+local actionDepth=frame(control,574,21,220,54,Color3.fromHex("DCA031"));actionButton.ZIndex=2
 local passButton=button(control,"Pass",500,79,75,26,C.paper,function() send("Skip") end)
 local timeText=text(control,"",16,81,400,18,10,C.muted)
 local timeTrack=frame(control,16,104,778,3,C.paper)
 local timeFill=Instance.new("Frame");timeFill.Size,timeFill.BackgroundColor3,timeFill.BorderSizePixel,timeFill.Parent=UDim2.fromScale(1,1),C.green,0,timeTrack
 local cameraBar=frame(root,24,510,188,84)
-button(cameraBar,"Table view",6,6,86,30,C.green,function() focusIndex=nil;root:SetAttribute("ViewMode","table");root:SetAttribute("Zoom",1);render() end).Name="TableView"
-button(cameraBar,"City view",96,6,86,30,C.paper,function() focusIndex=nil;root:SetAttribute("ViewMode","city");root:SetAttribute("Zoom",1);render() end).Name="CityView"
-button(cameraBar,"<",6,45,28,30,C.paper,function() focusIndex=nil;root:SetAttribute("Rotate",(root:GetAttribute("Rotate") or 0)-1) end).Name="RotateLeft"
+cameraBar.Name,cameraBar.ZIndex="CameraDock",2
+button(cameraBar,"Top view",6,6,86,30,C.paper,function() focusIndex=nil;root:SetAttribute("ViewMode",(root:GetAttribute("ViewMode") or "city")=="city" and "table" or "city");root:SetAttribute("Zoom",1);render() end).Name="TableView"
 button(cameraBar,"Fit",39,45,44,30,C.paper,function() focusIndex=nil;inspectorOpen=false;root:SetAttribute("Rotate",0);root:SetAttribute("Zoom",1);render() end).Name="Fit"
-button(cameraBar,">",88,45,28,30,C.paper,function() focusIndex=nil;root:SetAttribute("Rotate",(root:GetAttribute("Rotate") or 0)+1) end).Name="RotateRight"
 button(cameraBar,"-",121,45,27,30,C.paper,function() root:SetAttribute("Zoom",math.min(1.5,(root:GetAttribute("Zoom") or 1)+0.1)) end).Name="ZoomOut"
 button(cameraBar,"+",153,45,28,30,C.paper,function() root:SetAttribute("Zoom",math.max(0.75,(root:GetAttribute("Zoom") or 1)-0.1)) end).Name="ZoomIn"
 local visitBanner=frame(root,420,110,440,58,C.green)
@@ -157,6 +168,7 @@ local toastVersion=0
 notify=function(message)
     toastVersion=toastVersion+1;local version=toastVersion
     toastText.Text,toast.Visible=message,true
+    Motion.pop(toast,root)
     task.delay(4,function() if toastVersion==version then toast.Visible=false end end)
 end
 local function overlay(w,h)
@@ -360,9 +372,17 @@ do
     local ui={config=Config,colors=C,root=root,id=player.UserId,frame=frame,text=text,button=button,overlay=overlay,available=available,send=send,notify=notify,data=function() return data end,rent=rent,
         header=header,mark=mark,strap=strap,dieA=dieA,dieB=dieB,dieTextA=dieTextA,dieTextB=dieTextB,cameraBar=cameraBar,
         focus=function(index) selected,focusIndex,inspectorOpen,portfolioOpen=index,nil,true,false;render() end,
-        openGoals=function() menus.lobby.Visible=false;menus.actions.Visible=true;boutique.shade.Visible=false;menus:render(data) end,
+        openGoals=function()
+            if not data or data.game.status~="playing" or not resident(data.game,player.UserId) then notify("Start a match to receive cards and challenges.");return end
+            menus.lobby.Visible=false;menus.actions.Visible=true;boutique.shade.Visible=false;menus:render(data)
+        end,
+        openMatch=function() menus:openLobby() end,
+        openHomes=function() portfolioOpen=true;inspectorOpen=false;render() end,
+        openHelp=function() help.Visible=true end,
+        openCity=function() openCity("festival") end,
+        switchLight=function() night=not night;Lighting.ClockTime=night and 19.2 or 14.4 end,
         openStyles=function() menus.lobby.Visible=false;menus.actions.Visible=false;help.Visible=false;boutique:open() end}
-    menus=Menus.new(ui);boutique=Boutique.new(ui);city=CityPlaza.new(ui)
+    menus=Menus.new(ui);boutique=Boutique.new(ui);city=CityPlaza.new(ui);commandMenu=CommandMenu.new(ui);hover=HoverCard.new(ui,player)
     openCity=function(tab) menus.lobby.Visible=false;menus.actions.Visible=false;boutique.shade.Visible=false;city:open(tab) end
     boardView.onProperty=function(index) selected,inspectorOpen,portfolioOpen=index,true,false;render() end
     boardView.onInteraction=function(tab) openCity(tab) end
@@ -370,6 +390,7 @@ end
 render=function()
     if not data then return end
     local state=data.game
+    root:SetAttribute("ReducedMotion",data.club and not data.club.effects or false)
     local current=state.players[state.turn]
     local mine=resident(state,player.UserId)
     local myTurn=state.status=="playing" and current and current.id==player.UserId and current.alive
@@ -385,37 +406,53 @@ render=function()
     seats:ClearAllChildren()
     local entries=state.status=="lobby" and data.lobby or state.players
     for seat,entry in ipairs(entries) do
-        local row=frame(seats,0,(seat-1)*39,168,34,(current and state.status=="playing" and current.id==entry.id) and C.mint or C.card)
+        local row=frame(seats,0,(seat-1)*54,134,48,(current and state.status=="playing" and current.id==entry.id) and C.mint or C.card)
         local tint=Color3.fromHex(Config.playerColors[entry.colorIndex or seat] or "DCC098")
-        local dot=frame(row,9,13,13,13,tint);round(dot,7)
-        local name=text(row,(Cosmetics.get(styleFor(entry.id)).premium and "★ " or "")..entry.name,31,4,125,19,12,entry.alive==false and C.muted or C.ink,true);truncate(name)
-        text(row,entry.cash and ("$"..entry.cash..(entry.alive==false and " · out" or "")) or "Ready to move in",31,20,125,12,10,C.muted)
+        local dot=frame(row,0,7,5,34,tint);round(dot,3)
+        local avatar=frame(row,8,10,30,30,tint);round(avatar,15)
+        local initial=text(avatar,string.sub(entry.name,1,1),0,0,30,30,16,C.white,true);initial.TextXAlignment=Enum.TextXAlignment.Center
+        if type(entry.id)=="number" and entry.id>0 and portraits[entry.id]==nil then
+            portraits[entry.id]=false
+            task.spawn(function()
+                local ok,url=pcall(function() return Players:GetUserThumbnailAsync(entry.id,Enum.ThumbnailType.HeadShot,Enum.ThumbnailSize.Size100x100) end)
+                portraits[entry.id]=ok and url or ""
+                if ok then render() end
+            end)
+        end
+        if portraits[entry.id] and portraits[entry.id]~="" then
+            local image=Instance.new("ImageLabel");image.Size,image.BackgroundTransparency,image.Image,image.Parent=UDim2.fromScale(1,1),1,portraits[entry.id],avatar
+            round(image,15);initial.Visible=false
+        end
+        local name=text(row,entry.name,44,4,84,18,12,entry.alive==false and C.muted or C.ink,true);truncate(name)
+        text(row,entry.cash and ("$"..entry.cash..(entry.alive==false and " · out" or "")) or "READY",44,24,84,19,14,C.green,true)
     end
-    roster.Size=UDim2.fromOffset(188,52+math.min(#entries,6)*39)
-    roundText.Text=state.status=="playing" and ("TURN "..state.turnCount.." / "..Config.maxTurns) or "THE NEIGHBORHOOD IS OPEN"
-    if layout then turnChip.Position=UDim2.fromOffset(24,layout.roster[2]+roster.Size.Y.Offset+12) end
-    dieTextA.Text,dieTextB.Text=state.dice[1]>0 and tostring(state.dice[1]) or "·",state.dice[2]>0 and tostring(state.dice[2]) or "·"
+    roster.Size=UDim2.fromOffset(154,44+math.min(#entries,6)*54)
+    roundText.Text=state.status=="playing" and ("TURN "..state.turnCount.." / "..Config.maxTurns) or "LOBBY OPEN"
+    if layout then turnChip.Position,turnChip.Size=UDim2.fromOffset(20,layout.roster[2]+roster.Size.Y.Offset+10),UDim2.fromOffset(154,32) end
+    dieTextA.Text,dieTextB.Text="",""
+    local pipColor=Color3.fromHex(Cosmetics.get(data.club and data.club.styleId or "classic").pip)
+    Motion.face(dieA,state.dice[1],pipColor);Motion.face(dieB,state.dice[2],pipColor)
     passButton.Visible=false;mainCommand=nil
     if state.status~="playing" then
-        turnTitle.Text=state.status=="finished" and "Your next neighborhood awaits." or "A neighborhood of possibilities."
+        turnTitle.Text=state.status=="finished" and "Your next city awaits." or "Build your city."
         local online=data.matchmaking and data.matchmaking.mode=="match"
         turnHint.Text=online and data.matchmaking.status or "Choose a 2- or 4-player queue, invite friends, or practice with bots."
         mainCommand=online and (state.status=="finished" and "BackLobby" or "Match") or "Match"
-        actionButton.Text=online and (state.status=="finished" and "Return to matchmaking" or "Waiting for matched players") or "Play online / Practice"
+        actionButton.Text=online and (state.status=="finished" and "Return to lobby" or "Connecting players...") or "PLAY NOW"
     else
-        turnTitle.Text=myTurn and "Make your next move." or ((current and current.name or "A resident").." is exploring.")
+        turnTitle.Text=myTurn and "YOUR TURN" or ((current and current.name or "A resident").."'s turn")
         if state.phase=="end" then turnTitle.Text=myTurn and "Turn complete." or ((current and current.name or "A resident").." has finished.") end
         turnHint.Text=state.notice or "A new address is waiting."
         if myTurn then
-            if state.phase=="roll" then mainCommand="Roll";actionButton.Text=mine.detained and "Serve detention" or "Click dice / Roll [R]"
+            if state.phase=="roll" then mainCommand="Roll";actionButton.Text=mine.detained and "Serve detention" or "ROLL DICE"
             elseif state.phase=="buy" then
                 local tile=Config.tiles[state.pendingTile]
                 mainCommand="Buy"
-                actionButton.Text="Choose home · from $"..tile.price
+                actionButton.Text="Buy home · $"..tile.price.."+"
                 passButton.Visible=true
-            else mainCommand="End";actionButton.Text="Next player · Finish now" end
+            else mainCommand="End";actionButton.Text="Next player" end
         elseif current and current.id==player.UserId and state.phase=="end" then mainCommand="End";actionButton.Text="End turn"
-        else mainCommand="Plaza";actionButton.Text="Explore city plaza [P]" end
+        else mainCommand="Plaza";actionButton.Text="City events" end
     end
     if state.status=="playing" and (not mine or not mine.alive) and data.matchmaking and data.matchmaking.mode=="lobby" then
         mainCommand="Match";actionButton.Text=data.matchmaking.queued and "View matchmaking queue" or "Find an online match"
@@ -423,7 +460,8 @@ render=function()
     if rolling then mainCommand=nil;actionButton.Text="Rolling the dice…" end
     dieA.Active,dieB.Active=mainCommand=="Roll",mainCommand=="Roll"
     dieA.AutoButtonColor,dieB.AutoButtonColor=dieA.Active,dieB.Active
-    available(actionButton,mainCommand~=nil,C.green)
+    available(actionButton,mainCommand~=nil,C.gold)
+    actionDepth.Visible=mainCommand~=nil and not rolling
     portfolio.Visible=portfolioOpen and not visitIndex
     homeList:ClearAllChildren()
     local row=0
@@ -469,8 +507,7 @@ render=function()
     roster.Visible=not visitIndex and not (layout and layout.compact)
     turnChip.Visible=roster.Visible
     cameraBar.Visible=not visitIndex
-    available(cameraBar.TableView,true,(root:GetAttribute("ViewMode") or "table")=="table" and C.green or C.paper)
-    available(cameraBar.CityView,true,root:GetAttribute("ViewMode")=="city" and C.green or C.paper)
+    cameraBar.TableView.Text=(root:GetAttribute("ViewMode") or "city")=="city" and "Top view" or "City view"
     replay.Visible=isHost or (data.matchmaking and data.matchmaking.mode=="match")
     replay.Text=data.matchmaking and data.matchmaking.mode=="match" and "Return to matchmaking" or "Play again"
     if state.status=="finished" then
@@ -492,6 +529,8 @@ render=function()
     menus:render(data)
     boutique:render(data)
     city:render(data)
+    commandMenu.button.Visible=not visitIndex
+    commandMenu.button.Text=mine and mine.challenge and mine.challenge.ready and "REWARD READY" or "MENU  [M]"
     if layout then menus:resize(layout,roster.Size.Y.Offset) end
 end
 local function updateLayout()
@@ -500,47 +539,47 @@ local function updateLayout()
     layout=Layout.calculate(area.X,area.Y)
     local w,h=layout.width,layout.height
     uiScale.Scale=layout.scale;root.Size,root.Position=UDim2.fromOffset(w,h),UDim2.fromOffset(0,0)
-    place(header,24,16,w-48,layout.headerHeight)
-    local hw=w-48
+    place(header,20,16,w-40,layout.headerHeight)
+    local hw=w-40
+    place(mark,14,12,32,32)
+    place(brand,58,5,220,32);brand.TextSize=29
+    place(strap,60,36,260,15);strap.Visible=not layout.compact
+    place(cashLabel,hw-185,7,168,28);cashLabel.TextSize=25
+    place(worthLabel,hw-185,36,168,15)
+    homesButton.Visible,helpButton.Visible,dayButton.Visible=false,false,false
     if layout.compact then
-        place(brand,54,9,170,30);brand.TextSize=23;strap.Visible=false
-        place(cashLabel,18,59,160,28);place(worthLabel,180,64,250,18)
-        place(homesButton,hw-228,12,136,36);place(helpButton,hw-84,12,70,36);helpButton.Text="Rules";dayButton.Visible=false
-    else
-        place(brand,60,7,210,32);brand.TextSize=27;strap.Visible=true
-        place(cashLabel,math.max(310,hw*0.34),8,190,30);place(worthLabel,math.max(310,hw*0.34),39,230,16)
-        place(homesButton,hw-410,14,150,40);place(dayButton,hw-250,14,110,40);place(helpButton,hw-130,14,116,40)
-        helpButton.Text="How to play";dayButton.Visible=true
+        place(brand,58,12,210,32);brand.TextSize=25
+        place(cashLabel,hw-166,12,150,28);place(worthLabel,hw-166,44,150,17)
     end
     local r=layout.roster;place(roster,r[1],r[2],r[3],roster.Size.Y.Offset)
     local card=layout.inspector;place(inspector,card[1],card[2],card[3],462)
-    -- Deed cards can scroll on short or portrait screens, instead of clipping.
-    if card[4]<462 then
-        local fit=math.max(0.76,card[4]/462)
-        local inner=inspector:FindFirstChildOfClass("UIScale") or Instance.new("UIScale")
-        inner.Scale,inner.Parent=fit,inspector
-        inspector.Position=UDim2.fromOffset(w-24-258*fit,card[2])
-    else local inner=inspector:FindFirstChildOfClass("UIScale");if inner then inner.Scale=1 end end
-    place(portfolio,w-332,layout.headerHeight+46,308,math.min(440,h-layout.headerHeight-210))
+    local fit=math.min(1,math.max(0.76,card[4]/462))
+    local inner=inspector:FindFirstChildOfClass("UIScale") or Instance.new("UIScale")
+    inner.Scale,inner.Parent=fit,inspector
+    inspector.Position=UDim2.fromOffset(w-20-card[3]*fit,card[2])
+    place(portfolio,w-328,92,308,math.min(440,h-layout.toolbar[4]-125))
     homeList.Size=UDim2.fromOffset(284,portfolio.Size.Y.Offset-102)
     local t=layout.toolbar;place(control,t[1],t[2],t[3],t[4])
     if layout.compact then
-        place(dieA,16,16,44,44);place(dieB,66,16,44,44)
-        place(turnTitle,124,14,t[3]-140,27);turnTitle.TextSize=18
-        place(turnHint,16,67,t[3]-32,22)
-        place(actionButton,16,101,t[3]-112,42);place(passButton,t[3]-88,101,72,42)
-        place(timeText,124,44,t[3]-140,17)
+        place(dieA,14,12,64,64);place(dieB,86,12,64,64)
+        place(turnTitle,164,14,t[3]-180,26);turnTitle.TextSize=19
+        place(turnHint,164,44,t[3]-180,24)
+        place(timeText,16,84,t[3]-32,17)
+        place(actionButton,14,110,t[3]-104,64);place(passButton,t[3]-80,110,66,64)
     else
-        place(dieA,16,18,48,48);place(dieB,72,18,48,48)
-        place(turnTitle,140,14,t[3]-390,29);turnTitle.TextSize=21
-        place(turnHint,140,48,t[3]-390,26)
-        place(actionButton,t[3]-236,17,220,54);place(passButton,t[3]-90,79,74,24)
-        place(timeText,16,81,t[3]-122,18)
+        place(dieA,16,16,48,48);place(dieB,72,16,48,48)
+        place(turnTitle,136,10,t[3]-390,28);turnTitle.TextSize=21
+        place(turnHint,136,39,t[3]-390,20)
+        place(timeText,136,63,t[3]-340,14);timeText.TextSize=10
+        place(actionButton,t[3]-190,16,174,48);place(passButton,t[3]-250,18,52,44)
     end
-    place(timeTrack,16,t[4]-7,t[3]-32,3)
-    place(toast,(w-400)/2,layout.headerHeight+36,400,45)
-    place(visitBanner,(w-440)/2,layout.headerHeight+36,440,58)
+    place(dieTextA,0,0,48,48);place(dieTextB,0,0,48,48)
+    actionDepth.Position,actionDepth.Size=actionButton.Position+UDim2.fromOffset(0,4),actionButton.Size
+    place(timeTrack,16,t[4]-5,t[3]-32,3)
+    place(toast,(w-400)/2,86,400,45)
+    place(visitBanner,(w-440)/2,86,440,58)
     if menus then menus:resize(layout,roster.Size.Y.Offset) end
+    if commandMenu then commandMenu:resize(layout) end
     if data then render() end
 end
 safe:GetPropertyChangedSignal("AbsoluteSize"):Connect(updateLayout)
@@ -548,19 +587,19 @@ updateLayout()
 local animationVersion=0
 local function diceAnimation(first,second)
     if data and data.club and not data.club.effects then
-        dieTextA.Text,dieTextB.Text=tostring(first),tostring(second);return
+        Motion.face(dieA,first,dieTextA.TextColor3);Motion.face(dieB,second,dieTextB.TextColor3);return
     end
     animationVersion=animationVersion+1;local version=animationVersion
     rolling=true;render()
     task.spawn(function()
         for step=1,10 do
             if version~=animationVersion then return end
-            dieTextA.Text,dieTextB.Text=tostring(math.random(1,6)),tostring(math.random(1,6))
+            Motion.face(dieA,math.random(1,6),dieTextA.TextColor3);Motion.face(dieB,math.random(1,6),dieTextB.TextColor3)
             dieA.Rotation,dieB.Rotation=step%2==0 and 7 or -7,step%2==0 and -7 or 7
             task.wait(0.045+step*0.003)
         end
         if version~=animationVersion then return end
-        dieTextA.Text,dieTextB.Text,dieA.Rotation,dieB.Rotation=tostring(first),tostring(second),0,0
+        Motion.face(dieA,first,dieTextA.TextColor3);Motion.face(dieB,second,dieTextB.TextColor3);dieA.Rotation,dieB.Rotation=0,0
         rolling=false;render()
     end)
 end
@@ -575,9 +614,12 @@ snapshot.OnClientEvent:Connect(function(incoming)
         results.Visible=false;focusIndex=nil;inspectorOpen=false;portfolioOpen=false
         chooser.Visible=false;planPending=false;planIndex=nil;planTurn=nil
     end
+    if old and state.status=="playing" and state.players[state.turn].id==player.UserId and (old.game.turnCount~=state.turnCount or old.game.status~="playing") then
+        notify("YOUR TURN · Upgrade, play a card, or roll the dice!")
+    end
     if after and before and after.cash~=before.cash then
         local delta=after.cash-before.cash
-        notify((delta>0 and "+$" or "−$")..math.abs(delta).." · Balance $"..after.cash)
+        Motion.delta(cashLabel,delta,delta>0 and C.green or C.red,root)
     end
     if state.status=="playing" and state.phase=="buy" and state.players[state.turn].id==player.UserId then
         if not old or old.game.phase~="buy" or old.game.pendingTile~=state.pendingTile then
@@ -616,7 +658,7 @@ snapshot.OnClientEvent:Connect(function(incoming)
     if state.status=="finished" and (not old or old.game.status~="finished") then
         results.Visible=true;help.Visible=false;sale.Visible=false
         menus.lobby.Visible=false;menus.actions.Visible=false;boutique.shade.Visible=false
-        city.shade.Visible=false
+        city.shade.Visible=false;commandMenu.shade.Visible=false
         boutique:celebrate()
     end
     render()
@@ -627,7 +669,7 @@ feedback.OnClientEvent:Connect(function(message)
     notify(message);renderPlans();menus:feedback(message);boutique:feedback(message);city:feedback(message)
 end)
 local function inspect(position)
-    if help.Visible or sale.Visible or results.Visible or chooser.Visible or visitIndex or menus:isOpen() or boutique:isOpen() or city:isOpen() then return end
+    if help.Visible or sale.Visible or results.Visible or chooser.Visible or visitIndex or menus:isOpen() or boutique:isOpen() or city:isOpen() or commandMenu:isOpen() then return end
     local camera,board=workspace.CurrentCamera,workspace:FindFirstChild("CitymoneyBoard")
     if not camera or not board then return end
     local ray=camera:ScreenPointToRay(position.X,position.Y)
@@ -644,7 +686,8 @@ end
 Input.TouchTapInWorld:Connect(function(position,processed) if not processed then inspect(position) end end)
 Input.InputBegan:Connect(function(input,processed)
     if not processed and input.UserInputType==Enum.UserInputType.MouseButton1 then inspect(input.Position) end
-    if processed or help.Visible or sale.Visible or results.Visible or chooser.Visible or menus:isOpen() or boutique:isOpen() or city:isOpen() then return end
+    if not processed and input.KeyCode==Enum.KeyCode.M and not visitIndex and not help.Visible and not sale.Visible and not results.Visible and not chooser.Visible and not menus:isOpen() and not boutique:isOpen() and not city:isOpen() then commandMenu.shade.Visible=not commandMenu.shade.Visible;return end
+    if processed or help.Visible or sale.Visible or results.Visible or chooser.Visible or menus:isOpen() or boutique:isOpen() or city:isOpen() or commandMenu:isOpen() then return end
     if input.KeyCode==Enum.KeyCode.B and visitIndex then send("Return")
     elseif input.KeyCode==Enum.KeyCode.R and mainCommand=="Roll" then send("Roll")
     elseif input.KeyCode==Enum.KeyCode.P and not visitIndex then openCity("festival")
@@ -657,11 +700,11 @@ Input.InputChanged:Connect(function(input,processed)
 end)
 RunService.RenderStepped:Connect(function(dt)
     boardView:update(dt,root,safe,layout,data,focusIndex,inspector.Visible or portfolio.Visible,visitIndex,player)
-    dayButton.Text=night and "Night stroll" or "Golden hour"
+    hover:update(data,layout,safe,visitIndex or inspector.Visible or portfolio.Visible or help.Visible or sale.Visible or results.Visible or chooser.Visible or menus:isOpen() or boutique:isOpen() or city:isOpen() or commandMenu:isOpen())
     if data and data.game.status=="playing" then
         local handing=data.game.phase=="end"
         local seconds=math.max(0,(handing and data.handoffAt or data.deadline)-workspace:GetServerTimeNow())
-        timeText.Text=handing and ("Next player's turn starts automatically in "..math.ceil(seconds).."s") or (math.ceil(seconds).."s to decide · Click dice / R · City plaza [P]")
+        timeText.Text=handing and ("NEXT TURN IN "..math.ceil(seconds).."s") or ("R  ROLL  ·  P  EVENTS  ·  "..math.ceil(seconds).."s")
         if chooser.Visible and not planError then
             local tile=Config.tiles[planIndex]
             planNote.Text=(planMode=="buy" and ("Land $"..tile.price.." + building $"..planLevel*tile.upgrade) or (planMode=="rent" and "This multiplier applies to future rent payments." or "Only the added levels are charged.")).."  ·  "..math.ceil(seconds).."s left"

@@ -5,6 +5,7 @@ local Board, Architecture, Scene = require(shared.Board), require(shared.Archite
 local Cosmetics=require(shared.Cosmetics)
 local DiceWorld=require(script.Parent.DiceWorld)
 local Plaza=require(shared.Plaza)
+local Effects=require(script.Parent.WorldEffects)
 local World = {}
 World.__index = World
 
@@ -21,7 +22,7 @@ function World.new(config)
     -- Parcel geometry is replaced independently on purchase, repaint and upgrade.
     local entries = {}
     for _, entry in ipairs(Board.generate(config)) do
-        local die=entry.name=="DiceBody" or string.match(entry.name,"^Pip%d$")
+        local die=entry.interaction=="dice" and (string.match(entry.name,"^DiceBody") or string.match(entry.name,"^DiceShell") or string.match(entry.name,"^DiceEdge") or string.match(entry.name,"^DiceCorner") or string.match(entry.name,"^Pip%d$"))
         if not die and not (entry.tileIndex and config.tiles[entry.tileIndex].kind == "property" and entry.name ~= "Tile"..entry.tileIndex and entry.name ~= "DistrictInlay") then
             table.insert(entries, entry)
         end
@@ -206,8 +207,8 @@ function World:sync(state)
     self.state = state
     if self.festivalLabel and state.turnCount~=self.festivalTurn then
         self.festivalTurn=state.turnCount
-        local event,remaining=Plaza.festival(self.config,state)
-        self.festivalLabel.TextLabel.Text=string.upper(event.name).."\n$"..event.cost.." - "..remaining.." TURNS"
+        local event=Plaza.festival(self.config,state)
+        self.festivalLabel.TextLabel.Text="FESTIVAL\n$"..event.cost
     end
     if self.dice:sync(state,self.club) then self.moveReadyAt=os.clock()+self.config.diceSeconds end
     -- Buying immediately constructs a complete home, including its owner's sign.
@@ -216,7 +217,9 @@ function World:sync(state)
         local styleId=self.club and self.club:visual(property.ownerId) or "classic"
         local key = tostring(property.ownerId)..":"..property.level..":"..(property.paint or 0)..":"..styleId
         if key ~= view.key then
+            local previousOwner,previousLevel=view.ownerId,view.level
             view.key = key
+            view.ownerId,view.level=property.ownerId,property.level
             if view.model then view.model:Destroy() end
             local owner
             for _, resident in ipairs(state.players) do if resident.id==property.ownerId then owner=resident end end
@@ -231,6 +234,12 @@ function World:sync(state)
             view.effectsKey=nil
             if owner then
                 self:wireDoor(view.model,owner.id)
+                if previousOwner~=owner.id or property.level>(previousLevel or 0) then
+                    local p=Architecture.site(index)
+                    local animated=true
+                    if self.club then local _,effects=self.club:visual(owner.id);animated=effects end
+                    Effects.reveal(view.model,Vector3.new(table.unpack(p)),self.config.playerColors[owner.colorIndex],property.level,previousOwner==owner.id,animated)
+                end
                 local glow=Instance.new("Highlight")
                 glow.FillTransparency,glow.OutlineColor,glow.OutlineTransparency=1,Color3.fromHex(self.config.playerColors[owner.colorIndex]),0.1
                 glow.Adornee,glow.Parent=view.model,view.model

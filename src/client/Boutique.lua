@@ -101,7 +101,7 @@ function Boutique:render(data)
     ui.dieTextA.TextColor3,ui.dieTextB.TextColor3=Color3.fromHex(equipped.pip),Color3.fromHex(equipped.pip)
     ui.mark.BackgroundColor3=Color3.fromHex(equipped.accent)
     ui.header:FindFirstChildOfClass("UIStroke").Color=equipped.premium and Color3.fromHex(equipped.accent) or C.line
-    ui.strap.Text=equipped.premium and ("W A T E R F R O N T   C L U B  ·  "..equipped.label) or "T H E   W A T E R F R O N T   C L U B"
+    ui.strap.Text=equipped.premium and ("CLUB MEMBER · "..equipped.label) or "BUILD YOUR CITY"
     if not self.shade.Visible then return end
     self:product(profile.passId,false)
     local selected=Cosmetics.get(self.selected)
