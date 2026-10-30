@@ -24,6 +24,16 @@ Tap either large HUD die, the bigger 3D dice, or their tray to roll. R also roll
 Rounded dice with flat pips show the result; the HUD also shows the total.
 The shared dice settle on the server's values before your avatar moves.
 
+SEE YOUR PLAYER WHILE MOVING
+The camera eases in to follow the actual resident's body, then returns to
+the board after arrival. Fit restores the overview for this roll; the next
+roll can follow again. Reduced motion keeps a steady overview.
+Real players use their full-sized Roblox avatars. A player-colored ring,
+nameplate and active outline help identify them. A styled fallback figure
+appears while an avatar loads. Walking previews show this generated figure.
+The city has eight public downtown buildings, a waterfront boardwalk,
+benches, lamps, fountains and a ferry. Player plots stay empty until bought.
+
 AUTOMATIC TURNS
 The token moves one space at a time: 0.25 seconds moving, then a 0.13-second
 pause at the center of each space. It finishes its path before the result. The

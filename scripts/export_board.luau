@@ -47,6 +47,15 @@ if mode == "showcase" or mode == "home" or mode=="clubhome" or mode=="clubshowca
             for _, entry in ipairs(Architecture.property(Config,index,owner[1],owner[2],owner[3],0,nil,style and owner[4] or "classic")) do table.insert(entries,entry) end
         end
     end
+    if mode=="showcase" or mode=="clubshowcase" or mode=="table" then
+        local Actors=require("../src/shared/Actors")
+        local seat=0
+        for index=1,#Config.tiles do if showcase[index] then
+            seat=seat+1
+            local p,yaw=Actors.pose(index,seat)
+            for _,entry in ipairs(Actors.preview(showcase[index][2],p,yaw)) do table.insert(entries,entry) end
+        end end
+    end
     scene = entries
 end
 print(encode(scene))

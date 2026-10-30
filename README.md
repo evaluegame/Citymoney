@@ -2,15 +2,27 @@
 
 A bright, stylized Roblox property board game with colorful houses, a rounded city board, interactive 3D dice, automatic turn handoffs, and four playable city destinations. Play through **2- or 4-player online queues**, invite friends, choose your property's rent, and decide which rival house to demolish.
 
+**See your player as they move:** the camera now follows the moving resident at body height, then returns to the board. Real Roblox avatars keep their full size, with a player-colored ring, readable nameplate and an outline for the active resident. A colorful public downtown, waterfront boardwalk, lamps, benches, fountains and ferry surround the property game.
+
 Now includes an optional **Waterfront Club cosmetic game pass** with three luxury collections, a 3D showroom, styled dice, player auras, walking trails, saved preferences, and reduced motion. **[Publishing and pass setup guide](docs/PUBLISHING.md)**.
 
 **[Download the Studio game ZIP](https://github.com/evaluegame/Citymoney/raw/refs/heads/main/Citymoney-Waterfront.zip)** · **[Studio place file](https://github.com/evaluegame/Citymoney/blob/main/Citymoney-Waterfront.rbxlx)**
 
 The download files are at the repository root. On a GitHub file page, use **Download raw file** (the download-arrow button). The ZIP includes a ready-to-open place, source, and instructions.
 
-![Citymoney's bright city board and simplified play screen](docs/Play-screen-preview.png)
+![The moving resident, furnished homes and waterfront city](docs/Walking-screen-preview.png)
 
-*Layout preview: the actual client GUI's exported positions, text and colors over a matching geometry render, with example purchases. This is an offline review image, not a Roblox Studio screenshot. Native rendering, avatars and live services still need Studio/app playtests.*
+*Layout preview: actual client GUI positions over the shared scene geometry and generated resident model, with example purchases. This is an offline review image, not a Roblox Studio screenshot. Personal Roblox avatars, native rendering and live services still need Studio/app playtests.*
+
+[Full-board preview](docs/Play-screen-preview.png) · [Walking view on a phone](docs/Walking-phone-preview.png)
+
+## Follow your resident through the city
+
+The dice settle in the overview. As the resident begins moving, the camera eases toward their actual body and follows their separate steps, including corners. It briefly holds the landing and returns to the aligned board. Every client can follow the active resident, including other players' turns. **Fit** immediately restores the overview for the current roll; the next roll can follow again. The **3D view / Top view** switch also respects your manual choice. Reduced motion keeps the steady overview.
+
+The real player avatar appears once its body is prepared, replacing the colored fallback resident. Avatars face along their movement direction and stand apart within each space. Their bodies stay visible after leaving a first-person home visit. Floating property badges hide during the close view. Camera changes leave the purchase, reward and automatic-turn clocks running on the same shared journey timeline.
+
+The city now includes **eight public downtown buildings** with windows, storefront awnings and rooftop gardens, a surrounding boardwalk with benches and lamps, a ferry pier, pocket fountains and pedestrian crossings. Public scenery sits outside the property parcels. Unowned player plots remain empty until purchased. The board overview continues to fit the playable route; **3D view** fits the full downtown and waterfront, while the moving-player view shows them from closer to street level.
 
 ## Three easy steps
 
@@ -36,13 +48,13 @@ Tokens move **one space at a time**, taking **0.38 seconds per space**: a gentle
 
 ## A clearer city and play screen
 
-The game now opens in **Top view**: an aligned, almost overhead board without diagonal rotation. It fits the complete route and current buildings into the area left by the HUD, including window resizing, upgrades, property cards and device safe areas. Upright, clickable badges show short map names and prices, or **Rent** for an owned home's rent; owner-colored borders identify purchased spaces. Corner badges stay clear of their neighbors. Narrow phone/window badges show the price or rent; tapping opens the full name and details. Labels temporarily hide around actual avatars and bots so the route and pawns stay visible. Tap a badge to see the full property name, owner, level and rent. **3D view** switches to the angled city; **Top view** returns. **Fit** always restores the aligned top view, default zoom and complete board. The Studio editor opens at the same angle. Purchases and upgrades keep the board in view; **Close-up** lets you inspect a chosen home.
+The game now opens in **Top view**: an aligned, almost overhead board without diagonal rotation. It fits the complete route and current buildings into the area left by the HUD, including window resizing, upgrades, property cards and device safe areas. Upright, clickable badges show short map names and prices, or **Rent** for an owned home's rent; owner-colored borders identify purchased spaces. Corner badges stay clear of their neighbors. Narrow phone/window badges show the price or rent; tapping opens the full name and details. Labels temporarily hide around actual avatars and bots so the route and pawns stay visible. Tap a badge to see the full property name, owner, level and rent. **3D view** fits the entire waterfront and downtown; **Top view** returns. **Fit** always restores the aligned top view, default zoom and complete board. The Studio editor opens at the same angle. Purchases and upgrades keep the board in view; **Close-up** lets you inspect a chosen home.
 
 The persistent interface has a wallet header, a slim color-coded roster, one **MENU [M]** button, direct **EVENTS / CARDS & GOALS / MY HOMES** shortcuts, and a turn dock with larger beveled pip dice and one large gold action. The dock explains the next step and shows the rolled total. Phone layouts enlarge the shortcuts, dice, camera controls and property panels. Real players use Roblox avatar thumbnails with a colored initial while loading; bots use initials. The menu opens **Play Together**, **Cards & Goals**, **City Events**, **Your Properties**, **Style Studio**, and **How to Play**. Day/night lighting is also in the menu. Buttons respond to hover/press, cash changes float beside the wallet, and purchases/upgrades reveal the home with a short owner-colored celebration. Reduced motion disables movement effects.
 
 ![The colorful city, empty lots, purchased homes and four event buildings](docs/Neighborhood-preview.png)
 
-*Model preview of the shared scene geometry. The market has striped awnings and a clock tower; the festival has a domed stage, the challenge hall a trophy, and City News a broadcast tower.*
+*Model preview of the shared scene geometry, including the public downtown, boardwalk, ferry and generated residents. The market has striped awnings and a clock tower; the festival has a domed stage, the challenge hall a trophy, and City News a broadcast tower.*
 
 ## Dice and automatic turns
 
@@ -201,6 +213,7 @@ For source editing alongside Studio, use `rojo serve default.project.json --addr
 | `Engine`, `PropertyPlans`, `Config` | Authoritative economy, turns, home/rental quotes, settings |
 | `Tactics` | Cards, targets, challenges, bots' tactical choices |
 | `BoardCamera`, `client/BoardView`, `client/TileLabels` | Screen-safe table/city camera fitting and upright interactive deed labels |
+| `Actors`, `FollowView`, `CityScenery` | Resident models/poses, timed body-height camera tracking, and the public waterfront |
 | `Dice`, `Journey`, `server/DiceWorld`, `TurnFlow` | Exact-result dice, shared movement timing, arrival guards and automatic handoff |
 | `Opportunities`, `client/CityOffer` | Guaranteed cash/card choices, card caps, replay protection, timeout and bot decisions |
 | `client/GoalDisplay`, `client/MatchFeedback` | Visible goal progress, direct claims, staged result cards and reward effects |
@@ -211,7 +224,7 @@ For source editing alongside Studio, use `rojo serve default.project.json --addr
 | `server/World`, `server/WorldEffects`, `server/init.server` | Physical lifecycle, home reveals, avatar visits, doors, validated remotes, timers |
 | `client/Menus`, `client/init.client` | Match/card/goal menus, rent selector, HUD, cameras, input |
 
-Checks include **196 numbered cases and 600 complete simulated matches**: 35 core engine cases (200 matches), 18 purchase/upgrade cases, 23 strategy/rent cases (200 tactical matches), 25 party/matchmaking cases, 23 cosmetic/ownership/profile cases, 31 tabletop cases (200 automatic matches), 13 presentation cases, and 28 opportunity/experience cases. New cases cover camera projections across desktop/portrait/inset/rotation combinations, tall homes and closeups, exact dice faces, automatic handoff and stale clocks, market prices/caps, festival rotation/targets, and bots. Cosmetic cases cover verification/storage failures, concurrent saves, reconnects, and all **256 plot/style/level combinations**. Four headless client integration checks load the actual shared/client source through a limited Roblox API adapter at desktop, Studio, short-window and mobile sizes. They exercise all 24 map badges without overlap, labels clearing real avatars/bots as they move, camera switching/reset and property/News selection, goal claims/celebrations, arrival gating, opportunity selection/reopening/full hands/other-player privacy, large dice/shortcut targets, touch interactions, chosen festival targets, disabled off-turn offers, a market purchase, buying/skipping, upgrades, one-panel navigation, lobby settings, online search and one-click practice. Purchase requests are applied to the actual game engine. They also export the visible GUI layout, matching perspective camera, and actual world geometry for every review state. Additional scene, home and layout checks run; pure modules are analyzed, all Roblox source compiles, and built-place scripts, interactive attributes and geometry are checked against source.
+Checks include **211 numbered cases and 600 complete simulated matches**: 35 core engine cases (200 matches), 18 purchase/upgrade cases, 23 strategy/rent cases (200 tactical matches), 25 party/matchmaking cases, 23 cosmetic/ownership/profile cases, 31 tabletop cases (200 automatic matches), 13 presentation cases, 28 opportunity/experience cases, and 15 player-visibility/follow-camera/city-layout cases. New cases cover camera projections across desktop/portrait/inset/rotation combinations, tall homes and closeups, exact dice faces, automatic handoff and stale clocks, market prices/caps, festival rotation/targets, and bots. Cosmetic cases cover verification/storage failures, concurrent saves, reconnects, and all **256 plot/style/level combinations**. Four headless client integration checks load the actual shared/client source through a limited Roblox API adapter at desktop, Studio, short-window and mobile sizes. They exercise automatic player following, Fit cancellation, body transparency recovery, reduced motion, shared actor geometry, all 24 map badges without overlap, labels clearing real avatars/bots as they move, camera switching/reset and property/News selection, goal claims/celebrations, arrival gating, opportunity selection/reopening/full hands/other-player privacy, large dice/shortcut targets, touch interactions, chosen festival targets, disabled off-turn offers, a market purchase, buying/skipping, upgrades, one-panel navigation, lobby settings, online search and one-click practice. Purchase requests are applied to the actual game engine. They also export the visible GUI layout, matching perspective camera, and actual world geometry for every review state. Additional scene, home and layout checks run; pure modules are analyzed, all Roblox source compiles, and built-place scripts, interactive attributes and geometry are checked against source.
 
 Reservation and cosmetic service tests use in-memory adapters. **Cloud checks do not run Roblox Studio or live Roblox services.** Native rendering, thumbnails, movement, input, doors, replication, native invites, cross-server joins, actual game-pass checkout, and DataStore persistence still require Studio and published-game playtests.
 

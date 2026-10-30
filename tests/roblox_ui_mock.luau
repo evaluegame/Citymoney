@@ -47,7 +47,7 @@ return function(sources,width,height)
     function cfMethods:ToObjectSpace(b) return cf(b.Position-self.Position) end
     local cfApi={new=cf,Angles=function() return cf(0,0,0) end,lookAt=function(p) return cf(p) end,fromMatrix=function(p,r,u,b) local result=cf(p);result.right,result.up,result.back=r,u,b;return result end}
     local enum=setmetatable({},{__index=function(a,key)
-        local value=setmetatable({},{__index=function(t,name) local item={Name=name};rawset(t,name,item);return item end});rawset(a,key,value);return value
+                local value=setmetatable({},{__index=function(t,name) local item={Name=name,Value=key=="RenderPriority" and name=="Camera" and 200 or 0};rawset(t,name,item);return item end});rawset(a,key,value);return value
     end})
     local methods={}
     local pointer={Target=nil}
@@ -120,6 +120,7 @@ return function(sources,width,height)
     for _,name in ipairs({"Players","ReplicatedStorage","RunService","UserInputService","Lighting","StarterGui","TweenService","SocialService","HttpService","MarketplaceService"}) do services[name]=node("Service",name) end
     function services.TweenService:Create(object,_info,properties) return {Play=function() for key,value in pairs(properties) do object[key]=value end end,Cancel=function() end} end
     function services.RunService:IsStudio() return true end
+    function services.RunService:BindToRenderStep(_name,_priority,callback) self.RenderStepped:Connect(callback) end
     local game={PlaceId=0,JobId="mock",GetService=function(_,name) return assert(services[name],name) end}
     local player=node("Player","Avery");player.UserId=1;player.DisplayName="Avery";services.Players.LocalPlayer=player
     function services.Players:GetPlayerByUserId(id) return id==1 and player or nil end
@@ -210,12 +211,24 @@ return function(sources,width,height)
         walk(gui);return elements
     end
     local P=load(shared.Presentation);local Fit=load(shared.BoardCamera)
+    local Actors,Follow,Journey=load(shared.Actors),load(shared.FollowView),load(shared.Journey)
     local layout=P.layout(width,height);local r=P.board(layout,false)
     local function camera()
         local yaw,elevation=P.viewAngles(root:GetAttribute("ViewMode"),root:GetAttribute("Rotate"))
-        return Fit.fit(width,height,{r[1]*layout.scale,r[2]*layout.scale,r[3]*layout.scale,r[4]*layout.scale},yaw,elevation,root:GetAttribute("Zoom") or 1,Fit.cityBounds(Config,load(shared.Architecture),engine.state))
+        local bounds=root:GetAttribute("ViewMode")=="city" and load(shared.CityScenery).bounds() or Fit.cityBounds(Config,load(shared.Architecture),engine.state)
+        local tracking=Follow.plan(Config,engine.state,data.journeyUntil,now,root:GetAttribute("FollowSuppressed"),not data.club.effects)
+        if tracking then bounds,yaw,elevation=Follow.framing(tracking.position) end
+        return Fit.fit(width,height,{r[1]*layout.scale,r[2]*layout.scale,r[3]*layout.scale,r[4]*layout.scale},yaw,elevation,root:GetAttribute("Zoom") or 1,bounds)
     end
     local views={}
+    local function pose(resident,seat)
+        local roll=engine.state.lastRoll
+        if roll and roll.turn==engine.state.turnCount and resident.id==roll.actorId and resident.position==roll.to and data.journeyUntil and now<data.journeyUntil then
+            local elapsed=now-(data.journeyUntil-Journey.duration(Config,roll)+Config.diceSeconds)
+            return Actors.travel(Config,roll,seat,elapsed)
+        end
+        return Actors.pose(resident.position,seat)
+    end
     local function scene()
         local A,B,D=load(shared.Architecture),load(shared.Board),load(shared.Dice)
         local entries={}
@@ -223,7 +236,7 @@ return function(sources,width,height)
             local parcel=entry.tileIndex and Config.tiles[entry.tileIndex].kind=="property" and entry.name~="Tile"..entry.tileIndex and entry.name~="DistrictInlay"
             local die=entry.name=="DiceBody" or entry.name=="DiceShell" or entry.name=="DiceEdge" or entry.name=="DiceCorner" or string.match(entry.name,"^Pip%d$")
             if not parcel and not die then
-                if root:GetAttribute("ViewMode")=="table" and entry.name=="Tile"..tostring(entry.tileIndex) then entry.text=nil end
+                if entry.name=="Tile"..tostring(entry.tileIndex) and not board:WaitForChild(entry.name):WaitForChild("Caption").Enabled then entry.text=nil end
                 table.insert(entries,entry)
             end
         end
@@ -234,9 +247,24 @@ return function(sources,width,height)
         end end
         local dice=engine.state.lastRoll and engine.state.lastRoll.values or {1,6}
         for side,value in ipairs(dice) do for _,entry in ipairs(D.preview(value,side)) do table.insert(entries,entry) end end
+        for seat,resident in ipairs(engine.state.players) do if resident.alive then
+            local p,yaw=pose(resident,seat)
+            for _,entry in ipairs(Actors.preview(Config.playerColors[resident.colorIndex],p,yaw)) do table.insert(entries,entry) end
+        end end
         return entries
     end
-    local function capture(name) services.RunService.RenderStepped:Fire(0.016);views[name]={elements=export(),camera=camera(),scene=scene()} end
+    local function capture(name)
+        local figures={}
+        for seat,resident in ipairs(engine.state.players) do if resident.alive then
+            local figure=node("Model","Figure_"..resident.id);figure.Parent=board;table.insert(figures,figure)
+            local p=pose(resident,seat)
+            local torso=node("Part","Torso");torso.Position=vector(table.unpack(p));torso.Parent=figure
+            local head=node("Part","Head");head.Position=torso.Position+vector(0,1.47,0);head.Parent=figure
+        end end
+        services.RunService.RenderStepped:Fire(0.016);views[name]={elements=export(),camera=camera(),scene=scene()}
+        for _,figure in ipairs(figures) do figure:Destroy() end
+        services.RunService.RenderStepped:Fire(0.016)
+    end
     for _,name in ipairs({"Header","TurnDock","CityMenuButton","CameraDock","QuickActions","GoalProgress"}) do inside(root:WaitForChild(name)) end
     for _,die in ipairs({root.TurnDock.RollDieA,root.TurnDock.RollDieB}) do local _,s=absolute(die);assert(s.X>=50 and s.Y>=50,"Dice are too small to tap") end
     if layout.compact then
@@ -271,8 +299,16 @@ return function(sources,width,height)
     player.Character=node("Model","Character")
     local realHead=node("Part","Head");realHead.Parent=player.Character
     spot=load(shared.Architecture).position(2);realHead.Position=vector(spot[1],5,spot[3])
+    local loadingFigure=node("Model","Figure_1");loadingFigure.Parent=board
+    local loadingHead=node("Part","Head");loadingHead.Parent=loadingFigure
+    spot=load(shared.Architecture).position(5);loadingHead.Position=vector(spot[1],5,spot[3])
+    services.RunService.RenderStepped:Fire(0.016)
+    assert(root.DeedLabel2.Visible and not root.DeedLabel5.Visible,"A loading avatar hides the moving fallback figure")
+    loadingFigure:Destroy();player.Character:SetAttribute("CitymoneyPrepared",true)
     services.RunService.RenderStepped:Fire(0.016)
     assert(not root.DeedLabel2.Visible,"A map label covers a real player's avatar")
+    realHead.LocalTransparencyModifier=1;services.RunService.RenderStepped:Fire(0.016)
+    assert(realHead.LocalTransparencyModifier==0,"The local avatar remains hidden after the camera controller")
     spot=load(shared.Architecture).position(5);realHead.Position=vector(spot[1],5,spot[3])
     services.RunService.RenderStepped:Fire(0.016)
     assert(root.DeedLabel2.Visible and not root.DeedLabel5.Visible,"Labels do not follow the moving avatar")
@@ -348,6 +384,26 @@ return function(sources,width,height)
     publish();assert(findText("ON THE MOVE...").Active==false);assert(root.TurnDock.RollDieA.Active==false)
     capture("journey");advance(data.journeyUntil-now+0.1);services.RunService.RenderStepped:Fire(0.016)
     findText("WELCOME HOME!");assert(findText("Next player").Active,"Turn controls did not unlock on arrival")
+    -- Normal motion follows the resident at body height, then returns to the
+    -- readable overview. Fit cancels follow for this roll without changing play.
+    data.club.effects=false;engine.state.phase="roll";engine:player(1).position=13
+    assert(engine:act(1,"Roll"))
+    data.journeyUntil=now+Journey.duration(Config,engine.state.lastRoll);data.handoffAt=data.journeyUntil+4;data.deadline=data.journeyUntil+55
+    publish();assert(root:GetAttribute("FollowingResident")==nil,"Follow camera starts before the dice presentation")
+    -- Dice coroutines are not emulated by this adapter. Settle their faces,
+    -- then enable normal camera motion for the movement presentation.
+    data.club.effects=true
+    advance(Config.diceSeconds+0.3);services.RunService.RenderStepped:Fire(0.016)
+    assert(root:GetAttribute("FollowingResident")==1,"Walking does not follow the active player")
+    for index=1,24 do assert(not root["DeedLabel"..index].Visible,"A floating price label covers the follow view") end
+    capture("walking")
+    root.CameraDock.Fit.Activated:Fire();services.RunService.RenderStepped:Fire(0.016)
+    assert(root:GetAttribute("FollowingResident")==nil,"Fit does not return to the board during a walk")
+    assert(root:GetAttribute("FollowSuppressed")==Follow.key(engine.state.lastRoll))
+    advance(data.journeyUntil-now+0.8);services.RunService.RenderStepped:Fire(0.016)
+    assert(root:GetAttribute("FollowingResident")==nil,"The old journey keeps following after arrival")
+    if engine.state.phase=="buy" then click("Back");click("SKIP");assert(engine:act(1,"Skip"));publish() end
+    data.club.effects=false
     -- A waiting opportunity opens only when its token reaches the news space.
     engine:player(1).stats.news=1;engine:player(1).position=4;engine:land(engine:player(1))
     data.journeyUntil=now+2;data.deadline=now+57;publish()

@@ -37,4 +37,4 @@ for name, width, height in (("desktop", 1440, 900), ("studio", 1192, 642), ("sho
         if view!="main":
             (ROOT / "build" / f"{view}-{name}.json").write_text(json.dumps({"width":width,"height":height,**snapshot}, indent=2))
     (ROOT / "build" / f"hud-{name}.json").write_text(json.dumps(data, indent=2))
-    print(f"PASS client UI adapter: {name} {width}×{height}; 24 non-overlapping map labels, view toggle/reset, goals/rewards, arrival timing, opportunities, event targets, upgrades, buy/skip, lobby/practice and HUD bounds.")
+    print(f"PASS client UI adapter: {name} {width}×{height}; player visibility, follow/overview/Fit, 24 map labels, goals/rewards, arrival timing, opportunities, event targets, upgrades, buy/skip, lobby/practice and HUD bounds.")

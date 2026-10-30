@@ -4,6 +4,7 @@ local Architecture=runtimeScript and require(runtimeScript.Parent.Architecture) 
 local Dice=runtimeScript and require(runtimeScript.Parent.Dice) or require("./Dice")
 local Art=runtimeScript and require(runtimeScript.Parent.CityArt) or require("./CityArt")
 local Districts=runtimeScript and require(runtimeScript.Parent.CityDistricts) or require("./CityDistricts")
+local Scenery=runtimeScript and require(runtimeScript.Parent.CityScenery) or require("./CityScenery")
 local Board={spacing=Architecture.spacing}
 Board.position=Architecture.position
 function Board.generate(config)
@@ -33,6 +34,7 @@ function Board.generate(config)
     add("DiceInstructions",{30,0.08,4.7},{0,2.23,9},"386BF0",{text="LET'S ROLL!",textColor="FFFFFF",textSize=60,interaction="dice"})
     for side,value in ipairs({1,6}) do for _,entry in ipairs(Dice.preview(value,side)) do table.insert(parts,entry) end end
     for _,entry in ipairs(Districts.generate()) do table.insert(parts,entry) end
+    for _,entry in ipairs(Scenery.generate()) do table.insert(parts,entry) end
     add("CityTitle",{40,0.1,6},{0,1.75,-44},"74D6A0",{text="CITYMONEY",textSize=80,textColor="FFFFFF"})
     local function car(x,z,color)
         rounded("CityCar",{3.8,1.2,6.4},{x,2.7,z},0.8,color)

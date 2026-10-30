@@ -7,6 +7,7 @@ local DiceWorld=require(script.Parent.DiceWorld)
 local Plaza=require(shared.Plaza)
 local Effects=require(script.Parent.WorldEffects)
 local Journey=require(shared.Journey)
+local Actors=require(shared.Actors)
 local World = {}
 World.__index = World
 
@@ -50,31 +51,18 @@ function World:cancelMotion(id)
     end
 end
 
-function World:tokenFrame(index, seat, model)
-    local position = World.tilePosition(index)
-    local x, z = ((seat-1)%3-1)*2.2, math.floor((seat-1)/3)*2.2-1
+function World:tokenFrame(index, seat, model, from)
     local humanoid = model and model:FindFirstChildOfClass("Humanoid")
     local root = model and model:FindFirstChild("HumanoidRootPart")
     local height = humanoid and root and (humanoid.HipHeight+root.Size.Y/2+0.2) or 2.3
-    return CFrame.new(position + Vector3.new(x, height, z)) * CFrame.Angles(0, math.rad(-35), 0)
+    local p,yaw=Actors.pose(index,seat,height,from)
+    return CFrame.new(table.unpack(p))*CFrame.Angles(0,yaw,0)
 end
 
 function World:figure(resident)
-    local tint = self.config.playerColors[resident.colorIndex]
-    local origin = { 0,0,0 }
-    local parts = {
-        { name="Torso", size={1.4,1.5,0.8}, position={0,0,0}, color=tint },
-        { name="Head", size={1,1,1}, position={0,1.25,0}, color="E7C8A2", shape="Ball" },
-        { name="Hair", size={1.1,0.4,1.05}, position={0,1.65,0}, color="4D4B47" },
-        { name="LeftLeg", size={0.5,1.1,0.65}, position={-0.4,-1.25,0}, color="394E52" },
-        { name="RightLeg", size={0.5,1.1,0.65}, position={0.4,-1.25,0}, color="394E52" },
-        { name="LeftArm", size={0.4,1.4,0.6}, position={-0.95,0,0}, color=tint },
-        { name="RightArm", size={0.4,1.4,0.6}, position={0.95,0,0}, color=tint },
-        { name="Briefcase", size={0.8,0.7,0.3}, position={1.2,-0.7,0}, color="A58E6F" },
-    }
-    local model = Scene.model(parts,"Figure_"..resident.id,self.root)
+    local model = Scene.model(Actors.figure(self.config.playerColors[resident.colorIndex]),"Figure_"..resident.id,self.root)
     model.PrimaryPart = model:FindFirstChild("Torso")
-    model:PivotTo(CFrame.new(table.unpack(origin)))
+    model:PivotTo(CFrame.new())
     return model
 end
 
@@ -82,9 +70,9 @@ function World:prepareCharacter(player, character)
     local humanoid = character:WaitForChild("Humanoid", 10)
     local root = character:WaitForChild("HumanoidRootPart", 10)
     if not humanoid or not root or player.Character ~= character then return end
-    if not character:GetAttribute("CitymoneyScaled") then
-        pcall(function() character:ScaleTo(0.72) end)
-        character:SetAttribute("CitymoneyScaled", true)
+    if character:GetAttribute("CitymoneyScale")~=self.config.avatarScale then
+        local scaled=pcall(function() character:ScaleTo(self.config.avatarScale) end)
+        if scaled then character:SetAttribute("CitymoneyScale",self.config.avatarScale) end
     end
     humanoid.DisplayDistanceType = Enum.HumanoidDisplayDistanceType.None
     if self.visiting[player.UserId] then
@@ -95,6 +83,7 @@ function World:prepareCharacter(player, character)
             if part:IsA("BasePart") then part.CanCollide = false end
         end
     end
+    character:SetAttribute("CitymoneyPrepared",true)
     if self.state then self:sync(self.state) end
 end
 
@@ -278,7 +267,7 @@ function World:sync(state)
         present[resident.id] = true
         local player = type(resident.id)=="number" and Players:GetPlayerByUserId(resident.id) or nil
         local character = player and player.Character
-        if character and not character:FindFirstChild("HumanoidRootPart") then character=nil end
+        if character and (not character:FindFirstChild("HumanoidRootPart") or not character:GetAttribute("CitymoneyPrepared")) then character=nil end
         local model = self.tokens[resident.id]
         if character and model~=character then
             self:cancelMotion(resident.id)
@@ -293,23 +282,34 @@ function World:sync(state)
         local tag = model:FindFirstChild("ResidentTag")
         if not tag then
             tag=Instance.new("BillboardGui")
-            tag.Name, tag.Size, tag.StudsOffset, tag.AlwaysOnTop, tag.MaxDistance = "ResidentTag", UDim2.fromOffset(100,22),Vector3.new(0,3.5,0),true,500
+            tag.Name, tag.Size, tag.StudsOffset, tag.AlwaysOnTop, tag.MaxDistance = "ResidentTag", UDim2.fromOffset(132,28),Vector3.new(0,2.5,0),true,500
             tag.Adornee, tag.Parent = model:FindFirstChild("Head") or model.PrimaryPart, model
             local label=Instance.new("TextLabel")
-            label.Size,label.BackgroundTransparency,label.TextSize,label.Font = UDim2.fromScale(1,1),1,12,Enum.Font.GothamBold
-            label.TextColor3,label.TextStrokeTransparency,label.Parent = Color3.fromHex("FFFFFF"),0.5,tag
+            label.Size,label.BackgroundTransparency,label.TextSize,label.Font = UDim2.fromScale(1,1),0.12,12,Enum.Font.GothamBold
+            label.BackgroundColor3,label.BorderSizePixel=Color3.fromHex("1B2C48"),0
+            label.TextColor3,label.TextStrokeTransparency,label.TextTruncate,label.Parent = Color3.fromHex("FFFFFF"),1,Enum.TextTruncate.AtEnd,tag
+            local corner=Instance.new("UICorner");corner.CornerRadius,corner.Parent=UDim.new(0,8),label
         end
         local active = state.status=="playing" and state.players[state.turn].id==resident.id
         local style=Cosmetics.get(self.club and self.club:visual(resident.id) or "classic")
         tag.TextLabel.Text = (active and "> " or "")..(style.premium and "★ " or "")..resident.name
         tag.TextLabel.TextColor3=Color3.fromHex(self.config.playerColors[resident.colorIndex])
+        tag.Size=active and UDim2.fromOffset(132,28) or UDim2.fromOffset(88,20)
+        tag.TextLabel.TextSize=active and 12 or 10
         tag.Enabled = resident.alive
+        local outline=model:FindFirstChild("ResidentOutline")
+        if not outline then
+            outline=Instance.new("Highlight");outline.Name,outline.Adornee,outline.Parent="ResidentOutline",model,model
+            outline.DepthMode,outline.FillTransparency,outline.OutlineTransparency=Enum.HighlightDepthMode.AlwaysOnTop,1,0.1
+        end
+        outline.OutlineColor=Color3.fromHex(self.config.playerColors[resident.colorIndex])
+        outline.Enabled=active and resident.alive and not self.visiting[resident.id]
         if not model:FindFirstChild("PlayerColorRing") then
             local root=model:FindFirstChild("HumanoidRootPart") or model.PrimaryPart
             local humanoid=model:FindFirstChildOfClass("Humanoid")
             if root then
                 local ring=Instance.new("Part")
-                ring.Name,ring.Shape,ring.Size="PlayerColorRing",Enum.PartType.Cylinder,Vector3.new(0.12,3.6,3.6)
+                ring.Name,ring.Shape,ring.Size="PlayerColorRing",Enum.PartType.Cylinder,Vector3.new(0.12,4.4,4.4)
                 ring.Color,ring.Transparency=Color3.fromHex(self.config.playerColors[resident.colorIndex]),0.18
                 ring.CanCollide,ring.CanTouch,ring.CanQuery,ring.Massless=false,false,false,true
                 local offset=humanoid and (humanoid.HipHeight+root.Size.Y/2) or 2.1
@@ -346,7 +346,7 @@ function World:sync(state)
                     if not old or (not route and detained) or steps>12 or not animated or not resident.alive then model:PivotTo(self:tokenFrame(destination,seat,model)); return end
                     if steps>0 then
                         local frames={model:GetPivot()}
-                        for step=1,steps do table.insert(frames,self:tokenFrame((old+step-1)%#self.config.tiles+1,seat,model)) end
+                        for step=1,steps do table.insert(frames,self:tokenFrame((old+step-1)%#self.config.tiles+1,seat,model,(old+step-2)%#self.config.tiles+1)) end
                         local value=Instance.new("NumberValue")
                         value.Value=0
                         local connection=value.Changed:Connect(function(elapsed)
@@ -374,6 +374,7 @@ function World:sync(state)
             if model:GetAttribute("GeneratedFigure") then model:Destroy()
             elseif model.Parent then
                 local tag=model:FindFirstChild("ResidentTag");if tag then tag.Enabled=false end
+                local outline=model:FindFirstChild("ResidentOutline");if outline then outline.Enabled=false end
                 local ring=model:FindFirstChild("PlayerColorRing");if ring then ring.Transparency=1 end
                 local aura=model:FindFirstChild("ClubAura");if aura then aura.Transparency=1 end
                 local trail=model:FindFirstChild("ClubTrail");if trail then trail.Enabled=false end

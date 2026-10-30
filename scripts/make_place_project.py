@@ -31,7 +31,7 @@ for index, entry in enumerate(scene):
         "Material": entry.get("material", "SmoothPlastic"),
         "TopSurface": "Smooth", "BottomSurface": "Smooth",
         "Transparency": entry.get("transparency", 0),
-        "Reflectance": entry.get("reflectance", 0), "CanCollide": entry.get("canCollide", True),
+        "Reflectance": entry.get("reflectance", 0), "CanCollide": entry.get("canCollide", True), "CanQuery": entry.get("canQuery", True),
     }
     if "shape" in entry:
         properties["Shape"] = entry["shape"]
@@ -44,6 +44,8 @@ for index, entry in enumerate(scene):
         node["$attributes"] = {"TileIndex": entry["tileIndex"]}
     if "interaction" in entry:
         node.setdefault("$attributes", {})["Interaction"] = entry["interaction"]
+    if entry.get("background"):
+        node.setdefault("$attributes", {})["CityScenery"] = True
     if "text" in entry:
         node["TileLabel"] = {
             "$className": "SurfaceGui",

@@ -12,6 +12,8 @@ function Scene.populate(entries, parent, preview)
         object.TopSurface, object.BottomSurface = Enum.SurfaceType.Smooth, Enum.SurfaceType.Smooth
         object.Transparency, object.Reflectance = entry.transparency or 0, entry.reflectance or 0
         object.CanCollide = entry.canCollide ~= false
+        object.CanQuery = entry.canQuery ~= false
+        if entry.background then object:SetAttribute("CityScenery",true) end
         if entry.shape then object.Shape = Enum.PartType[entry.shape] end
         if object:IsA("SpawnLocation") then object.Neutral, object.Duration = true, 0 end
         if entry.tileIndex then object:SetAttribute("TileIndex", entry.tileIndex) end

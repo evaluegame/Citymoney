@@ -150,9 +150,9 @@ test("the default camera uses the full available height instead of leaving an em
     for _,p in ipairs(bounds.points) do local _,y=Camera.project(frame,p);low=math.min(low,y);high=math.max(high,y) end
     check(math.abs(low-rect[2]-10)<0.01 and math.abs(high-rect[2]-rect[4]+10)<0.01,"Camera wastes vertical board space")
 end)
-test("cinematic framing includes the complete city and every fully upgraded property",function()
+test("overview framing includes the complete playable board and every fully upgraded property",function()
     local points={}
-    for _,entry in ipairs(Board.generate(Config)) do if entry.name~="Sea" then for _,p in ipairs(corners(entry)) do table.insert(points,p) end end end
+    for _,entry in ipairs(Board.generate(Config)) do if entry.name~="Sea" and not entry.background then for _,p in ipairs(corners(entry)) do table.insert(points,p) end end end
     for index,tile in ipairs(Config.tiles) do if tile.kind=="property" then
         for _,entry in ipairs(A.property(Config,index,"Owner","FFC34D",3,0)) do for _,p in ipairs(corners(entry)) do table.insert(points,p) end end
     end end

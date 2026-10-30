@@ -56,7 +56,8 @@ function Labels:update(camera,safe,scale,data,enabled,rect)
     if enabled and data and board then
         for _,resident in ipairs(data.game.players) do if resident.alive then
             local player=type(resident.id)=="number" and Players:GetPlayerByUserId(resident.id)
-            local model=player and player.Character or board:FindFirstChild("Figure_"..resident.id)
+            local character=player and player.Character
+            local model=character and character:GetAttribute("CitymoneyPrepared") and character or board:FindFirstChild("Figure_"..resident.id)
             local head=model and model:FindFirstChild("Head")
             if head then
                 local point,visible=camera:WorldToScreenPoint(head.Position)

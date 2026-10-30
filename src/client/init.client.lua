@@ -21,6 +21,7 @@ local CityOffer=require(script:WaitForChild("CityOffer"))
 local GoalDisplay=require(script:WaitForChild("GoalDisplay"))
 local MatchFeedback=require(script:WaitForChild("MatchFeedback"))
 local Journey=require(shared.Journey)
+local Follow=require(shared.FollowView)
 local boardView=BoardView.new()
 local remotes=shared:WaitForChild("Remotes")
 local action,snapshot,feedback=remotes:WaitForChild("Action"),remotes:WaitForChild("Snapshot"),remotes:WaitForChild("Feedback")
@@ -164,8 +165,8 @@ local timeTrack=frame(control,16,104,778,3,C.paper)
 local timeFill=Instance.new("Frame");timeFill.Size,timeFill.BackgroundColor3,timeFill.BorderSizePixel,timeFill.Parent=UDim2.fromScale(1,1),C.green,0,timeTrack
 local cameraBar=frame(root,24,510,188,84)
 cameraBar.Name,cameraBar.ZIndex="CameraDock",2
-button(cameraBar,"3D view",6,6,86,30,C.paper,function() focusIndex=nil;root:SetAttribute("ViewMode",(root:GetAttribute("ViewMode") or Presentation.defaultView)=="city" and "table" or "city");root:SetAttribute("Zoom",1);render() end).Name="TableView"
-button(cameraBar,"Fit",39,45,44,30,C.paper,function() focusIndex=nil;inspectorOpen=false;root:SetAttribute("ViewMode",Presentation.defaultView);root:SetAttribute("Rotate",0);root:SetAttribute("Zoom",1);render() end).Name="Fit"
+button(cameraBar,"3D view",6,6,86,30,C.paper,function() focusIndex=nil;root:SetAttribute("FollowSuppressed",Follow.key(data and data.game.lastRoll));root:SetAttribute("ViewMode",(root:GetAttribute("ViewMode") or Presentation.defaultView)=="city" and "table" or "city");root:SetAttribute("Zoom",1);render() end).Name="TableView"
+button(cameraBar,"Fit",39,45,44,30,C.paper,function() focusIndex=nil;inspectorOpen=false;root:SetAttribute("FollowSuppressed",Follow.key(data and data.game.lastRoll));root:SetAttribute("ViewMode",Presentation.defaultView);root:SetAttribute("Rotate",0);root:SetAttribute("Zoom",1);render() end).Name="Fit"
 button(cameraBar,"-",121,45,27,30,C.paper,function() root:SetAttribute("Zoom",math.min(1.5,(root:GetAttribute("Zoom") or 1)+0.1)) end).Name="ZoomOut"
 button(cameraBar,"+",153,45,28,30,C.paper,function() root:SetAttribute("Zoom",math.max(0.75,(root:GetAttribute("Zoom") or 1)-0.1)) end).Name="ZoomIn"
 local visitBanner=frame(root,420,110,440,58,C.green)
@@ -783,6 +784,11 @@ RunService.RenderStepped:Connect(function(dt)
         timeFill.Size,timeFill.BackgroundColor3=UDim2.fromScale(math.clamp(seconds/(handing and Config.autoAdvanceSeconds or Config.turnSeconds),0,1),1),not handing and seconds<10 and C.red or C.green
         if journeyActive then timeFill.Size,timeFill.BackgroundColor3=UDim2.fromScale(Journey.progress(Config,data.game.lastRoll,data.journeyUntil-workspace:GetServerTimeNow()),1),C.gold end
     else timeText.Text="2 / 4 players · online queues or practice with bots";timeFill.Size=UDim2.fromScale(0,1) end
+end)
+-- Run after Roblox's camera controller, which can hide the local avatar after
+-- a first-person home visit. Scriptable board/follow views show its real body.
+RunService:BindToRenderStep("CitymoneyAvatarVisibility",Enum.RenderPriority.Camera.Value+1,function()
+    if not visitIndex then boardView:revealCharacter(player.Character) end
 end)
 action:FireServer("Sync")
 task.delay(3,function() if not data then action:FireServer("Sync") end end)
