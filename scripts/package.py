@@ -7,7 +7,7 @@ root = Path(__file__).resolve().parents[1]
 destination = root / "build/Citymoney-Studio.zip"
 with ZipFile(destination, "w", compression=ZIP_DEFLATED) as bundle:
     bundle.write(root / "build/Citymoney.rbxlx", "Citymoney/build/Citymoney.rbxlx")
-    for name in ("START-HERE.txt", "README.md", ".gitignore", "default.project.json"):
+    for name in ("START-HERE.txt", "START-HERE-TH.txt", "README.md", ".gitignore", "default.project.json"):
         bundle.write(root / name, "Citymoney/" + name)
     for directory in ("src", "scripts", "tests", "docs"):
         for source in sorted((root / directory).rglob("*")):

@@ -27,7 +27,7 @@ for item in layout["elements"]:
     if item["stroke"]:
         stroke=item["stroke"]
         draw.rounded_rectangle((x,y,x+w,y+h),radius=radius,outline="#"+stroke["color"]+f'{round(stroke["alpha"]*255):02x}',width=max(1,round(stroke["width"])))
-    if item["text"]:
+    if item["text"] and item.get("textAlpha",1)>0:
         font=ImageFont.truetype(bold if "Bold" in item["font"] or "Black" in item["font"] else regular,max(8,round(item["size"])))
         lines=[]
         for paragraph in item["text"].splitlines():
@@ -49,7 +49,7 @@ for item in layout["elements"]:
         top=y+(h-len(lines)*line_height)/2
         for i,line in enumerate(lines):
             tx=x if item["align"]=="Left" else x+(w-draw.textlength(line,font=font))/2
-            draw.text((tx,top+i*line_height),line,font=font,fill="#"+item["fg"])
+            draw.text((tx,top+i*line_height),line,font=font,fill="#"+item["fg"]+f'{round(item.get("textAlpha",1)*255):02x}')
     canvas=Image.alpha_composite(canvas,layer)
 
 label=Image.new("RGBA",canvas.size)

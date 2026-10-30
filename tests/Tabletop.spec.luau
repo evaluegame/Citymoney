@@ -169,7 +169,8 @@ test("200 complete 2/4-player games advance using the automatic phase clock",fun
                 check(e:act(current.id,current.cash>=cost+150 and "Buy" or "Skip"))
             else
                 now=e.state.phase=="end" and f.handoffAt or f.deadline
-                check(e:act(current.id,f:due(e.state,now)))
+                local command,argument=f:due(e.state,now)
+                check(e:act(current.id,command,argument))
             end
             for _,player in ipairs(e.state.players) do check(player.cash>=0) end
         end

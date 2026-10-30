@@ -7,6 +7,7 @@ local Parties = require(shared.Parties)
 local Tactics = require(shared.Tactics)
 local TurnFlow=require(shared.TurnFlow)
 local Plaza=require(shared.Plaza)
+local Offers=require(shared.Opportunities)
 local flow=TurnFlow.new(Config)
 local Matchmaker = require(script.Matchmaker)
 local ClubService = require(script.ClubService)
@@ -38,14 +39,14 @@ local function payload(id)
     return { game = engine:view(id), lobby = lobby, lobbyConfig=settings,hostId = party and party:hostId() or false,
         matchmaking=matcher and matcher:status(id) or nil,
         club=club and club:snapshot(id) or nil, styles=club and club:styles() or {},
-        deadline = deadline, handoffAt=flow.handoffAt,serverTime = workspace:GetServerTimeNow(), revision = revision, visitors = world:visitorList() }
+        deadline = deadline, handoffAt=flow.handoffAt,journeyUntil=flow.journeyUntil,serverTime = workspace:GetServerTimeNow(), revision = revision, visitors = world:visitorList() }
 end
 
 local function publish(resetTimer)
     revision = revision + 1
     flow:observe(engine.state,workspace:GetServerTimeNow())
     deadline=flow.deadline
-    if resetTimer or botReadyAt == 0 then botReadyAt = workspace:GetServerTimeNow() + 2.1 end
+    if resetTimer or botReadyAt == 0 then botReadyAt = math.max(workspace:GetServerTimeNow()+2.1,flow.journeyUntil+0.35) end
     world:sync(engine.state)
     for _,recipient in ipairs(Players:GetPlayers()) do snapshot:FireClient(recipient,payload(recipient.UserId)) end
 end
@@ -54,6 +55,7 @@ club=ClubService.new(Config,function() publish(false) end)
 world.club=club
 
 local function perform(id, command, index, level, expectedTurn)
+    if not flow:allows(engine.state,command,workspace:GetServerTimeNow()) then return false,"Your token is still moving. Choose after it lands." end
     local previousTurn = engine.state.turnCount
     local previousPhase = engine.state.phase
     local ok, message = engine:act(id, command, index, level, expectedTurn)
@@ -231,9 +233,9 @@ task.spawn(function()
         if engine.state.status == "playing" then
             local current = engine:current()
             local now = workspace:GetServerTimeNow()
-            local automatic=flow:due(engine.state,now)
+            local automatic,argument=flow:due(engine.state,now)
             if automatic then
-                perform(current.id,automatic)
+                perform(current.id,automatic,argument)
             elseif current.bot and now >= botReadyAt then
                 local handled=false
                 if current.bot and current.alive then
@@ -261,6 +263,8 @@ task.spawn(function()
                     if offer then perform(current.id,"Plaza",offer);botReadyAt=now+0.7
                     elseif target then perform(current.id,"Upgrade",target);botReadyAt=now+0.7
                     else perform(current.id,"Roll") end
+                elseif phase == "offer" then
+                    perform(current.id,"Offer",Offers.botChoice(engine,current.id))
                 elseif phase == "buy" then
                     local tile = Config.tiles[engine.state.pendingTile]
                     local buy = current.bot and current.cash >= tile.price + 180

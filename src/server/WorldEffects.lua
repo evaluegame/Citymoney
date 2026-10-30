@@ -1,6 +1,15 @@
 local Tween=game:GetService("TweenService")
 local Debris=game:GetService("Debris")
 local Effects={}
+function Effects.landing(position,color,parent)
+    local ring=Instance.new("Part")
+    ring.Name,ring.Shape,ring.Size="LandingPulse",Enum.PartType.Cylinder,Vector3.new(0.08,4,4)
+    ring.CFrame=CFrame.new(position+Vector3.new(0,0.3,0))*CFrame.Angles(0,0,math.pi/2)
+    ring.Anchored,ring.CanCollide,ring.CanQuery,ring.CanTouch=true,false,false,false
+    ring.Material,ring.Color,ring.Transparency,ring.Parent=Enum.Material.Neon,Color3.fromHex(color),0.25,parent
+    Tween:Create(ring,TweenInfo.new(0.6,Enum.EasingStyle.Quad,Enum.EasingDirection.Out),{Size=Vector3.new(0.08,13,13),Transparency=1}):Play()
+    Debris:AddItem(ring,0.65)
+end
 function Effects.reveal(model,position,color,level,upgrade,animated)
     if not animated then return end
     for _,part in ipairs(model:GetChildren()) do

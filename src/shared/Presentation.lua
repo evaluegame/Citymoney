@@ -20,9 +20,14 @@ function P.shortcuts(layout,rosterHeight)
     if layout.compact then return {20,180,layout.width-40,64} end
     return {20,layout.roster[2]+(rosterHeight or 260)+54,154,144}
 end
+function P.goal(layout,rosterHeight)
+    if layout.compact then return {20,256,layout.width-40,64} end
+    local shortcuts=P.shortcuts(layout,rosterHeight)
+    return {20,shortcuts[2]+shortcuts[4]+12,154,80}
+end
 function P.board(layout,inspector)
     local left=layout.compact and 12 or 188
-    local top=layout.compact and 256 or 86
+    local top=layout.compact and 332 or 86
     local right=layout.width-(not layout.compact and inspector and 298 or 16)
     local bottom=layout.toolbar[2]-12
     return {left,top,math.max(140,right-left),math.max(140,bottom-top)}

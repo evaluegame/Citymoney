@@ -210,7 +210,8 @@ function World:sync(state)
         local event=Plaza.festival(self.config,state)
         self.festivalLabel.TextLabel.Text="FESTIVAL\n$"..event.cost
     end
-    if self.dice:sync(state,self.club) then self.moveReadyAt=os.clock()+self.config.diceSeconds end
+    local newRoll=self.dice:sync(state,self.club)
+    if newRoll then self.moveReadyAt=os.clock()+self.config.diceSeconds end
     -- Buying immediately constructs a complete home, including its owner's sign.
     for index, view in pairs(self.propertyViews) do
         local property = state.properties[index]
@@ -283,6 +284,7 @@ function World:sync(state)
             if model and model:GetAttribute("GeneratedFigure") then model:Destroy() end
             model, self.tokens[resident.id], self.positions[resident.id] = character, character, nil
         elseif not model or not model.Parent then
+            self:cancelMotion(resident.id)
             model = self:figure(resident)
             model:SetAttribute("GeneratedFigure",true)
             self.tokens[resident.id], self.positions[resident.id] = model, nil
@@ -327,7 +329,8 @@ function World:sync(state)
         if self.visiting[resident.id] and (not resident.alive or state.status~="playing") then self:endVisit(resident.id) end
         if not self.visiting[resident.id] then
             local old = self.positions[resident.id]
-            if old~=resident.position then
+            local route=newRoll and state.lastRoll and state.lastRoll.actorId==resident.id and state.lastRoll.from==old and state.lastRoll or nil
+            if old~=resident.position or route then
                 self:cancelMotion(resident.id)
                 self.positions[resident.id] = resident.position
                 local generation = self.generations[resident.id]
@@ -336,19 +339,28 @@ function World:sync(state)
                     local delay=math.max(0,(self.moveReadyAt or 0)-os.clock())
                     if delay>0 and old then task.wait(delay) end
                     if self.generations[resident.id]~=generation or not model.Parent then return end
-                    local steps=old and (destination-old)%#self.config.tiles or 0
-                    if not old or detained or steps>12 then model:PivotTo(self:tokenFrame(destination,seat,model)); return end
+                    local steps=route and route.steps or (old and (destination-old)%#self.config.tiles or 0)
+                    local animated=true
+                    if self.club then local _,effects=self.club:visual(resident.id);animated=effects end
+                    if not old or (not route and detained) or steps>12 or not animated or not resident.alive then model:PivotTo(self:tokenFrame(destination,seat,model)); return end
                     for step=1,steps do
                         if self.generations[resident.id]~=generation or not model.Parent then return end
-                        local value=Instance.new("CFrameValue")
-                        value.Value=model:GetPivot()
+                        local value=Instance.new("NumberValue")
+                        value.Value=0
+                        local start=model:GetPivot()
                         local target=self:tokenFrame((old+step-1)%#self.config.tiles+1,seat,model)
-                        local connection=value.Changed:Connect(function(frame) if model.Parent then model:PivotTo(frame) end end)
-                        local tween=TweenService:Create(value,TweenInfo.new(0.18,Enum.EasingStyle.Sine),{Value=target})
-                        self.motions[resident.id]={ value=value, connection=connection, tween=tween }
-                        tween:Play(); tween.Completed:Wait()
+                        local connection=value.Changed:Connect(function(alpha)
+                            if model.Parent then model:PivotTo(start:Lerp(target,alpha)+Vector3.new(0,math.sin(math.pi*alpha)*1.6,0)) end
+                        end)
+                        local tween=TweenService:Create(value,TweenInfo.new(self.config.stepSeconds,Enum.EasingStyle.Linear),{Value=1})
+                        self.motions[resident.id]={value=value,connection=connection,tween=tween}
+                        tween:Play();tween.Completed:Wait()
                         if self.generations[resident.id]~=generation then return end
                         connection:Disconnect(); value:Destroy(); self.motions[resident.id]=nil
+                    end
+                    if self.generations[resident.id]==generation and model.Parent then
+                        model:PivotTo(self:tokenFrame(destination,seat,model))
+                        if route then Effects.landing(World.tilePosition(destination),self.config.playerColors[resident.colorIndex],self.root) end
                     end
                 end)
             end

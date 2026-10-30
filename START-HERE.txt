@@ -1,4 +1,5 @@
 CITYMONEY — BUILD YOUR CITY
+Thai instructions: START-HERE-TH.txt
 
 OPEN IN ROBLOX STUDIO
 1. Extract Citymoney-Waterfront.zip.
@@ -23,9 +24,10 @@ Rounded dice with flat pips show the result; the HUD also shows the total.
 The shared dice settle on the server's values before your avatar moves.
 
 AUTOMATIC TURNS
-Resolved landings, purchases and passes advance to the next player after
-four seconds. Next player / Space advances sooner. Buying still gives you
-55 seconds to decide. Use cards, upgrades and plaza offers BEFORE rolling.
+The token hops along its rolled path before showing the result. The
+four-second next-turn countdown starts after arrival and resolution.
+Next player / Space advances sooner after arrival. Buying and opportunity
+choices give you a full 55 seconds AFTER movement. Use cards, upgrades and plaza offers BEFORE rolling.
 Menus do not pause the handoff countdown.
 
 CITY PLAZA
@@ -99,9 +101,15 @@ opponent. One card per turn; hold up to three copies of each type.
   capped at $350.
 Online always uses full demolition. Practice also offers one-level attacks.
 
-Complete rotating challenges, then claim cash and a card during your turn.
+Your goal and progress bar are visible on the main screen. Tap a ready
+goal to claim cash and a card directly during your turn. Card rewards use
+remaining hand space; if the hand is completely full, you still get cash.
 One claim per turn; changing the goal costs $50 once per turn.
-City News has 20 events. City Gate, City News, the park and goals award cards.
+City News has 20 automatic events. Every SECOND City News visit opens a
+City Opportunity: choose cash or a specific card, free. A full card type
+is disabled. If you do not choose within 55 seconds, cash is selected.
+Cards go into your hand; play them separately in Cards & Goals.
+City Gate, City News, the park and goals also award cards.
 
 WALK THROUGH / CAMERA
 Select your home > Walk through your home. Use normal Roblox controls.

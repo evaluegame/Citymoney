@@ -103,7 +103,7 @@ return function(sources,width,height)
     end
     local services={}
     for _,name in ipairs({"Players","ReplicatedStorage","RunService","UserInputService","Lighting","StarterGui","TweenService","SocialService","HttpService","MarketplaceService"}) do services[name]=node("Service",name) end
-    function services.TweenService:Create(object,_info,properties) return {Play=function() for key,value in pairs(properties) do object[key]=value end end} end
+    function services.TweenService:Create(object,_info,properties) return {Play=function() for key,value in pairs(properties) do object[key]=value end end,Cancel=function() end} end
     function services.RunService:IsStudio() return true end
     local game={PlaceId=0,JobId="mock",GetService=function(_,name) return assert(services[name],name) end}
     local player=node("Player","Avery");player.UserId=1;player.DisplayName="Avery";services.Players.LocalPlayer=player
@@ -144,6 +144,7 @@ return function(sources,width,height)
     local roster={{id=1,name="Avery"},{id=2,name="Riley"},{id=3,name="Jamie"},{id=4,name="Morgan"}}
     assert(engine:start(roster))
     for _,asset in ipairs({{2,1,0},{8,2,1},{14,3,2},{23,4,3}}) do local p=engine.state.properties[asset[1]];p.ownerId,p.level=asset[2],asset[3] end
+    load(shared.Tactics).refresh(engine)
     local members={};for i,p in ipairs(roster) do table.insert(members,{id=p.id,name=p.name,colorIndex=i,ready=true}) end
     local data={lobby=members,hostId=1,lobbyConfig={seats=4,fillBots=true,attackMode="destroy"},
         matchmaking={mode="lobby",queued=false,status="Studio local matchmaking",studio=true},club={styleId="classic",ownsPass=false,loading=false,studio=true,passId=0,effects=true,status=""},
@@ -180,7 +181,7 @@ return function(sources,width,height)
             for _,o in ipairs(children) do if visible(o) then
                 if guiClasses[o.ClassName] then
                     local p,s,scale=absolute(o);local corner=o:FindFirstChildOfClass("UICorner");local stroke=o:FindFirstChildOfClass("UIStroke")
-                    table.insert(elements,{class=o.ClassName,name=o.Name,x=p.X,y=p.Y,w=s.X,h=s.Y,text=o.Text or "",size=(o.TextSize or 14)*scale,bg=hex(o.BackgroundColor3),fg=hex(o.TextColor3),alpha=1-(o.BackgroundTransparency or 0),font=o.Font and o.Font.Name or "Gotham",wrap=o.TextWrapped==true,align=o.TextXAlignment and o.TextXAlignment.Name or "Left",corner=corner and (corner.CornerRadius.Scale*math.min(s.X,s.Y)+corner.CornerRadius.Offset*scale) or 0,
+                    table.insert(elements,{class=o.ClassName,name=o.Name,x=p.X,y=p.Y,w=s.X,h=s.Y,text=o.Text or "",textAlpha=1-(o.TextTransparency or 0),size=(o.TextSize or 14)*scale,bg=hex(o.BackgroundColor3),fg=hex(o.TextColor3),alpha=1-(o.BackgroundTransparency or 0),font=o.Font and o.Font.Name or "Gotham",wrap=o.TextWrapped==true,align=o.TextXAlignment and o.TextXAlignment.Name or "Left",corner=corner and (corner.CornerRadius.Scale*math.min(s.X,s.Y)+corner.CornerRadius.Offset*scale) or 0,
                         stroke=stroke and {color=hex(stroke.Color or color(0.8,0.85,0.9)),alpha=1-(stroke.Transparency or 0),width=(stroke.Thickness or 1)*scale} or false})
                 end
                 walk(o)
@@ -192,8 +193,25 @@ return function(sources,width,height)
     local layout=P.layout(width,height);local r=P.board(layout,false)
     local function camera() return Fit.fit(width,height,{r[1]*layout.scale,r[2]*layout.scale,r[3]*layout.scale,r[4]*layout.scale},P.defaultYaw,P.defaultElevation,1,Fit.cityBounds(Config,load(shared.Architecture),engine.state)) end
     local views={}
-    local function capture(name) services.RunService.RenderStepped:Fire(0.016);views[name]={elements=export(),camera=camera()} end
-    for _,name in ipairs({"Header","TurnDock","CityMenuButton","CameraDock","QuickActions"}) do inside(root:WaitForChild(name)) end
+    local function scene()
+        local A,B,D=load(shared.Architecture),load(shared.Board),load(shared.Dice)
+        local entries={}
+        for _,entry in ipairs(B.generate(Config)) do
+            local parcel=entry.tileIndex and Config.tiles[entry.tileIndex].kind=="property" and entry.name~="Tile"..entry.tileIndex and entry.name~="DistrictInlay"
+            local die=entry.name=="DiceBody" or entry.name=="DiceShell" or entry.name=="DiceEdge" or entry.name=="DiceCorner" or string.match(entry.name,"^Pip%d$")
+            if not parcel and not die then table.insert(entries,entry) end
+        end
+        for index,tile in ipairs(Config.tiles) do if tile.kind=="property" then
+            local property=engine.state.properties[index];local owner
+            for _,p in ipairs(engine.state.players) do if p.id==property.ownerId then owner=p end end
+            for _,entry in ipairs(A.property(Config,index,owner and owner.name or false,owner and Config.playerColors[owner.colorIndex] or Config.groups[tile.group].color,property.level,property.paint,property,"classic")) do table.insert(entries,entry) end
+        end end
+        local dice=engine.state.lastRoll and engine.state.lastRoll.values or {1,6}
+        for side,value in ipairs(dice) do for _,entry in ipairs(D.preview(value,side)) do table.insert(entries,entry) end end
+        return entries
+    end
+    local function capture(name) services.RunService.RenderStepped:Fire(0.016);views[name]={elements=export(),camera=camera(),scene=scene()} end
+    for _,name in ipairs({"Header","TurnDock","CityMenuButton","CameraDock","QuickActions","GoalProgress"}) do inside(root:WaitForChild(name)) end
     for _,die in ipairs({root.TurnDock.RollDieA,root.TurnDock.RollDieB}) do local _,s=absolute(die);assert(s.X>=50 and s.Y>=50,"Dice are too small to tap") end
     if layout.compact then
         for _,button in ipairs({root.QuickActions.OpenEvents,root.QuickActions.OpenCards,root.QuickActions.OpenHomes}) do
@@ -225,6 +243,11 @@ return function(sources,width,height)
     click("Brick Courtyard");click("JOIN FESTIVAL · $80")
     request=requests[#requests];assert(request[1]=="Plaza" and request[2].tile==3,"Festival target was not the chosen home")
     assert(engine:act(1,"Plaza",request[2]));publish();advance(0.3)
+    findText("Claim $140 + card");root.GoalProgress.Activated:Fire()
+    request=requests[#requests];assert(request[1]=="Claim" and request[4]==engine.state.turnCount,"Goal shortcut did not claim the earned reward")
+    assert(engine:act(1,request[1],request[2],request[3],request[4]));publish();findText("GOAL COMPLETE!");inside(root.MatchMoment)
+    assert(not root.NoticeToast.Visible and not root.PropertyHover.Visible,"Old notifications cover the reward moment")
+    capture("reward");advance(0.3)
     root.QuickActions.OpenCards.Activated:Fire();findText("Cards & challenges");inside(findText("Cards & challenges").Parent);click("×")
     menu("CITY EVENTS");findText("Choose an event.");click("X")
     root.QuickActions.OpenHomes.Activated:Fire();findText("Your collection");inside(root.PropertyCollection)
@@ -242,6 +265,30 @@ return function(sources,width,height)
     engine.state.phase="buy";engine.state.pendingTile=6;publish();advance(0.3);click("Back");click("SKIP")
     assert(requests[#requests][1]=="Skip");assert(engine:act(1,"Skip"));assert(not engine.state.properties[6].ownerId)
     advance(0.3)
+    -- Reduced motion still respects the same authoritative movement deadline.
+    data.club.effects=false;engine.state.phase="roll";engine:player(1).position=1;engine.random=function(low) return low end
+    assert(engine:act(1,"Roll"))
+    data.journeyUntil=now+load(shared.Journey).duration(Config,engine.state.lastRoll);data.handoffAt=data.journeyUntil+4;data.deadline=data.journeyUntil+55
+    publish();assert(findText("ON THE MOVE...").Active==false);assert(root.TurnDock.RollDieA.Active==false)
+    capture("journey");advance(data.journeyUntil-now+0.1);services.RunService.RenderStepped:Fire(0.016)
+    findText("WELCOME HOME!");assert(findText("Next player").Active,"Turn controls did not unlock on arrival")
+    -- A waiting opportunity opens only when its token reaches the news space.
+    engine:player(1).stats.news=1;engine:player(1).position=4;engine:land(engine:player(1))
+    data.journeyUntil=now+2;data.deadline=now+57;publish()
+    assert(root.OpportunityOverlay.Visible==false,"Choice opened before movement finished")
+    advance(2.1);services.RunService.RenderStepped:Fire(0.016)
+    findText("Builder's Deal");inside(findText("Builder's Deal").Parent);capture("opportunity")
+    click("X");click("CHOOSE REWARD");findText("Builder's Deal")
+    click("Renovation card");request=requests[#requests]
+    assert(request[1]=="Offer" and request[2].option==2)
+    assert(engine:act(1,"Offer",request[2]));publish();findText("CITY REWARD!");advance(0.3)
+    engine:player(1).stats.news=1;engine:player(1).cards.repair=3;engine:land(engine:player(1));data.journeyUntil=0;publish()
+    findText("HAND FULL · TAKE CASH INSTEAD");local count=#requests
+    click("Renovation card");assert(#requests==count,"A full hand still sent a card request")
+    click("Take $90");request=requests[#requests];assert(engine:act(1,"Offer",request[2]));publish();advance(0.3)
+    engine.state.turn=2;engine:player(2).stats.news=1;engine:player(2).position=4;engine:land(engine:player(2));publish()
+    assert(root.OpportunityOverlay.Visible==false,"Another player's reward opened for this client")
+    assert(engine:act(2,"Offer",load(shared.Opportunities).request(engine.state,1)));publish()
     engine=Engine.new(Config);data.lobby={members[1]};data.lobbyConfig.seats=2;publish()
     assert(root.QuickActions.Visible==false,"Match shortcuts appear before a game starts")
     click("PLAY NOW");click("4 PLAYERS")

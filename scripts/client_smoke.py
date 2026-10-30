@@ -33,7 +33,8 @@ for name, width, height in (("desktop", 1440, 900), ("studio", 1192, 642), ("sho
         raise RuntimeError(result.stderr + result.stdout)
     data = json.loads(result.stdout.splitlines()[-1])
     for view, snapshot in data.pop("views").items():
+        (ROOT / "build" / f"{view}-{name}-scene.json").write_text(json.dumps(snapshot.pop("scene")))
         if view!="main":
             (ROOT / "build" / f"{view}-{name}.json").write_text(json.dumps({"width":width,"height":height,**snapshot}, indent=2))
     (ROOT / "build" / f"hud-{name}.json").write_text(json.dumps(data, indent=2))
-    print(f"PASS client UI adapter: {name} {width}×{height}; large dice/shortcuts, touch events, validated purchases/targets, upgrades, buy/skip, lobby/practice and HUD bounds.")
+    print(f"PASS client UI adapter: {name} {width}×{height}; goals/rewards, arrival timing, opportunity choices/caps, event targets, upgrades, buy/skip, lobby/practice and HUD bounds.")

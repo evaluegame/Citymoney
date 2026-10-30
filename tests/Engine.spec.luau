@@ -1,5 +1,6 @@
 local Config = require("../src/shared/Config")
 local Engine = require("../src/shared/Engine")
+local Offers = require("../src/shared/Opportunities")
 local passed = 0
 local function expect(value, message) assert(value, message or "Expectation failed") end
 local function equal(actual, expected) assert(actual == expected, tostring(actual) .. " ~= " .. tostring(expected)) end
@@ -330,6 +331,7 @@ test("200 full seeded matches preserve economy and terminate", function()
             local phase = engine.state.phase
             local command
             if phase == "roll" then command = "Roll"
+            elseif phase=="offer" then command="Offer"
             elseif phase == "buy" then
                 command = current.cash >= Config.tiles[engine.state.pendingTile].price + 100 and "Buy" or "Skip"
             else
@@ -348,7 +350,7 @@ test("200 full seeded matches preserve economy and terminate", function()
                 level=(match+engine.state.turnCount)%4
                 while level>0 and tile.price+level*tile.upgrade>current.cash-100 do level=level-1 end
             end
-            expect(engine:act(current.id, command,nil,level,engine.state.turnCount))
+            expect(engine:act(current.id, command,command=="Offer" and Offers.request(engine.state,1) or nil,level,engine.state.turnCount))
             actions = actions + 1
             expect(actions < 500, "Match did not terminate")
             for _, entry in ipairs(engine.state.players) do

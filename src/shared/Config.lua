@@ -5,6 +5,15 @@ local Config = {
     turnSeconds = 55,
     autoAdvanceSeconds = 4,
     diceSeconds = 1.1,
+    stepSeconds = 0.18,
+    opportunityEvery = 2,
+    opportunities = {
+        {name="Builder's Deal",description="A city investor likes your plans. Choose your guaranteed reward.",choices={{label="Take $90",detail="Add $90 to your balance now.",cash=90},{label="Renovation card",detail="Upgrade one of your homes for free when you play this card.",card="repair"}}},
+        {name="Neighborhood Watch",description="Your neighborhood is looking out for you. Pick what helps your city.",choices={{label="Take $80",detail="Add $80 to your balance now.",cash=80},{label="Property shield",detail="Protect a home from its next demolition attempt.",card="shield"}}},
+        {name="Rent Campaign",description="A local business offers a partnership. Which reward fits your plan?",choices={{label="Take $80",detail="Add $80 to your balance now.",cash=80},{label="Rent demand",detail="Choose a home and an opponent when you play the card.",card="collect"}}},
+        {name="Festival Sponsor",description="The city festival wants a sponsor. Choose a reward for helping out.",choices={{label="Take $90",detail="Add $90 to your balance now.",cash=90},{label="Rent boost",detail="Give a chosen home +50% rent for two paid collections.",card="boost"}}},
+        {name="City Makeover",description="An empty skyline makes room for a new plan. Pick your advantage.",choices={{label="Take $70",detail="Add $70 to your balance now.",cash=70},{label="Demolition permit",detail="Choose a rival home to demolish when you play this card.",card="demolish"}}},
+    },
     festivalTurns = 8,
     cityMarket = {demolish=180,collect=140,boost=100,shield=100,repair=160},
     festivals = {

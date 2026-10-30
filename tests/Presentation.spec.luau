@@ -47,6 +47,10 @@ test("direct shortcuts fit below the roster and leave the board and turn control
     for _,screen in ipairs(screens) do for _,players in ipairs({2,4}) do
         local l=Layout.calculate(table.unpack(screen));local rosterHeight=44+players*54
         local q=P.shortcuts(l,rosterHeight);local board=Layout.board(l,false)
+        local goal=P.goal(l,rosterHeight)
+        check(goal[1]>=0 and goal[2]>=0 and goal[1]+goal[3]<=l.width and goal[2]+goal[4]<=l.height,"Goal is cropped")
+        if l.compact then check(goal[2]+goal[4]<board[2],"Goal covers the board")
+        else check(goal[2]+goal[4]<l.menu[2],"Goal covers the menu") end
         check(q[1]>=0 and q[2]>=0 and q[1]+q[3]<=l.width and q[2]+q[4]<=l.height)
         if l.compact then
             check(q[2]+q[4]<board[2],"Shortcuts cover the board")

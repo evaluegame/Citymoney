@@ -17,6 +17,10 @@ local Presentation=require(shared.Presentation)
 local Motion=require(script:WaitForChild("Motion"))
 local CommandMenu=require(script:WaitForChild("CommandMenu"))
 local HoverCard=require(script:WaitForChild("HoverCard"))
+local CityOffer=require(script:WaitForChild("CityOffer"))
+local GoalDisplay=require(script:WaitForChild("GoalDisplay"))
+local MatchFeedback=require(script:WaitForChild("MatchFeedback"))
+local Journey=require(shared.Journey)
 local boardView=BoardView.new()
 local remotes=shared:WaitForChild("Remotes")
 local action,snapshot,feedback=remotes:WaitForChild("Action"),remotes:WaitForChild("Snapshot"),remotes:WaitForChild("Feedback")
@@ -76,7 +80,8 @@ end
 local function truncate(object) object.TextWrapped,object.TextTruncate=false,Enum.TextTruncate.AtEnd end
 local data,selected,focusIndex,mainCommand,visitIndex,layout
 local inspectorOpen,portfolioOpen,rolling,locked=false,false,false,false
-local notify,render,requestSale,openPlans,renderPlans,mainAction,menus,boutique,city,openCity,commandMenu,hover
+local notify,render,requestSale,openPlans,renderPlans,mainAction,menus,boutique,city,openCity,commandMenu,hover,opportunity,goals,moments
+local journeyActive=false
 local portraits={}
 local function send(command,index,level,expectedTurn)
     if locked or (rolling and command~="Return") then return false end
@@ -167,9 +172,11 @@ local visitText=text(visitBanner,"Welcome home",16,8,270,38,16,C.white,true)
 button(visitBanner,"Back to board",292,10,134,38,C.paper,function() send("Return") end)
 visitBanner.Visible=false
 local toast=frame(root,440,105,400,45,C.card);toast.ZIndex=15;toast.Visible=false
+toast.Name="NoticeToast"
 local toastText=text(toast,"",16,5,368,35,14,C.green,true);toastText.ZIndex=16
 local toastVersion=0
 notify=function(message)
+    if moments then moments:hide() end
     toastVersion=toastVersion+1;local version=toastVersion
     toastText.Text,toast.Visible=message,true
     Motion.pop(toast,root)
@@ -365,6 +372,7 @@ local function closePanels()
     if boutique then boutique.shade.Visible=false end
     if city then city.shade.Visible=false end
     if commandMenu then commandMenu.shade.Visible=false end
+    if opportunity then opportunity.shade.Visible=false end
 end
 openPlans=function(mode,index)
     if not data then return end
@@ -377,6 +385,7 @@ openPlans=function(mode,index)
 end
 mainAction=function()
     if mainCommand=="Buy" and data then openPlans("buy",data.game.pendingTile)
+    elseif mainCommand=="Offer" then opportunity:open()
     elseif mainCommand=="Plaza" then openCity("overview")
     elseif mainCommand=="Match" and menus then closePanels();menus:openLobby()
     elseif mainCommand=="Ready" and menus then menus:toggleReady()
@@ -384,7 +393,11 @@ mainAction=function()
 end
 do
     local ui={config=Config,colors=C,root=root,id=player.UserId,frame=frame,text=text,button=button,overlay=overlay,available=available,send=send,notify=notify,data=function() return data end,rent=rent,
-        header=header,mark=mark,strap=strap,dieA=dieA,dieB=dieB,dieTextA=dieTextA,dieTextB=dieTextB,cameraBar=cameraBar,
+        header=header,mark=mark,strap=strap,dieA=dieA,dieB=dieB,dieTextA=dieTextA,dieTextB=dieTextB,cameraBar=cameraBar,closePanels=closePanels,
+        hideToast=function()
+            toast.Visible=false
+            for _,child in ipairs(header:GetChildren()) do if child.Name=="CashChange" then child:Destroy() end end
+        end,
         focus=function(index) selected,focusIndex,inspectorOpen,portfolioOpen=index,nil,true,false;render() end,
         openGoals=function()
             if not data or data.game.status~="playing" or not resident(data.game,player.UserId) then notify("Start a match to receive cards and challenges.");return end
@@ -397,6 +410,7 @@ do
         switchLight=function() night=not night;Lighting.ClockTime=night and 19.2 or 14.4 end,
         openStyles=function() closePanels();boutique:open();render() end}
     menus=Menus.new(ui);boutique=Boutique.new(ui);city=CityPlaza.new(ui);commandMenu=CommandMenu.new(ui);hover=HoverCard.new(ui,player)
+    opportunity=CityOffer.new(ui);goals=GoalDisplay.new(ui);moments=MatchFeedback.new(ui)
     openCity=function(tab) closePanels();city:open(tab);render() end
     boardView.onProperty=function(index) selected,inspectorOpen,portfolioOpen=index,true,false;render() end
     boardView.onInteraction=function(tab) openCity(tab) end
@@ -408,6 +422,7 @@ render=function()
     local current=state.players[state.turn]
     local mine=resident(state,player.UserId)
     local myTurn=state.status=="playing" and current and current.id==player.UserId and current.alive
+    journeyActive=state.status=="playing" and workspace:GetServerTimeNow()<(data.journeyUntil or 0)
     local isHost=data.hostId==player.UserId
     visitIndex=nil
     for _, visitor in ipairs(data.visitors or {}) do if visitor.id==player.UserId then visitIndex=visitor.tile end end
@@ -456,7 +471,7 @@ render=function()
         turnTitle.Text=myTurn and "YOUR TURN" or ((current and current.name or "A resident").."'s turn")
         if state.phase=="end" then turnTitle.Text=myTurn and "Turn complete." or ((current and current.name or "A resident").." has finished.") end
         turnHint.Text=state.notice or "A new address is waiting."
-        if myTurn then turnHint.Text=state.phase=="roll" and "Roll to move. Events are optional." or (state.phase=="buy" and "Choose a home level, or skip this lot." or "Next player starts automatically.") end
+        if myTurn then turnHint.Text=state.phase=="roll" and "Roll to move. Events are optional." or (state.phase=="buy" and "Choose a home level, or skip this lot." or (state.phase=="offer" and "Choose cash or a tactical card." or "Next player starts automatically.")) end
         if myTurn then
             if state.phase=="roll" then mainCommand="Roll";actionButton.Text=mine.detained and "Serve detention" or "ROLL DICE"
             elseif state.phase=="buy" then
@@ -464,6 +479,7 @@ render=function()
                 mainCommand="Buy"
                 actionButton.Text="Buy home · $"..tile.price.."+"
                 passButton.Visible=true
+            elseif state.phase=="offer" then mainCommand="Offer";actionButton.Text="CHOOSE REWARD"
             else mainCommand="End";actionButton.Text="Next player" end
         elseif current and current.id==player.UserId and state.phase=="end" then mainCommand="End";actionButton.Text="End turn"
         else mainCommand="Plaza";actionButton.Text="City events" end
@@ -472,6 +488,11 @@ render=function()
         mainCommand="Match";actionButton.Text=data.matchmaking.queued and "View matchmaking queue" or "Find an online match"
     end
     if rolling then mainCommand=nil;actionButton.Text="Rolling the dice…" end
+    if journeyActive and myTurn then
+        mainCommand=nil;passButton.Visible=false;actionButton.Text="ON THE MOVE..."
+        turnTitle.Text="YOUR TOKEN IS MOVING"
+        turnHint.Text="Your result appears when you land."
+    end
     dieA.Active,dieB.Active=mainCommand=="Roll",mainCommand=="Roll"
     dieA:SetAttribute("RollReady",dieA.Active);dieB:SetAttribute("RollReady",dieB.Active)
     dieA.AutoButtonColor,dieB.AutoButtonColor=dieA.Active,dieB.Active
@@ -550,12 +571,14 @@ render=function()
     boutique:render(data)
     Motion.face(dieA,state.dice[1]>0 and state.dice[1] or 1,pipColor);Motion.face(dieB,state.dice[2]>0 and state.dice[2] or 6,pipColor)
     city:render(data)
+    opportunity:render(data)
     commandMenu.button.Visible=not visitIndex
     commandMenu.button.Text="MENU  [M]"
     commandMenu.quick.Visible=state.status=="playing" and not visitIndex
     commandMenu.cards.Text=mine and mine.challenge and mine.challenge.ready and not state.challengeClaimed and "CLAIM REWARD" or "CARDS & GOALS"
     commandMenu.homes.Text="MY HOMES · "..count
     if layout then commandMenu:resize(layout,roster.Size.Y.Offset) end
+    goals:render(data,layout,roster.Size.Y.Offset,visitIndex~=nil)
     if layout then menus:resize(layout,roster.Size.Y.Offset) end
 end
 local function updateLayout()
@@ -655,13 +678,13 @@ snapshot.OnClientEvent:Connect(function(incoming)
     end
     if after and before and after.cash~=before.cash then
         local delta=after.cash-before.cash
-        Motion.delta(cashLabel,delta,delta>0 and C.green or C.red,root)
+        if not layout or not layout.compact then Motion.delta(cashLabel,delta,delta>0 and C.green or C.red,root) end
     end
     if state.status=="playing" and state.phase=="buy" and state.players[state.turn].id==player.UserId then
         if not old or old.game.phase~="buy" or old.game.pendingTile~=state.pendingTile then
             selected,portfolioOpen=state.pendingTile,false
             local turn,index=state.turnCount,state.pendingTile
-            local delay=state.lastRoll and Config.diceSeconds+(state.lastRoll.steps or 0)*0.18+0.15 or 0
+            local delay=math.max(0,(data.journeyUntil or 0)-workspace:GetServerTimeNow())
             task.delay(delay,function()
                 if data and data.game.status=="playing" and data.game.turnCount==turn and data.game.phase=="buy" and data.game.pendingTile==index and not chooser.Visible then openPlans("buy",index) end
             end)
@@ -695,17 +718,20 @@ snapshot.OnClientEvent:Connect(function(incoming)
         results.Visible=true;help.Visible=false;sale.Visible=false
         menus.lobby.Visible=false;menus.actions.Visible=false;menus.practiceSettings.Visible=false;boutique.shade.Visible=false
         city.shade.Visible=false;commandMenu.shade.Visible=false
+        opportunity.shade.Visible=false
         boutique:celebrate()
     end
+    moments:observe(data,old)
     render()
 end)
 feedback.OnClientEvent:Connect(function(message)
     locked=false;planPending=false
     if chooser.Visible then planError=message end
     notify(message);renderPlans();menus:feedback(message);boutique:feedback(message);city:feedback(message)
+    opportunity:feedback(message);goals:feedback()
 end)
 local function inspect(position)
-    if help.Visible or sale.Visible or results.Visible or chooser.Visible or visitIndex or menus:isOpen() or boutique:isOpen() or city:isOpen() or commandMenu:isOpen() then return end
+    if help.Visible or sale.Visible or results.Visible or chooser.Visible or visitIndex or menus:isOpen() or boutique:isOpen() or city:isOpen() or commandMenu:isOpen() or opportunity:isOpen() then return end
     local camera,board=workspace.CurrentCamera,workspace:FindFirstChild("CitymoneyBoard")
     if not camera or not board then return end
     local ray=camera:ScreenPointToRay(position.X,position.Y)
@@ -722,8 +748,8 @@ end
 Input.TouchTapInWorld:Connect(function(position,processed) if not processed then inspect(position) end end)
 Input.InputBegan:Connect(function(input,processed)
     if not processed and input.UserInputType==Enum.UserInputType.MouseButton1 then inspect(input.Position) end
-    if not processed and input.KeyCode==Enum.KeyCode.M and not visitIndex and not help.Visible and not sale.Visible and not results.Visible and not chooser.Visible and not menus:isOpen() and not boutique:isOpen() and not city:isOpen() then commandMenu.shade.Visible=not commandMenu.shade.Visible;return end
-    if processed or help.Visible or sale.Visible or results.Visible or chooser.Visible or menus:isOpen() or boutique:isOpen() or city:isOpen() or commandMenu:isOpen() then return end
+    if not processed and input.KeyCode==Enum.KeyCode.M and not visitIndex and not help.Visible and not sale.Visible and not results.Visible and not chooser.Visible and not menus:isOpen() and not boutique:isOpen() and not city:isOpen() and not opportunity:isOpen() then commandMenu.shade.Visible=not commandMenu.shade.Visible;return end
+    if processed or help.Visible or sale.Visible or results.Visible or chooser.Visible or menus:isOpen() or boutique:isOpen() or city:isOpen() or commandMenu:isOpen() or opportunity:isOpen() then return end
     if input.KeyCode==Enum.KeyCode.B and visitIndex then send("Return")
     elseif input.KeyCode==Enum.KeyCode.R and mainCommand=="Roll" then send("Roll")
     elseif input.KeyCode==Enum.KeyCode.P and not visitIndex then openCity("overview")
@@ -735,18 +761,26 @@ Input.InputChanged:Connect(function(input,processed)
     end
 end)
 RunService.RenderStepped:Connect(function(dt)
+    if data then
+        local travelling=data.game.status=="playing" and workspace:GetServerTimeNow()<(data.journeyUntil or 0)
+        if travelling~=journeyActive then render() end
+        opportunity:update(data)
+    end
     boardView:update(dt,root,safe,layout,data,focusIndex,inspector.Visible or portfolio.Visible,visitIndex,player)
-    hover:update(data,layout,safe,visitIndex or inspector.Visible or portfolio.Visible or help.Visible or sale.Visible or results.Visible or chooser.Visible or menus:isOpen() or boutique:isOpen() or city:isOpen() or commandMenu:isOpen())
+    local blocked=visitIndex or inspector.Visible or portfolio.Visible or help.Visible or sale.Visible or results.Visible or chooser.Visible or menus:isOpen() or boutique:isOpen() or city:isOpen() or commandMenu:isOpen() or opportunity:isOpen()
+    hover:update(data,layout,safe,blocked or moments.card.Visible)
+    if data then moments:update(data,layout,blocked) end
     if data and data.game.status=="playing" then
         local handing=data.game.phase=="end"
         local seconds=math.max(0,(handing and data.handoffAt or data.deadline)-workspace:GetServerTimeNow())
         local myTurn=data.game.players[data.game.turn].id==player.UserId
-        timeText.Text=handing and ("NEXT TURN IN "..math.ceil(seconds).."s") or (myTurn and (math.ceil(seconds).."s left"..(layout.compact and "" or " · Events [P]")) or "Your turn starts automatically")
+        timeText.Text=journeyActive and "DICE · MOVE · ARRIVE" or (handing and ("NEXT TURN IN "..math.ceil(seconds).."s") or (myTurn and (math.ceil(seconds).."s left"..(layout.compact and "" or " · Events [P]")) or "Your turn starts automatically"))
         if chooser.Visible and not planError then
             local tile=Config.tiles[planIndex]
             planNote.Text=(planMode=="buy" and ("Land $"..tile.price.." + building $"..planLevel*tile.upgrade) or (planMode=="rent" and "This multiplier applies to future rent payments." or "Only the added levels are charged.")).."  ·  "..math.ceil(seconds).."s left"
         end
         timeFill.Size,timeFill.BackgroundColor3=UDim2.fromScale(math.clamp(seconds/(handing and Config.autoAdvanceSeconds or Config.turnSeconds),0,1),1),not handing and seconds<10 and C.red or C.green
+        if journeyActive then timeFill.Size,timeFill.BackgroundColor3=UDim2.fromScale(Journey.progress(Config,data.game.lastRoll,data.journeyUntil-workspace:GetServerTimeNow()),1),C.gold end
     else timeText.Text="2 / 4 players · online queues or practice with bots";timeFill.Size=UDim2.fromScale(0,1) end
 end)
 action:FireServer("Sync")

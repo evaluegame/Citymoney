@@ -2,6 +2,7 @@ local Config=require("../src/shared/Config")
 local Engine=require("../src/shared/Engine")
 local Tactics=require("../src/shared/Tactics")
 local Plans=require("../src/shared/PropertyPlans")
+local Offers=require("../src/shared/Opportunities")
 local passed=0
 local function check(value) assert(value,"Expected true") end
 local function equal(a,b) assert(a==b,tostring(a).." ~= "..tostring(b)) end
@@ -173,6 +174,7 @@ test("200 tactical 2/4-player matches terminate with valid economy and effects",
             if e.state.status~="playing" then break end
             local phase=e.state.phase
             if phase=="roll" then check(e:act(player.id,"Roll"))
+            elseif phase=="offer" then check(e:act(player.id,"Offer",Offers.botChoice(e,player.id)))
             elseif phase=="buy" then
                 local index=e.state.pendingTile;local tile=Config.tiles[index]
                 local level=math.random(0,3)

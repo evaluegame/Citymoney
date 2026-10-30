@@ -44,10 +44,15 @@ function Tactics.grant(engine,player,kind,count)
     return player.cards[kind]-previous
 end
 function Tactics.draw(engine,player,count)
+    local added=0
     for _=1,count or 1 do
-        local kind=engine.config.cardTypes[engine.random(1,#engine.config.cardTypes)]
-        Tactics.grant(engine,player,kind,1)
+        local available={}
+        for _,kind in ipairs(engine.config.cardTypes) do if (player.cards[kind] or 0)<engine.config.cardLimit then table.insert(available,kind) end end
+        if #available==0 then break end
+        local kind=available[engine.random(1,#available)]
+        added=added+Tactics.grant(engine,player,kind,1)
     end
+    return added
 end
 function Tactics.claim(engine,player)
     Tactics.refresh(engine)
@@ -56,8 +61,8 @@ function Tactics.claim(engine,player)
     player.cash=player.cash+player.challenge.reward
     player.completedChallenges=player.completedChallenges+1
     engine.state.challengeClaimed=true
-    engine:log(player.name.." completed "..player.challenge.name.." and collected $"..player.challenge.reward.." plus a card!")
-    Tactics.draw(engine,player,1)
+    local added=Tactics.draw(engine,player,1)
+    engine:log(player.name.." completed "..player.challenge.name.." and collected $"..player.challenge.reward..(added>0 and " plus a card!" or "! Their card hand is full."))
     Tactics.nextChallenge(engine,player)
     return true
 end

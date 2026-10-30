@@ -3,6 +3,7 @@ local runtimeScript = getfenv().script
 local Plans = runtimeScript and require(runtimeScript.Parent.PropertyPlans) or require("./PropertyPlans")
 local Tactics = runtimeScript and require(runtimeScript.Parent.Tactics) or require("./Tactics")
 local Plaza = runtimeScript and require(runtimeScript.Parent.Plaza) or require("./Plaza")
+local Offers = runtimeScript and require(runtimeScript.Parent.Opportunities) or require("./Opportunities")
 local Engine = {}
 Engine.__index = Engine
 
@@ -65,6 +66,7 @@ function Engine:start(roster, rules)
     self.state.lastAction=false
     self.state.lastRoll=false
     self.state.plazaUsed=false
+    self.state.pendingOffer,self.state.lastOpportunity,self.state.offerSeq=false,false,0
     Tactics.refresh(self)
     self:log("Welcome to Citymoney! " .. self:current().name .. " goes first.")
     return true
@@ -105,6 +107,7 @@ function Engine:checkWinner()
         end
         self.state.status, self.state.winnerId = "finished", winner and winner.id or false
         self.state.pendingTile = false
+        self.state.pendingOffer=false
         self:log(winner and (winner.name .. " wins Citymoney with $" .. self:wealth(winner) .. " net worth!") or "The city is empty. Start a new match!")
         return true
     end
@@ -147,14 +150,15 @@ function Engine:playCard(id,kind,index,targetId,turn)
     return Tactics.play(self,id,kind,index,targetId,turn)
 end
 
+local function copySnapshot(value: any): any
+    if type(value)~="table" then return value end
+    local result={}
+    for key,entry in pairs(value) do result[key]=copySnapshot(entry) end
+    return result
+end
 function Engine:view(id)
-    local result=table.clone(self.state)
-    result.players={}
-    for _,player in ipairs(self.state.players) do
-        local copy=table.clone(player)
-        if player.id~=id then copy.cards={} end
-        table.insert(result.players,copy)
-    end
+    local result=copySnapshot(self.state)
+    for _,player in ipairs(result.players) do if player.id~=id then player.cards={} end end
     return result
 end
 
@@ -185,6 +189,7 @@ function Engine:land(player)
         self:sendToDetention(player)
     elseif tile.kind == "event" then
         player.stats.news=player.stats.news+1
+        if Offers.open(self,player) then return end
         local card = self.config.events[self.random(1, #self.config.events)]
         self:log(player.name .. ": " .. card.text)
         if card.detention then
@@ -221,6 +226,7 @@ function Engine:nextTurn()
     self.state.phase, self.state.pendingTile, self.state.dice = "roll", false, { 0, 0 }
     self.state.actionUsed,self.state.challengeClaimed,self.state.challengeSwapped=false,false,false
     self.state.plazaUsed=false
+    self.state.pendingOffer=false
     self:log("It's " .. self:current().name .. "'s turn.")
 end
 
@@ -254,7 +260,9 @@ function Engine:act(id, action, tileIndex: any, targetLevel: any, expectedTurn: 
         return false, "That home selection expired. Open the options again."
     end
     local phase = self.state.phase
-    if action=="Plaza" then
+    if action=="Offer" then
+        return Offers.act(self,id,tileIndex)
+    elseif action=="Plaza" then
         return Plaza.act(self,id,tileIndex)
     elseif action=="Claim" then
         local ok,message=Tactics.claim(self,player)
@@ -267,6 +275,7 @@ function Engine:act(id, action, tileIndex: any, targetLevel: any, expectedTurn: 
             player.detained, self.state.phase = false, "end"
             self:log(player.name .. " served their detention and can move next turn.")
         else
+            local from=player.position
             local first, second = self.random(1, 6), self.random(1, 6)
             self.state.dice = { first, second }
             local destination = player.position + first + second
@@ -275,8 +284,10 @@ function Engine:act(id, action, tileIndex: any, targetLevel: any, expectedTurn: 
                 self:log(player.name .. " passed City Gate and collected $" .. self.config.startBonus .. ".")
             end
             player.position = (destination - 1) % #self.config.tiles + 1
+            local landed=player.position
             self:land(player)
-            self.state.lastRoll={seq=(self.state.lastRoll and self.state.lastRoll.seq or 0)+1,turn=self.state.turnCount,actorId=id,values={first,second},steps=first+second}
+            self.state.lastRoll={seq=(self.state.lastRoll and self.state.lastRoll.seq or 0)+1,turn=self.state.turnCount,actorId=id,values={first,second},steps=first+second,
+                from=from,landedTile=landed,to=player.position,summary=self.state.notice}
         end
     elseif action == "Buy" and phase == "buy" then
         local index = self.state.pendingTile

@@ -9,6 +9,7 @@ cd "$project_dir"
 .tools/luau tests/Cosmetics.spec.luau
 .tools/luau tests/Tabletop.spec.luau
 .tools/luau tests/Presentation.spec.luau
+.tools/luau tests/Experience.spec.luau
 .tools/luau tests/Board.spec.luau
 .tools/luau tests/Homes.spec.luau
 pure_sources=()

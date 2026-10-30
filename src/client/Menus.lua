@@ -208,7 +208,9 @@ function Menus:render(data)
     local goal=me.challenge
     self.goalName.Text=goal.name
     self.goalText.Text=goal.description
-    self.goalProgress.Text=goal.progress.." / "..goal.target.." · reward $"..goal.reward.." + card"
+    local cardSpace=false
+    for _,kind in ipairs(config.cardTypes) do if (me.cards[kind] or 0)<config.cardLimit then cardSpace=true end end
+    self.goalProgress.Text=goal.progress.." / "..goal.target.." · reward $"..goal.reward..(cardSpace and " + card" or " · hand full")
     self.claim.Text="Claim $"..goal.reward
     ui.available(self.claim,myTurn and goal.ready and not state.challengeClaimed,C.green)
     ui.available(self.newGoal,myTurn and not state.challengeSwapped and me.cash>=config.challengeSwapCost,C.paper)
