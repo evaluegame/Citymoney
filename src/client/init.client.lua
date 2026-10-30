@@ -21,7 +21,6 @@ local CityOffer=require(script:WaitForChild("CityOffer"))
 local GoalDisplay=require(script:WaitForChild("GoalDisplay"))
 local MatchFeedback=require(script:WaitForChild("MatchFeedback"))
 local Journey=require(shared.Journey)
-local Follow=require(shared.FollowView)
 local boardView=BoardView.new()
 local remotes=shared:WaitForChild("Remotes")
 local action,snapshot,feedback=remotes:WaitForChild("Action"),remotes:WaitForChild("Snapshot"),remotes:WaitForChild("Feedback")
@@ -84,6 +83,13 @@ local data,selected,focusIndex,mainCommand,visitIndex,layout
 local inspectorOpen,portfolioOpen,rolling,locked=false,false,false,false
 local notify,render,requestSale,openPlans,renderPlans,mainAction,menus,boutique,city,openCity,commandMenu,hover,opportunity,goals,moments
 local journeyActive=false
+local presentationPhase="done"
+local function journeyPhase()
+    local state=data and data.game
+    local roll=state and state.lastRoll
+    if not state or state.status~="playing" or not roll or roll.turn~=state.turnCount then return "done" end
+    return Journey.phase(Config,roll,data.journeyUntil,workspace:GetServerTimeNow(),data.diceEndsAt,data.moveAt)
+end
 local portraits={}
 local function send(command,index,level,expectedTurn)
     if locked or (rolling and command~="Return") then return false end
@@ -95,7 +101,7 @@ local header=frame(root,24,16,1200,68)
 header.Name="Header"
 local mark=frame(header,14,12,32,32,C.green)
 local logo=text(mark,"C",0,0,32,32,24,C.white,true);logo.TextXAlignment=Enum.TextXAlignment.Center
-local brand=text(header,"citymoney",60,7,210,32,27,C.ink,true)
+local brand=text(header,"citymoney",60,7,210,32,23,C.ink,true)
 local strap=text(header,"BUILD YOUR CITY",62,40,240,15,9,C.muted,true)
 local cashLabel=text(header,"$1,500",360,8,190,30,23,C.ink,true)
 local worthLabel=text(header,"YOUR BALANCE",360,39,230,16,10,C.muted)
@@ -130,11 +136,10 @@ local upgradeButton=button(inspector,"Upgrade options",16,316,109,44,C.green,fun
 upgradeButton.TextSize=12
 local rentButton=button(inspector,"Rent options",133,316,109,44,C.green,function() if selected and openPlans then openPlans("rent",selected) end end)
 rentButton.TextSize=12
-local sellButton=button(inspector,"Sell",95,424,70,32,C.paper,function() if requestSale then requestSale(selected) end end)
+local sellButton=button(inspector,"Sell",134,424,108,32,C.paper,function() if requestSale then requestSale(selected) end end)
 local visitButton=button(inspector,"Walk through your home",16,370,226,44,C.green,function() if selected then send("Visit",selected) end end)
-local paintButton=button(inspector,"Repaint",16,424,70,32,C.paper,function() if selected then send("Paint",selected) end end)
+local paintButton=button(inspector,"Repaint",16,424,108,32,C.paper,function() if selected then send("Paint",selected) end end)
 paintButton.TextSize=11
-local focusButton=button(inspector,"Close-up",173,424,69,32,C.paper,function() focusIndex=selected end);focusButton.TextSize=11
 sellButton.TextSize=11
 local ownerMark=frame(inspector,8,214,4,19,C.green)
 local portfolio=frame(root,920,114,308,440)
@@ -158,6 +163,7 @@ local turnTitle=text(control,"A neighborhood of possibilities.",140,14,400,29,21
 truncate(turnTitle)
 local turnHint=text(control,"Start solo against City Bot, or invite your friends.",140,48,400,26,12,C.muted);truncate(turnHint)
 local actionButton=button(control,"Connecting…",574,17,220,54,C.green,function() if mainAction then mainAction() end end)
+actionButton.Name="PrimaryAction"
 local actionDepth=frame(control,574,21,220,54,Color3.fromHex("DCA031"));actionButton.ZIndex=2
 local passButton=button(control,"SKIP",500,79,75,26,C.paper,function() send("Skip") end)
 local timeText=text(control,"",16,81,400,18,10,C.muted)
@@ -165,10 +171,8 @@ local timeTrack=frame(control,16,104,778,3,C.paper)
 local timeFill=Instance.new("Frame");timeFill.Size,timeFill.BackgroundColor3,timeFill.BorderSizePixel,timeFill.Parent=UDim2.fromScale(1,1),C.green,0,timeTrack
 local cameraBar=frame(root,24,510,188,84)
 cameraBar.Name,cameraBar.ZIndex="CameraDock",2
-button(cameraBar,"3D view",6,6,86,30,C.paper,function() focusIndex=nil;root:SetAttribute("FollowSuppressed",Follow.key(data and data.game.lastRoll));root:SetAttribute("ViewMode",(root:GetAttribute("ViewMode") or Presentation.defaultView)=="city" and "table" or "city");root:SetAttribute("Zoom",1);render() end).Name="TableView"
-button(cameraBar,"Fit",39,45,44,30,C.paper,function() focusIndex=nil;inspectorOpen=false;root:SetAttribute("FollowSuppressed",Follow.key(data and data.game.lastRoll));root:SetAttribute("ViewMode",Presentation.defaultView);root:SetAttribute("Rotate",0);root:SetAttribute("Zoom",1);render() end).Name="Fit"
-button(cameraBar,"-",121,45,27,30,C.paper,function() root:SetAttribute("Zoom",math.min(1.5,(root:GetAttribute("Zoom") or 1)+0.1)) end).Name="ZoomOut"
-button(cameraBar,"+",153,45,28,30,C.paper,function() root:SetAttribute("Zoom",math.max(0.75,(root:GetAttribute("Zoom") or 1)-0.1)) end).Name="ZoomIn"
+button(cameraBar,"3D view",6,6,100,30,C.paper,function() focusIndex=nil;root:SetAttribute("ViewMode",(root:GetAttribute("ViewMode") or Presentation.defaultView)=="city" and "table" or "city");render() end).Name="TableView"
+button(cameraBar,"Fit",108,6,60,30,C.paper,function() focusIndex=nil;inspectorOpen=false;root:SetAttribute("ViewMode",Presentation.defaultView);render() end).Name="Fit"
 local visitBanner=frame(root,420,110,440,58,C.green)
 local visitText=text(visitBanner,"Welcome home",16,8,270,38,16,C.white,true)
 button(visitBanner,"Back to board",292,10,134,38,C.paper,function() send("Return") end)
@@ -425,6 +429,8 @@ render=function()
     local mine=resident(state,player.UserId)
     local myTurn=state.status=="playing" and current and current.id==player.UserId and current.alive
     journeyActive=state.status=="playing" and workspace:GetServerTimeNow()<(data.journeyUntil or 0)
+    presentationPhase=journeyPhase()
+    rolling=presentationPhase=="dice" and not (data.club and not data.club.effects)
     local isHost=data.hostId==player.UserId
     visitIndex=nil
     for _, visitor in ipairs(data.visitors or {}) do if visitor.id==player.UserId then visitIndex=visitor.tile end end
@@ -491,9 +497,17 @@ render=function()
     end
     if rolling then mainCommand=nil;actionButton.Text="Rolling the dice…" end
     if journeyActive and myTurn then
-        mainCommand=nil;passButton.Visible=false;actionButton.Text="ON THE MOVE..."
-        turnTitle.Text="YOUR TOKEN IS MOVING"
-        turnHint.Text="Your result appears when you land."
+        mainCommand=nil;passButton.Visible=false
+        if presentationPhase=="dice" then
+            actionButton.Text="ROLLING...";turnTitle.Text="ROLLING THE DICE"
+            turnHint.Text="Wait for both dice to stop."
+        elseif presentationPhase=="result" then
+            actionButton.Text="GET READY...";turnTitle.Text="YOU ROLLED "..(state.dice[1]+state.dice[2])
+            turnHint.Text="Dice settled. Your resident moves next."
+        else
+            actionButton.Text="ON THE MOVE...";turnTitle.Text="MOVING SPACE BY SPACE"
+            turnHint.Text="Your result appears when you land."
+        end
     end
     dieA.Active,dieB.Active=mainCommand=="Roll",mainCommand=="Roll"
     dieA:SetAttribute("RollReady",dieA.Active);dieB:SetAttribute("RollReady",dieB.Active)
@@ -571,7 +585,9 @@ render=function()
     renderPlans()
     menus:render(data)
     boutique:render(data)
-    Motion.face(dieA,state.dice[1]>0 and state.dice[1] or 1,pipColor);Motion.face(dieB,state.dice[2]>0 and state.dice[2] or 6,pipColor)
+    if not rolling then
+        Motion.face(dieA,state.dice[1]>0 and state.dice[1] or 1,pipColor);Motion.face(dieB,state.dice[2]>0 and state.dice[2] or 6,pipColor)
+    end
     city:render(data)
     opportunity:render(data)
     commandMenu.button.Visible=not visitIndex
@@ -592,13 +608,13 @@ local function updateLayout()
     place(header,20,16,w-40,layout.headerHeight)
     local hw=w-40
     place(mark,14,12,32,32)
-    place(brand,58,5,220,32);brand.TextSize=29
+    place(brand,58,5,220,32);brand.TextSize=24
     place(strap,60,36,260,15);strap.Visible=not layout.compact
     place(cashLabel,hw-185,7,168,28);cashLabel.TextSize=25
     place(worthLabel,hw-185,36,168,15)
     homesButton.Visible,helpButton.Visible,dayButton.Visible=false,false,false
     if layout.compact then
-        place(brand,58,12,210,32);brand.TextSize=25
+        place(brand,58,12,210,32);brand.TextSize=23
         place(cashLabel,hw-166,12,150,28);place(worthLabel,hw-166,44,150,17)
     end
     local r=layout.roster;place(roster,r[1],r[2],r[3],roster.Size.Y.Offset)
@@ -645,24 +661,23 @@ local function updateLayout()
 end
 safe:GetPropertyChangedSignal("AbsoluteSize"):Connect(updateLayout)
 updateLayout()
-local animationVersion=0
-local function diceAnimation(first,second)
-    if data and data.club and not data.club.effects then
-        Motion.face(dieA,first,dieTextA.TextColor3);Motion.face(dieB,second,dieTextB.TextColor3);return
-    end
-    animationVersion=animationVersion+1;local version=animationVersion
-    rolling=true;render()
-    task.spawn(function()
-        for step=1,10 do
-            if version~=animationVersion then return end
-            Motion.face(dieA,math.random(1,6),dieTextA.TextColor3);Motion.face(dieB,math.random(1,6),dieTextB.TextColor3)
-            dieA.Rotation,dieB.Rotation=step%2==0 and 7 or -7,step%2==0 and -7 or 7
-            task.wait(0.045+step*0.003)
+local shakeKey,shakeTick,shakeA,shakeB=nil,nil,1,6
+local function diceAnimation()
+    if not data then return end
+    local state=data.game
+    local a,b=state.dice[1]>0 and state.dice[1] or 1,state.dice[2]>0 and state.dice[2] or 6
+    if rolling then
+        local roll=state.lastRoll
+        local key=roll.turn..":"..roll.seq
+        local tick=math.floor(workspace:GetServerTimeNow()/0.075)
+        if shakeKey~=key or shakeTick~=tick then
+            shakeKey,shakeTick=key,tick;shakeA,shakeB=math.random(1,6),math.random(1,6)
         end
-        if version~=animationVersion then return end
-        Motion.face(dieA,first,dieTextA.TextColor3);Motion.face(dieB,second,dieTextB.TextColor3);dieA.Rotation,dieB.Rotation=0,0
-        rolling=false;render()
-    end)
+        a,b=shakeA,shakeB
+        dieA.Rotation,dieB.Rotation=tick%2==0 and 5 or -5,tick%2==0 and -5 or 5
+    else dieA.Rotation,dieB.Rotation=0,0 end
+    local tint=Color3.fromHex(Cosmetics.get(data.club and data.club.styleId or "classic").pip)
+    Motion.face(dieA,a,tint);Motion.face(dieB,b,tint)
 end
 snapshot.OnClientEvent:Connect(function(incoming)
     if data and incoming.revision<data.revision then return end
@@ -687,9 +702,13 @@ snapshot.OnClientEvent:Connect(function(incoming)
             selected,portfolioOpen=state.pendingTile,false
             local turn,index=state.turnCount,state.pendingTile
             local delay=math.max(0,(data.journeyUntil or 0)-workspace:GetServerTimeNow())
-            task.delay(delay,function()
-                if data and data.game.status=="playing" and data.game.turnCount==turn and data.game.phase=="buy" and data.game.pendingTile==index and not chooser.Visible then openPlans("buy",index) end
-            end)
+            local function chooseAfterArrival()
+                if data and data.game.status=="playing" and data.game.turnCount==turn and data.game.phase=="buy" and data.game.pendingTile==index and not chooser.Visible then
+                    local remaining=(data.journeyUntil or 0)-workspace:GetServerTimeNow()
+                    if remaining>0 then task.delay(remaining,chooseAfterArrival) else openPlans("buy",index) end
+                end
+            end
+            task.delay(delay,chooseAfterArrival)
         end
     end
     if planPending and chooser.Visible then
@@ -714,7 +733,6 @@ snapshot.OnClientEvent:Connect(function(incoming)
             end
         end
         if state.turnCount~=old.game.turnCount then focusIndex=nil end
-        if state.lastRoll and state.lastRoll.seq>(old.game.lastRoll and old.game.lastRoll.seq or 0) then diceAnimation(state.lastRoll.values[1],state.lastRoll.values[2]) end
     end
     if state.status=="finished" and (not old or old.game.status~="finished") then
         results.Visible=true;help.Visible=false;sale.Visible=false
@@ -757,26 +775,23 @@ Input.InputBegan:Connect(function(input,processed)
     elseif input.KeyCode==Enum.KeyCode.P and not visitIndex then openCity("overview")
     elseif input.KeyCode==Enum.KeyCode.Space and mainCommand and not visitIndex then mainAction() end
 end)
-Input.InputChanged:Connect(function(input,processed)
-    if not processed and not visitIndex and input.UserInputType==Enum.UserInputType.MouseWheel then
-        root:SetAttribute("Zoom",math.clamp((root:GetAttribute("Zoom") or 1)-input.Position.Z*0.06,0.75,1.5))
-    end
-end)
 RunService.RenderStepped:Connect(function(dt)
     if data then
         local travelling=data.game.status=="playing" and workspace:GetServerTimeNow()<(data.journeyUntil or 0)
-        if travelling~=journeyActive then render() end
+        if travelling~=journeyActive or journeyPhase()~=presentationPhase then render() end
         opportunity:update(data)
     end
+    diceAnimation()
     boardView:update(dt,root,safe,layout,data,focusIndex,inspector.Visible or portfolio.Visible,visitIndex,player)
     local blocked=visitIndex or inspector.Visible or portfolio.Visible or help.Visible or sale.Visible or results.Visible or chooser.Visible or menus:isOpen() or boutique:isOpen() or city:isOpen() or commandMenu:isOpen() or opportunity:isOpen()
-    hover:update(data,layout,safe,blocked or moments.card.Visible)
+    hover:update(data,layout,safe,blocked or moments.card.Visible or journeyActive)
     if data then moments:update(data,layout,blocked) end
     if data and data.game.status=="playing" then
         local handing=data.game.phase=="end"
         local seconds=math.max(0,(handing and data.handoffAt or data.deadline)-workspace:GetServerTimeNow())
         local myTurn=data.game.players[data.game.turn].id==player.UserId
-        timeText.Text=journeyActive and "DICE · MOVE · ARRIVE" or (handing and ("NEXT TURN IN "..math.ceil(seconds).."s") or (myTurn and (math.ceil(seconds).."s left"..(layout.compact and "" or " · Events [P]")) or "Your turn starts automatically"))
+        local stages={dice="ROLLING THE DICE",result="DICE SETTLED · MOVING NEXT",move="ONE SPACE AT A TIME"}
+        timeText.Text=journeyActive and (stages[presentationPhase] or "ARRIVING") or (handing and ("NEXT TURN IN "..math.ceil(seconds).."s") or (myTurn and (math.ceil(seconds).."s left"..(layout.compact and "" or " · Events [P]")) or "Your turn starts automatically"))
         if chooser.Visible and not planError then
             local tile=Config.tiles[planIndex]
             planNote.Text=(planMode=="buy" and ("Land $"..tile.price.." + building $"..planLevel*tile.upgrade) or (planMode=="rent" and "This multiplier applies to future rent payments." or "Only the added levels are charged.")).."  ·  "..math.ceil(seconds).."s left"
@@ -786,7 +801,7 @@ RunService.RenderStepped:Connect(function(dt)
     else timeText.Text="2 / 4 players · online queues or practice with bots";timeFill.Size=UDim2.fromScale(0,1) end
 end)
 -- Run after Roblox's camera controller, which can hide the local avatar after
--- a first-person home visit. Scriptable board/follow views show its real body.
+-- a first-person home visit. The fixed board view shows its real body.
 RunService:BindToRenderStep("CitymoneyAvatarVisibility",Enum.RenderPriority.Camera.Value+1,function()
     if not visitIndex then boardView:revealCharacter(player.Character) end
 end)

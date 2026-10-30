@@ -211,20 +211,18 @@ return function(sources,width,height)
         walk(gui);return elements
     end
     local P=load(shared.Presentation);local Fit=load(shared.BoardCamera)
-    local Actors,Follow,Journey=load(shared.Actors),load(shared.FollowView),load(shared.Journey)
+    local Actors,Journey=load(shared.Actors),load(shared.Journey)
     local layout=P.layout(width,height);local r=P.board(layout,false)
     local function camera()
-        local yaw,elevation=P.viewAngles(root:GetAttribute("ViewMode"),root:GetAttribute("Rotate"))
-        local bounds=root:GetAttribute("ViewMode")=="city" and load(shared.CityScenery).bounds() or Fit.cityBounds(Config,load(shared.Architecture),engine.state)
-        local tracking=Follow.plan(Config,engine.state,data.journeyUntil,now,root:GetAttribute("FollowSuppressed"),not data.club.effects)
-        if tracking then bounds,yaw,elevation=Follow.framing(tracking.position) end
-        return Fit.fit(width,height,{r[1]*layout.scale,r[2]*layout.scale,r[3]*layout.scale,r[4]*layout.scale},yaw,elevation,root:GetAttribute("Zoom") or 1,bounds)
+        local yaw,elevation=P.viewAngles(root:GetAttribute("ViewMode"),0)
+        local bounds=root:GetAttribute("ViewMode")=="city" and load(shared.CityScenery).bounds() or Fit.cityBounds(Config,load(shared.Architecture))
+        return Fit.fit(width,height,{r[1]*layout.scale,r[2]*layout.scale,r[3]*layout.scale,r[4]*layout.scale},yaw,elevation,1,bounds)
     end
     local views={}
     local function pose(resident,seat)
         local roll=engine.state.lastRoll
         if roll and roll.turn==engine.state.turnCount and resident.id==roll.actorId and resident.position==roll.to and data.journeyUntil and now<data.journeyUntil then
-            local elapsed=now-(data.journeyUntil-Journey.duration(Config,roll)+Config.diceSeconds)
+            local elapsed=now-(data.moveAt or (data.journeyUntil-Journey.duration(Config,roll)+Journey.beforeMove(Config)))
             return Actors.travel(Config,roll,seat,elapsed)
         end
         return Actors.pose(resident.position,seat)
@@ -323,10 +321,16 @@ return function(sources,width,height)
     end
     root:SetAttribute("Rotate",2);root:SetAttribute("Zoom",1.4)
     root.CameraDock.Fit.Activated:Fire();services.RunService.RenderStepped:Fire(0.016)
-    assert(root:GetAttribute("ViewMode")=="table" and root:GetAttribute("Rotate")==0 and root:GetAttribute("Zoom")==1,"Fit did not reset the readable view")
+    assert(root:GetAttribute("ViewMode")=="table","Fit did not reset the readable view")
+    local fixedCamera=workspace.CurrentCamera.CFrame
+    assert(not root.CameraDock:FindFirstChild("ZoomIn") and not root.CameraDock:FindFirstChild("ZoomOut"),"Zoom controls remain visible")
+    services.UserInputService.InputChanged:Fire({UserInputType=enum.UserInputType.MouseWheel,Position=vector(0,0,4)},false)
+    services.RunService.RenderStepped:Fire(0.016)
+    assert(workspace.CurrentCamera.CFrame==fixedCamera,"Mouse wheel zooms the board")
     checkDeeds()
     root.DeedLabel3.Activated:Fire();services.RunService.RenderStepped:Fire(0.016)
     findText("Brick Courtyard");assert(root.PropertyCard.Visible,"Map label did not open the full property card")
+    assert(workspace.CurrentCamera.CFrame==fixedCamera,"Property inspection zooms the board")
     root.CameraDock.Fit.Activated:Fire();services.RunService.RenderStepped:Fire(0.016)
     assert(not root.PropertyCard.Visible,"Fit did not close the property inspector");checkDeeds()
     root.DeedLabel4.Activated:Fire();findText("Around the city.");click("X")
@@ -370,6 +374,7 @@ return function(sources,width,height)
     click("L2 · Garden villa");click("Upgrade to Garden villa · $120")
     request=requests[#requests];assert(request[1]=="Upgrade" and request[2]==2 and request[3]==2)
     assert(engine:act(1,request[1],request[2],request[3],request[4]));publish();advance(0.3)
+    assert(workspace.CurrentCamera.CFrame==fixedCamera,"Upgrades zoom the board")
     engine.state.phase="buy";engine.state.pendingTile=5;publish();advance(0.3);services.RunService.RenderStepped:Fire(0.016)
     findText("Choose your home level");click("L1 · Townhouse");click("Buy Townhouse · $220")
     request=requests[#requests];assert(request[1]=="Buy" and request[2]==5 and request[3]==1)
@@ -377,33 +382,36 @@ return function(sources,width,height)
     engine.state.phase="buy";engine.state.pendingTile=6;publish();advance(0.3);click("Back");click("SKIP")
     assert(requests[#requests][1]=="Skip");assert(engine:act(1,"Skip"));assert(not engine.state.properties[6].ownerId)
     advance(0.3)
-    -- Reduced motion still respects the same authoritative movement deadline.
-    data.club.effects=false;engine.state.phase="roll";engine:player(1).position=1;engine.random=function(low) return low end
+    -- The dice finish, their result stays visible, then separate board steps
+    -- begin. All three phases use one fixed camera, including delayed snapshots.
+    data.club.effects=true;engine.state.phase="roll";engine:player(1).position=13;engine.random=function(low) return low end
     assert(engine:act(1,"Roll"))
-    data.journeyUntil=now+load(shared.Journey).duration(Config,engine.state.lastRoll);data.handoffAt=data.journeyUntil+4;data.deadline=data.journeyUntil+55
-    publish();assert(findText("ON THE MOVE...").Active==false);assert(root.TurnDock.RollDieA.Active==false)
-    capture("journey");advance(data.journeyUntil-now+0.1);services.RunService.RenderStepped:Fire(0.016)
-    findText("WELCOME HOME!");assert(findText("Next player").Active,"Turn controls did not unlock on arrival")
-    -- Normal motion follows the resident at body height, then returns to the
-    -- readable overview. Fit cancels follow for this roll without changing play.
-    data.club.effects=false;engine.state.phase="roll";engine:player(1).position=13
-    assert(engine:act(1,"Roll"))
+    data.diceEndsAt=now+Config.diceSeconds;data.moveAt=now+Journey.beforeMove(Config)
     data.journeyUntil=now+Journey.duration(Config,engine.state.lastRoll);data.handoffAt=data.journeyUntil+4;data.deadline=data.journeyUntil+55
-    publish();assert(root:GetAttribute("FollowingResident")==nil,"Follow camera starts before the dice presentation")
-    -- Dice coroutines are not emulated by this adapter. Settle their faces,
-    -- then enable normal camera motion for the movement presentation.
-    data.club.effects=true
-    advance(Config.diceSeconds+0.3);services.RunService.RenderStepped:Fire(0.016)
-    assert(root:GetAttribute("FollowingResident")==1,"Walking does not follow the active player")
-    for index=1,24 do assert(not root["DeedLabel"..index].Visible,"A floating price label covers the follow view") end
+    publish();assert(root.TurnDock.PrimaryAction.Text=="ROLLING..." and not root.TurnDock.PrimaryAction.Active);assert(root.TurnDock.RollDieA.Active==false)
+    assert(not root.MatchMoment.Visible,"A large roll banner hides the walking route")
+    assert(not root.NoticeToast.Visible and not root.PropertyHover.Visible,"Old notices cover the dice and walking route")
+    assert(workspace.CurrentCamera.CFrame==fixedCamera,"Rolling zooms the camera")
+    advance(0.7);services.RunService.RenderStepped:Fire(0.016)
+    -- A late server dice-completion message extends the whole presentation.
+    data.diceEndsAt=data.diceEndsAt+0.3;data.moveAt=data.moveAt+0.3
+    data.journeyUntil=data.journeyUntil+0.3;data.handoffAt=data.handoffAt+0.3;data.deadline=data.deadline+0.3;publish()
+    advance(data.diceEndsAt-now+0.2);services.RunService.RenderStepped:Fire(0.016)
+    findText("GET READY...");findText("YOU ROLLED 2")
+    local before=Actors.pose(engine.state.lastRoll.from,1)
+    local held=pose(engine:player(1),1)
+    for axis=1,3 do assert(math.abs(before[axis]-held[axis])<1e-6,"The pawn moves before the settled result is shown") end
+    assert(root.TurnDock.RollDieA.Rotation==0 and root.TurnDock.RollDieB.Rotation==0,"The HUD dice keep tumbling after their result")
+    capture("result")
+    advance(data.moveAt-now+0.3);services.RunService.RenderStepped:Fire(0.016)
+    assert(findText("ON THE MOVE...").Active==false)
+    assert(workspace.CurrentCamera.CFrame==fixedCamera,"Movement zooms the camera")
+    local moving=pose(engine:player(1),1);assert(math.abs(moving[1]-before[1])+math.abs(moving[3]-before[3])>1,"The pawn never leaves its starting space")
     capture("walking")
-    root.CameraDock.Fit.Activated:Fire();services.RunService.RenderStepped:Fire(0.016)
-    assert(root:GetAttribute("FollowingResident")==nil,"Fit does not return to the board during a walk")
-    assert(root:GetAttribute("FollowSuppressed")==Follow.key(engine.state.lastRoll))
-    advance(data.journeyUntil-now+0.8);services.RunService.RenderStepped:Fire(0.016)
-    assert(root:GetAttribute("FollowingResident")==nil,"The old journey keeps following after arrival")
+    advance(data.journeyUntil-now+0.1);services.RunService.RenderStepped:Fire(0.016)
+    assert(workspace.CurrentCamera.CFrame==fixedCamera,"Arrival zooms the camera")
     if engine.state.phase=="buy" then click("Back");click("SKIP");assert(engine:act(1,"Skip"));publish() end
-    data.club.effects=false
+    data.club.effects=false;data.diceEndsAt=nil;data.moveAt=nil
     -- A waiting opportunity opens only when its token reaches the news space.
     engine:player(1).stats.news=1;engine:player(1).position=4;engine:land(engine:player(1))
     data.journeyUntil=now+2;data.deadline=now+57;publish()

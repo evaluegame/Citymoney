@@ -111,7 +111,7 @@ function City.generate()
         add("CivicRoof",{18.5,0.6,14.5},{x,h+2.2,-135},"3F618C")
         add("RooftopGarden",{12,0.2,8},{x,h+2.6,-135},"79CFA4")
         add("RoofLantern",{2,2.1,2},{x-5,h+3.7,-135},"FFF1BC",{material="Neon"})
-        add("PublicShopSign",{14,1.6,0.3},{x,4.5,-128.1},"3555A5",{text=title,textFace="Back",textColor="FFFFFF",textSize=64})
+        add("PublicShopSign",{14,1.6,0.3},{x,4.5,-128.1},"3555A5",{text=title,textFace="Back",textColor="FFFFFF",textSize=42})
         for stripe=-2,2 do add("PublicAwning",{3.7,0.3,3.1},{x+stripe*3.7,5.6,-127.1},stripe%2==0 and color or "FFFFFF",{rotation=A.rotation(0,math.rad(12),0)}) end
     end
     -- A bright ferry makes the waterfront read as a small, lived-in city.

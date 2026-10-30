@@ -20,7 +20,7 @@ function Districts.generate()
             add(name,{height,width,width},x,y,z,color,{shape="Cylinder",rotation=A.rotation(0,0,math.pi/2)})
         end
         for _,p in ipairs(Art.rounded("StationPlatform",{23,0.6,21},{station.x,1.9,station.z},3,"F9FCFF",{interaction=station.id})) do table.insert(entries,p) end
-        add("StationLabel",{20,0.09,5},0,2.25,7.2,station.color,{text=station.title,textColor="FFFFFF",textSize=64})
+        add("StationLabel",{20,0.09,5},0,2.25,7.2,station.color,{text=station.title,textColor="FFFFFF",textSize=48})
         if station.id=="market" then
             add("MarketShop",{16,5.4,8},0,4.9,-2.2,"FFF6DF")
             add("MarketFascia",{17,1.2,0.5},0,7.7,-6.4,station.color)

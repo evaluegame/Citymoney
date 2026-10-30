@@ -31,6 +31,7 @@ function World.new(config)
     end
     Scene.populate(entries, self.root)
     self.dice=DiceWorld.new(self.root,config)
+    self.dice.onSettled=function(sequence,at) if self.onDiceSettled then self.onDiceSettled(sequence,at) end end
     for _,part in ipairs(self.root:GetChildren()) do
         if part.Name=="StationLabel" and part:GetAttribute("Interaction")=="festival" then self.festivalLabel=part:FindFirstChild("Caption") end
     end
@@ -201,7 +202,8 @@ function World:sync(state)
         self.festivalLabel.TextLabel.Text="FESTIVAL\n$"..event.cost
     end
     local newRoll=self.dice:sync(state,self.club)
-    if newRoll then self.moveReadyAt=os.clock()+self.config.diceSeconds end
+    if newRoll then self.moveReadyAt=workspace:GetServerTimeNow()+Journey.beforeMove(self.config)
+    elseif not state.lastRoll then self.moveReadyAt=0 end
     -- Buying immediately constructs a complete home, including its owner's sign.
     for index, view in pairs(self.propertyViews) do
         local property = state.properties[index]
@@ -331,13 +333,22 @@ function World:sync(state)
         if not self.visiting[resident.id] then
             local old = self.positions[resident.id]
             local route=newRoll and state.lastRoll and state.lastRoll.actorId==resident.id and state.lastRoll.from==old and state.lastRoll or nil
+            local pending=state.lastRoll
+            local readyAt=math.max(self.moveReadyAt or 0,(self.dice.settledAt or 0)+Journey.resultSeconds(self.config))
+            if not old and pending and pending.actorId==resident.id and pending.turn==state.turnCount and (workspace:GetServerTimeNow()<readyAt or self.dice.settledSeq~=pending.seq) then
+                old,route=pending.from,pending
+                model:PivotTo(self:tokenFrame(old,seat,model))
+            end
             if old~=resident.position or route then
                 self:cancelMotion(resident.id)
                 self.positions[resident.id] = resident.position
                 local generation = self.generations[resident.id]
                 local destination, detained = resident.position, resident.detained
                 task.spawn(function()
-                    local delay=math.max(0,(self.moveReadyAt or 0)-os.clock())
+                    if route and not self.dice:waitUntilSettled(route.seq) then return end
+                    local readyAt=self.moveReadyAt or 0
+                    if route then readyAt=math.max(readyAt,(self.dice.settledAt or 0)+Journey.resultSeconds(self.config)) end
+                    local delay=math.max(0,readyAt-workspace:GetServerTimeNow())
                     if delay>0 and old then task.wait(delay) end
                     if self.generations[resident.id]~=generation or not model.Parent then return end
                     local steps=route and route.steps or (old and (destination-old)%#self.config.tiles or 0)

@@ -44,11 +44,11 @@ function Feedback:observe(data,old)
  end
  local roll=state.lastRoll
  if roll and roll.seq>(old.game.lastRoll and old.game.lastRoll.seq or 0) then
-  local actor=resident(state,roll.actorId)
-  local total=roll.values[1]+roll.values[2]
-  local tint=Color3.fromHex(self.ui.config.playerColors[actor.colorIndex])
   self.journey={turn=roll.turn,roll=roll,state=state,untilTime=data.journeyUntil or workspace:GetServerTimeNow()}
-  self:show(actor.name.." ROLLED "..total,"Follow the token. Your result appears when it lands.",tostring(total),tint,math.max(0.1,self.journey.untilTime-workspace:GetServerTimeNow()))
+  -- The HUD presents the dice phases. Keep the route and walking residents
+  -- clear instead of covering the top of the board with a large roll banner.
+  self.ui.hideToast()
+  self:hide()
  end
  local action=state.lastAction
  if action and action.seq>(old.game.lastAction and old.game.lastAction.seq or 0) then
@@ -91,6 +91,9 @@ function Feedback:landing(journey)
 end
 function Feedback:update(data,layout,blocked)
  if not layout then return end
+ if self.journey and data.game.lastRoll and data.game.lastRoll.seq==self.journey.roll.seq and data.game.turnCount==self.journey.turn then
+  self.journey.untilTime=data.journeyUntil or self.journey.untilTime
+ end
  if self.journey and workspace:GetServerTimeNow()>=self.journey.untilTime then
   local journey=self.journey;self.journey=nil
   if data.game.status=="playing" and data.game.turnCount==journey.turn then self:landing(journey) end

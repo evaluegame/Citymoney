@@ -20,15 +20,30 @@ function World:place(values,time,duration,sequence)
         model:PivotTo(CFrame.new(p[1],p[2],p[3],table.unpack(r)))
     end
 end
+function World:settled(roll,generation)
+    if self.generation~=generation then return end
+    self:place(roll.values,1,1,roll.seq)
+    self.settledSeq,self.settledAt=roll.seq,workspace:GetServerTimeNow()
+    local settledAt=self.settledAt
+    task.defer(function()
+        if self.generation==generation and self.onSettled then self.onSettled(roll.seq,settledAt) end
+    end)
+end
+function World:waitUntilSettled(sequence)
+    while self.seq==sequence and self.settledSeq~=sequence do RunService.Heartbeat:Wait() end
+    return self.seq==sequence and self.settledSeq==sequence
+end
 function World:sync(state,club)
     local roll=state.lastRoll
     if not roll then
-        if self.seq~=0 then self.generation=self.generation+1;self.seq=0;self:place({1,6},1,1,0) end
+        if self.seq~=0 then self.generation=self.generation+1;self.seq=0;self.settledSeq,self.settledAt=nil,nil;self:place({1,6},1,1,0) end
         return false
     end
     if self.seq==roll.seq then return false end
     self.seq=roll.seq;self.generation=self.generation+1
+    self.settledSeq,self.settledAt=nil,nil
     local generation=self.generation
+    local started=workspace:GetServerTimeNow()
     local styleId,effects="classic",true
     if club then styleId,effects=club:visual(roll.actorId) end
     local style=Cosmetics.get(styleId)
@@ -37,15 +52,14 @@ function World:sync(state,club)
             if part:IsA("BasePart") then part.Color=Color3.fromHex(string.sub(part.Name,1,4)=="Dice" and style.dice or style.pip) end
         end
     end
-    if not effects then self:place(roll.values,1,1,roll.seq);return true end
+    if not effects then self:settled(roll,generation);return true end
     task.spawn(function()
-        local started=os.clock()
         repeat
             if self.generation~=generation then return end
-            self:place(roll.values,os.clock()-started,self.config.diceSeconds,roll.seq)
+            self:place(roll.values,workspace:GetServerTimeNow()-started,self.config.diceSeconds,roll.seq)
             RunService.Heartbeat:Wait()
-        until os.clock()-started>=self.config.diceSeconds
-        if self.generation==generation then self:place(roll.values,1,1,roll.seq) end
+        until workspace:GetServerTimeNow()-started>=self.config.diceSeconds
+        self:settled(roll,generation)
     end)
     return true
 end

@@ -5,6 +5,7 @@ local Config = {
     turnSeconds = 55,
     autoAdvanceSeconds = 4,
     diceSeconds = 1.1,
+    diceResultSeconds = 0.4, -- Show both settled values before the first step.
     stepSeconds = 0.38, -- One complete board step, including a pause on the space.
     stepPauseSeconds = 0.13,
     avatarScale = 1,

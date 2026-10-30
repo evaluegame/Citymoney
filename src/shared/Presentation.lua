@@ -19,7 +19,7 @@ function P.layout(width,height)
     return {scale=scale,width=w,height=h,compact=compact,headerHeight=compact and 84 or 56,
         toolbar={(w-toolbarWidth)/2,h-toolbarHeight-18,toolbarWidth,toolbarHeight},
         inspector={w-290,92,270,math.min(462,h-toolbarHeight-118)},roster={20,96,154,300},
-        menu={20,compact and 102 or h-66,compact and 106 or 134,compact and 64 or 46},camera={compact and w-408 or w-510,compact and 100 or 26,compact and 388 or 254,compact and 68 or 34}}
+        menu={20,compact and 102 or h-66,compact and 106 or 134,compact and 64 or 46},camera={compact and w-408 or w-426,compact and 100 or 26,compact and 388 or 170,compact and 68 or 34}}
 end
 function P.shortcuts(layout,rosterHeight)
     if layout.compact then return {20,180,layout.width-40,64} end

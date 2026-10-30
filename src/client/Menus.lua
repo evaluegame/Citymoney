@@ -115,8 +115,8 @@ function Menus:resize(layout,_rosterHeight)
     local bar=self.ui.cameraBar
     local r=layout.camera
     bar.Position,bar.Size=UDim2.fromOffset(r[1],r[2]),UDim2.fromOffset(r[3],r[4])
-    local specs={{"TableView",4,100},{"Fit",108,60},{"ZoomOut",172,36},{"ZoomIn",212,36}}
-    if layout.compact then specs={{"TableView",4,144},{"Fit",156,80},{"ZoomOut",244,64},{"ZoomIn",316,64}} end
+    local specs={{"TableView",4,100},{"Fit",108,60}}
+    if layout.compact then specs={{"TableView",4,232},{"Fit",244,136}} end
     for _,spec in ipairs(specs) do
         local object=bar:FindFirstChild(spec[1])
         object.Position,object.Size=UDim2.fromOffset(spec[2],2),UDim2.fromOffset(spec[3],layout.compact and 64 or 30)

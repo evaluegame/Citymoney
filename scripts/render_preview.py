@@ -82,6 +82,7 @@ for entry in entries:
         max_height=size[1]*0.72 if front or back else size[2]*0.68
         lines=entry["text"].splitlines()
         fit=min(size[0]*0.85/max(0.1,max(len(line) for line in lines)*0.66),max_height/max(0.1,len(lines)*1.1))
+        fit=min(fit,entry.get("textSize",72)/40)
         text.scale=(fit,fit,fit);curve.materials.append(material({"color":entry.get("textColor","475C50")}))
 
 scene = bpy.context.scene

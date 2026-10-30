@@ -1,12 +1,10 @@
 local Config=require('../src/shared/Config')
-local Engine=require('../src/shared/Engine')
-local Follow=require('../src/shared/FollowView')
 local Actors=require('../src/shared/Actors')
-local Journey=require('../src/shared/Journey')
 local Camera=require('../src/shared/BoardCamera')
 local Layout=require('../src/shared/Layout')
 local A=require('../src/shared/Architecture')
 local City=require('../src/shared/CityScenery')
+local Board=require('../src/shared/Board')
 local passed=0
 local function check(v,message) assert(v,message or 'Expected true') end
 local function equal(a,b) check(a==b,tostring(a)..' ~= '..tostring(b)) end
@@ -15,63 +13,6 @@ local function test(name,callback)
  local ok,message=pcall(callback);if not ok then error('FAIL '..name..': '..tostring(message),0) end
  passed=passed+1;print('PASS '..name)
 end
-local function game()
- local e=Engine.new(Config,function(low) return low end)
- check(e:start({{id=1,name='Avery'},{id=2,name='Riley'},{id=3,name='Jamie'},{id=4,name='Morgan'}}));check(e:act(1,'Roll'))
- return e.state,100+Journey.duration(Config,e.state.lastRoll)
-end
-test('the overview stays visible for the dice before following the moving resident',function()
- local state,arrival=game()
- check(not Follow.plan(Config,state,arrival,100,nil,false))
- local plan=Follow.plan(Config,state,arrival,101,nil,false)
- equal(plan.id,1);equal(plan.seat,1)
-end)
-test('the follow view lasts through arrival and returns automatically afterward',function()
- local state,arrival=game()
- check(Follow.plan(Config,state,arrival,arrival,nil,false))
- check(Follow.plan(Config,state,arrival,arrival+0.6,nil,false))
- check(not Follow.plan(Config,state,arrival,arrival+0.7,nil,false))
-end)
-test('Fit suppresses only the current roll and the next roll can follow again',function()
- local state,arrival=game();local key=Follow.key(state.lastRoll)
- check(not Follow.plan(Config,state,arrival,101,key,false))
- state.lastRoll.seq=state.lastRoll.seq+1
- check(Follow.plan(Config,state,arrival,101,key,false))
-end)
-test('reduced motion keeps the steady overview without changing journey timing',function()
- local state,arrival=game();local original=Journey.duration(Config,state.lastRoll)
- check(not Follow.plan(Config,state,arrival,101,nil,true))
- equal(Journey.duration(Config,state.lastRoll),original)
-end)
-test('finished, stale, eliminated and subsequently moved residents cannot retain camera control',function()
- for _,change in ipairs({function(s) s.status='finished' end,function(s) s.turnCount=s.turnCount+1 end,function(s) s.players[1].alive=false end,function(s) s.players[1].position=9 end}) do
-  local state,arrival=game();change(state);check(not Follow.plan(Config,state,arrival,101,nil,false))
- end
-end)
-test('the camera follows every seat in a four-player match using the rolled actor',function()
- for seat=1,4 do
-  local state,arrival=game();state.lastRoll.actorId=seat;state.players[seat].position=state.lastRoll.to
-  local plan=Follow.plan(Config,state,arrival,101,nil,false);equal(plan.id,seat);equal(plan.seat,seat)
- end
-end)
-test('body-height framing makes the full pawn visible across all spaces and screen sizes',function()
- for _,size in ipairs({{1440,900},{1192,642},{800,560},{390,760}}) do
-  local layout=Layout.calculate(table.unpack(size));local r=Layout.board(layout,false)
-  local rect={r[1]*layout.scale,r[2]*layout.scale,r[3]*layout.scale,r[4]*layout.scale}
-  for index=1,24 do
-   local p=Actors.pose(index,1);local bounds,yaw,elevation=Follow.framing(p)
-   local frame=Camera.fit(size[1],size[2],rect,yaw,elevation,1,bounds)
-   local _,foot=Camera.project(frame,{p[1],p[2]-2.04,p[3]})
-   local _,head=Camera.project(frame,{p[1],p[2]+2.2,p[3]})
-   check(foot-head>=24,'Follow view still makes the body too small')
-   for _,dx in ipairs({-1.8,1.8}) do for _,dy in ipairs({-2.04,2.2}) do
-    local x,y,z=Camera.project(frame,{p[1]+dx,p[2]+dy,p[3]})
-    check(z>0 and x>rect[1]+10 and x<rect[1]+rect[3]-10 and y>rect[2]+10 and y<rect[2]+rect[4]-10,'Body overlaps the HUD')
-   end end
-   check(math.sin(yaw)*p[1]+math.cos(yaw)*p[3]<0,'Follow camera stands behind the houses')
-  end
- end
-end)
 test('all six resident positions stay separated and within each rotated space',function()
  for index=1,24 do
   local seen={};local _,yaw=A.site(index)
@@ -108,6 +49,13 @@ test('shared fallback residents have readable faces, clothing and owner colors',
  for _,entry in ipairs(Actors.figure('FFBE55')) do names[entry.name]=true;check(entry.canCollide==false) end
  for _,name in ipairs({'Torso','Head','Eye','Smile','Shirt','Tie','Shoe','LeftLeg','RightLeg','Briefcase'}) do check(names[name],name) end
  check(Config.avatarScale>=1,'Real avatars are still shrunk')
+end)
+test('board and city names have modest surface-text limits',function()
+ for _,entry in ipairs(Board.generate(Config)) do
+  if entry.name=="CityTitle" then check(entry.size[1]<=26 and entry.textSize<=40) end
+  if string.match(entry.name,"^Tile%d+$") then check(entry.textSize<=60) end
+  if entry.name=="PublicShopSign" then check(entry.textSize<=42) end
+ end
 end)
 test('downtown, the boardwalk and ferry stay outside every purchasable parcel',function()
  for _,entry in ipairs(City.generate()) do if entry.background then
@@ -152,4 +100,4 @@ test('city details leave the route centers and all four event stations clear',fu
   end end
  end end
 end)
-print('\n'..passed..' player-visibility, follow-camera and city-layout cases passed.')
+print('\n'..passed..' player-visibility and city-layout cases passed.')

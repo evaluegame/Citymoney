@@ -39,7 +39,7 @@ local function payload(id)
     return { game = engine:view(id), lobby = lobby, lobbyConfig=settings,hostId = party and party:hostId() or false,
         matchmaking=matcher and matcher:status(id) or nil,
         club=club and club:snapshot(id) or nil, styles=club and club:styles() or {},
-        deadline = deadline, handoffAt=flow.handoffAt,journeyUntil=flow.journeyUntil,serverTime = workspace:GetServerTimeNow(), revision = revision, visitors = world:visitorList() }
+        deadline = deadline, handoffAt=flow.handoffAt,journeyUntil=flow.journeyUntil,diceEndsAt=flow.diceEndsAt,moveAt=flow.moveAt,serverTime = workspace:GetServerTimeNow(), revision = revision, visitors = world:visitorList() }
 end
 
 local function publish(resetTimer)
@@ -49,6 +49,12 @@ local function publish(resetTimer)
     if resetTimer or botReadyAt == 0 then botReadyAt = math.max(workspace:GetServerTimeNow()+2.1,flow.journeyUntil+0.35) end
     world:sync(engine.state)
     for _,recipient in ipairs(Players:GetPlayers()) do snapshot:FireClient(recipient,payload(recipient.UserId)) end
+end
+world.onDiceSettled=function(sequence,at)
+    if flow:diceSettled(engine.state,sequence,at) then
+        botReadyAt=math.max(botReadyAt,flow.journeyUntil+0.35)
+        publish(false)
+    end
 end
 
 club=ClubService.new(Config,function() publish(false) end)
@@ -188,6 +194,11 @@ action.OnServerEvent:Connect(function(player, command, index, level, expectedTur
     if command=="Plaza" then
         local ok,message=engine:act(player.UserId,"Plaza",index)
         if ok then publish(false) else feedback:FireClient(player,message) end
+        return
+    end
+    if command=="Offer" then
+        local ok,message=perform(player.UserId,"Offer",index)
+        if not ok then feedback:FireClient(player,message) end
         return
     end
     if command == "Return" then

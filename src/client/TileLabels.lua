@@ -95,7 +95,7 @@ function Labels:update(camera,safe,scale,data,enabled,rect)
                 end
                 button.Text=name..(value~="" and ((name~="" and "\n" or "")..value) or "")
                 local longest=math.max(#name,#value)
-                button.TextSize=math.max(9,math.min(12,height/2.8,(width-3)/math.max(1,longest*0.85)))/scale
+                button.TextSize=math.max(9,math.min(10.5,height/2.8,(width-3)/math.max(1,longest*0.85)))/scale
             end
             button.Size,button.Position=UDim2.fromOffset(width/scale,height/scale),UDim2.fromOffset((screen.X-offset.X)/scale,(screen.Y-offset.Y)/scale)
             button.Visible=visible and (not rect or (screen.X-width/2>=rect[1] and screen.X+width/2<=rect[1]+rect[3] and screen.Y-height/2>=rect[2] and screen.Y+height/2<=rect[2]+rect[4]))

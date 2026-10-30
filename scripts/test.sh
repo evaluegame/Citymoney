@@ -11,6 +11,7 @@ cd "$project_dir"
 .tools/luau tests/Presentation.spec.luau
 .tools/luau tests/Experience.spec.luau
 .tools/luau tests/CityView.spec.luau
+.tools/luau tests/DiceSequence.spec.luau
 .tools/luau tests/Board.spec.luau
 .tools/luau tests/Homes.spec.luau
 pure_sources=()
@@ -24,3 +25,4 @@ while IFS= read -r -d '' source_file; do
 done < <(find src -name '*.lua' -print0)
 printf 'All Roblox source files compiled successfully.\n'
 python3 scripts/client_smoke.py
+python3 scripts/server_smoke.py

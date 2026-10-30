@@ -15,7 +15,7 @@ The colorful city board has empty lots, a card market, festival stage,
 challenge hall and broadcast tower. Play starts in an aligned Top view.
 Upright badges show short names and prices; RENT marks an owned home's rent.
 Tap a badge for the full name, owner and details. 3D view switches to the
-angled city. Fit restores Top view and resets the zoom; + / - zoom in/out.
+whole waterfront. Fit restores Top view. The board camera stays fixed.
 MENU [M] contains all game menus.
 EVENTS, CARDS & GOALS and MY HOMES are direct shortcuts. On phones they
 are above the board. The larger turn dock explains your next step.
@@ -24,13 +24,14 @@ Tap either large HUD die, the bigger 3D dice, or their tray to roll. R also roll
 Rounded dice with flat pips show the result; the HUD also shows the total.
 The shared dice settle on the server's values before your avatar moves.
 
-SEE YOUR PLAYER WHILE MOVING
-The camera eases in to follow the actual resident's body, then returns to
-the board after arrival. Fit restores the overview for this roll; the next
-roll can follow again. Reduced motion keeps a steady overview.
-Real players use their full-sized Roblox avatars. A player-colored ring,
-nameplate and active outline help identify them. A styled fallback figure
-appears while an avatar loads. Walking previews show this generated figure.
+DICE FIRST / FIXED BOARD CAMERA
+Both dice finish tumbling and display their result for 0.4 seconds before
+the resident starts moving. HUD dice stop changing before the first step.
+Late dice completion shifts movement and all decision clocks together.
+The camera stays fixed through walking, buying, upgrades and inspection.
+Automatic follow, zoom buttons, wheel zoom and board close-up are removed.
+Real players keep their full Roblox avatars, player-colored rings,
+nameplates and active outlines. Smaller map names keep the view clean.
 The city has eight public downtown buildings, a waterfront boardwalk,
 benches, lamps, fountains and a ferry. Player plots stay empty until bought.
 
@@ -126,7 +127,7 @@ City Gate, City News, the park and goals also award cards.
 WALK THROUGH / CAMERA
 Select your home > Walk through your home. Use normal Roblox controls.
 E opens your front door. B or Back to board returns. Matches keep moving.
-Use Top view, City view, Fit, + / -, and Close-up. MENU also has Day/Night.
+Use 3D view, Top view or Fit to choose the view. MENU also has Day/Night.
 
 VISUAL REVIEW AND CHECKS
 docs/Play-screen-preview.png combines the actual exported client UI layout

@@ -1,5 +1,14 @@
 -- Shared timeline for the dice, board movement, result reveal and turn clock.
 local Journey={}
+function Journey.resultSeconds(config) return config.diceResultSeconds or 0.4 end
+function Journey.beforeMove(config) return config.diceSeconds+Journey.resultSeconds(config) end
+function Journey.phase(config,roll,arrival,now,diceEndsAt,moveAt)
+    if not roll or not arrival or arrival<=0 or now>=arrival then return "done" end
+    local started=arrival-Journey.duration(config,roll)
+    if now<(diceEndsAt or started+config.diceSeconds) then return "dice" end
+    if now<(moveAt or started+Journey.beforeMove(config)) then return "result" end
+    return "move"
+end
 function Journey.stepSeconds(config) return config.stepSeconds or 0.38 end
 -- The tween spans a whole step. Reach the exact space early, then hold still
 -- there so a board move reads as individual spaces instead of a continuous run.
@@ -21,7 +30,7 @@ function Journey.sample(config,steps,elapsed)
 end
 function Journey.duration(config,roll)
     if not roll then return 0 end
-    return config.diceSeconds+math.clamp(roll.steps or 0,0,12)*Journey.stepSeconds(config)+0.15
+    return Journey.beforeMove(config)+math.clamp(roll.steps or 0,0,12)*Journey.stepSeconds(config)+0.15
 end
 function Journey.progress(config,roll,remaining)
     return math.clamp(1-remaining/math.max(0.01,Journey.duration(config,roll)),0,1)
