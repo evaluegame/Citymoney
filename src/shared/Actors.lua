@@ -2,17 +2,19 @@
 local runtimeScript=getfenv().script
 local A=runtimeScript and require(runtimeScript.Parent.Architecture) or require("./Architecture")
 local Journey=runtimeScript and require(runtimeScript.Parent.Journey) or require("./Journey")
-local Actors={}
+local P=runtimeScript and require(runtimeScript.Parent.Presentation) or require("./Presentation")
+local Actors={scale=2.1,heightScale=2.6,ringSize=3.8}
+Actors.height=1.88*Actors.heightScale+0.2
 function Actors.offset(seat,index)
-    local x,z=((seat-1)%3-1)*4.4,math.floor((seat-1)/3)*4.4-2.2
+    local x,z=((seat-1)%3-1)*5.6,math.floor((seat-1)/3)*4.1-6.5
     local _,yaw=A.site(index or 1)
     return math.cos(yaw)*x+math.sin(yaw)*z,-math.sin(yaw)*x+math.cos(yaw)*z
 end
 function Actors.pose(index,seat,height,from)
     local p=A.position(index);local x,z=Actors.offset(seat,index)
-    local dx,dz=-p[1],-p[3]
+    local dx,dz=math.sin(P.defaultYaw),math.cos(P.defaultYaw)
     if from then local previous=A.position(from);dx,dz=p[1]-previous[1],p[3]-previous[3] end
-    return {p[1]+x,p[2]+(height or 2.3),p[3]+z},math.atan2(-dx,-dz)
+    return {p[1]+x,p[2]+(height or Actors.height),p[3]+z},math.atan2(-dx,-dz)
 end
 function Actors.travel(config,roll,seat,elapsed,height)
     local steps=math.clamp(roll.steps or 0,0,12)
@@ -29,7 +31,8 @@ function Actors.figure(color)
     local parts={}
     local function add(name,size,p,tint,extra)
         local s={};local position={}
-        for axis=1,3 do s[axis]=size[axis]*1.15;position[axis]=p[axis]*1.15 end
+        for axis=1,3 do local scale=axis==2 and Actors.heightScale or Actors.scale
+            s[axis]=size[axis]*scale;position[axis]=p[axis]*scale end
         local entry={name=name,size=s,position=position,color=tint,material="SmoothPlastic",canCollide=false}
         for k,v in pairs(extra or {}) do entry[k]=v end
         table.insert(parts,entry)
@@ -61,7 +64,7 @@ function Actors.preview(color,p,yaw)
         entry.position={p[1]+c*x+s*z,p[2]+y,p[3]-s*x+c*z}
         entry.rotation=A.rotation(yaw)
     end
-    table.insert(parts,{name="PlayerColorRing",size={0.12,4.4,4.4},position={p[1],p[2]-2.04,p[3]},color=color,shape="Cylinder",rotation=A.rotation(0,0,math.pi/2),material="Neon",canCollide=false})
+    table.insert(parts,{name="PlayerColorRing",size={0.12,Actors.ringSize,Actors.ringSize},position={p[1],p[2]-Actors.height+0.28,p[3]},color=color,shape="Cylinder",rotation=A.rotation(0,0,math.pi/2),material="Neon",canCollide=false})
     return parts
 end
 return Actors

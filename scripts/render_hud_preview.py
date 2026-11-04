@@ -28,7 +28,7 @@ for item in layout["elements"]:
         stroke=item["stroke"]
         draw.rounded_rectangle((x,y,x+w,y+h),radius=radius,outline="#"+stroke["color"]+f'{round(stroke["alpha"]*255):02x}',width=max(1,round(stroke["width"])))
     if item["text"] and item.get("textAlpha",1)>0:
-        font=ImageFont.truetype(bold if "Bold" in item["font"] or "Black" in item["font"] else regular,max(8,round(item["size"])))
+        font=ImageFont.truetype(bold if "Bold" in item["font"] or "Black" in item["font"] else regular,max(1,int(item["size"]) if item["name"].startswith("DeedLabel") else round(item["size"])))
         lines=[]
         for paragraph in item["text"].splitlines():
             if item["wrap"]:
@@ -44,12 +44,14 @@ for item in layout["elements"]:
                 while len(paragraph)>1 and draw.textlength(paragraph,font=font)>w-2:
                     paragraph=paragraph[:-2]+"…"
                 lines.append(paragraph)
-        line_height=font.size+2
-        lines=lines[:max(1,h//line_height)]
+        line_height=font.size*1.1 if item["name"].startswith("DeedLabel") else font.size+2
+        lines=lines[:max(1,int(h//line_height))]
         top=y+(h-len(lines)*line_height)/2
         for i,line in enumerate(lines):
             tx=x if item["align"]=="Left" else x+(w-draw.textlength(line,font=font))/2
             draw.text((tx,top+i*line_height),line,font=font,fill="#"+item["fg"]+f'{round(item.get("textAlpha",1)*255):02x}')
+    if item.get("rotation"):
+        layer=layer.rotate(-item["rotation"],resample=Image.Resampling.BICUBIC,center=(x+w/2,y+h/2))
     canvas=Image.alpha_composite(canvas,layer)
 
 label=Image.new("RGBA",canvas.size)

@@ -1,24 +1,22 @@
--- Upright, screen-sized labels keep the tabletop readable on every board edge.
+-- Clickable labels fit inside their physical space, including perspective sides.
 local shared=game:GetService("ReplicatedStorage"):WaitForChild("Citymoney")
 local Players=game:GetService("Players")
-local Config,Architecture,Plans=require(shared.Config),require(shared.Architecture),require(shared.PropertyPlans)
+local Config,Plans,Spaces,Actors=require(shared.Config),require(shared.PropertyPlans),require(shared.BoardSpaces),require(shared.Actors)
 local Labels={}
 Labels.__index=Labels
-local special={start={"GATE","+$200"},visit={"JAIL","VISIT"},park={"PARK","CARD"},detention={"JAIL","GO TO"},event={"NEWS",""},tax={"TAX","$120"}}
-local function position(index)
-    local p=Architecture.position(index)
-    return Vector3.new(p[1],1.9,p[3])
-end
+local special={start={"CITY GATE","+$200"},visit={"JAIL","JUST VISIT"},park={"PARK","FREE CARD"},detention={"GO TO","JAIL"},event={"CITY","NEWS"},tax={"CITY TAX","$120"}}
 function Labels.new(root,onSelect,onInteraction)
-    local self=setmetatable({buttons={},captions={},revision=nil,enabled=nil},Labels)
+    local self=setmetatable({buttons={},captions={},revision=nil},Labels)
     for index,tile in ipairs(Config.tiles) do
         local button=Instance.new("TextButton")
         button.Name,button.AnchorPoint,button.ZIndex="DeedLabel"..index,Vector2.new(0.5,0.5),5
-        button.BackgroundColor3,button.BackgroundTransparency,button.BorderSizePixel=Color3.fromHex("FFFFFF"),0.04,0
+        button.BackgroundColor3,button.BackgroundTransparency,button.BorderSizePixel=Color3.fromHex("FFFFFF"),0,0
         button.TextColor3,button.Font,button.TextWrapped=Color3.fromHex("1B2C48"),Enum.Font.GothamBold,false
+        button.TextScaled,button.ClipsDescendants=true,true
         button.Text=tile.name;button.Parent=root
-        local corner=Instance.new("UICorner");corner.CornerRadius,corner.Parent=UDim.new(0,5),button
-        local outline=Instance.new("UIStroke");outline.Color,outline.Thickness,outline.ApplyStrokeMode,outline.Parent=Color3.fromHex(tile.group and Config.groups[tile.group].color or "85A393"),1.5,Enum.ApplyStrokeMode.Border,button
+        local corner=Instance.new("UICorner");corner.CornerRadius,corner.Parent=UDim.new(0,2),button
+        local limit=Instance.new("UITextSizeConstraint");limit.MinTextSize,limit.Parent=1,button
+        local outline=Instance.new("UIStroke");outline.Color,outline.Thickness,outline.ApplyStrokeMode,outline.Parent=Color3.fromHex(tile.group and Config.groups[tile.group].color or "85A393"),0.8,Enum.ApplyStrokeMode.Border,button
         button.Activated:Connect(function()
             if tile.kind=="property" then onSelect(index) else onInteraction(tile.kind=="park" and "contracts" or "news") end
         end)
@@ -28,16 +26,6 @@ function Labels.new(root,onSelect,onInteraction)
 end
 function Labels:update(camera,safe,scale,data,enabled,rect)
     local board=workspace:FindFirstChild("CitymoneyBoard")
-    if self.enabled~=enabled or self.board~=board then
-        self.enabled,self.board=enabled,board
-        if board then
-            for index=1,24 do
-                local tile=board:FindFirstChild("Tile"..index)
-                local caption=tile and tile:FindFirstChild("Caption")
-                if caption then caption.Enabled=not enabled end
-            end
-        end
-    end
     if data and self.revision~=data.revision then
         self.revision=data.revision
         for index,tile in ipairs(Config.tiles) do
@@ -48,7 +36,7 @@ function Labels:update(camera,safe,scale,data,enabled,rect)
             self.captions[index]={name=tile.name,value=value,owned=owner~=nil}
             local stroke=self.buttons[index]:FindFirstChildOfClass("UIStroke")
             stroke.Color=Color3.fromHex(owner and Config.playerColors[owner.colorIndex] or (tile.group and Config.groups[tile.group].color or "85A393"))
-            stroke.Thickness=owner and 2.5 or 1.5
+            stroke.Thickness=owner and 1.2 or 0.8
         end
     end
     local offset=safe.AbsolutePosition
@@ -61,52 +49,52 @@ function Labels:update(camera,safe,scale,data,enabled,rect)
             local head=model and model:FindFirstChild("Head")
             if head then
                 local point,visible=camera:WorldToScreenPoint(head.Position)
-                if visible then table.insert(figures,point) end
+                if visible then
+                    local root=model:FindFirstChild("HumanoidRootPart") or model:FindFirstChild("Torso")
+                    local humanoid=model:FindFirstChildOfClass("Humanoid")
+                    local leg=model:FindFirstChild("Left Leg") or model:FindFirstChild("Right Leg")
+                    local height=humanoid and root and root.Size.Y/2+(leg and leg.Size.Y or humanoid.HipHeight) or Actors.height-0.2
+                    local foot=root and camera:WorldToScreenPoint(root.Position-Vector3.new(0,height,0)) or point
+                    local margin=math.max(2,8*math.min(1,scale))
+                    table.insert(figures,{left=math.min(point.X,foot.X)-margin,right=math.max(point.X,foot.X)+margin,
+                        top=math.min(point.Y,foot.Y)-margin,bottom=math.max(point.Y,foot.Y)+margin})
+                end
             end
         end end
     end
     for index,button in ipairs(self.buttons) do
-        button.Visible=enabled
+        button.Visible=false
         if enabled then
-            local screen,visible=camera:WorldToScreenPoint(position(index))
-            local nextScreen=camera:WorldToScreenPoint(position(index%24+1))
-            local previousScreen=camera:WorldToScreenPoint(position((index-2)%24+1))
-            local dx,dy=math.abs(nextScreen.X-screen.X),math.abs(nextScreen.Y-screen.Y)
-            local px,py=previousScreen.X-screen.X,previousScreen.Y-screen.Y
-            local spacing=math.min(math.sqrt(dx*dx+dy*dy),math.sqrt(px*px+py*py))
-            local corner=(index-1)%6==0
-            -- Corners need compact badges; an oversized corner would obscure
-            -- the neighboring space. Every badge scales down with the route.
-            local width=corner and math.min(44,spacing*0.8) or math.min(96,spacing*(dx>=dy and 0.96 or 1.7))
-            local height=math.min(corner and 44 or (dx>=dy and 44 or 38),spacing*(corner and 0.8 or (dx>=dy and 0.88 or 0.8)))
-            local caption=self.captions[index]
-            if caption then
-                -- Short map names stay legible; the property card gives the full name.
-                local name=string.match(caption.name,"^%S+")
-                local short=special[Config.tiles[index].kind]
-                if short then name=short[1] end
-                local value=short and short[2] or caption.value
-                if caption.owned then value=(width<48 and "RENT\n" or "Rent ")..value end
-                if width<48 then
-                    if not short then name=""
-                    elseif Config.tiles[index].kind=="start" then name,value="GO",""
-                    elseif Config.tiles[index].kind=="visit" or Config.tiles[index].kind=="park" then value=""
-                    elseif Config.tiles[index].kind=="detention" then name,value="TO","JAIL" end
+            local projected=Spaces.project(index,function(p)
+                local screen=camera:WorldToScreenPoint(Vector3.new(table.unpack(p)))
+                return {screen.X,screen.Y}
+            end)
+            if projected then
+                local x,y,w,h=projected.x,projected.y,projected.width,projected.height
+                local caption=self.captions[index]
+                if caption then
+                    local short=special[Config.tiles[index].kind]
+                    local name=short and short[1] or string.match(caption.name,"^%S+")
+                    local value=short and short[2] or ((caption.owned and "RENT " or "")..caption.value)
+                    button.Text=name.."\n"..value
+                    local font=math.min(10.5,h/2.3,w/(math.max(#name,#value)*0.67+1))
+                    button.TextSize=math.max(1,font/scale)
+                    button:FindFirstChildOfClass("UITextSizeConstraint").MaxTextSize=math.max(1,math.floor(font/scale))
                 end
-                button.Text=name..(value~="" and ((name~="" and "\n" or "")..value) or "")
-                local longest=math.max(#name,#value)
-                button.TextSize=math.max(9,math.min(10.5,height/2.8,(width-3)/math.max(1,longest*0.85)))/scale
-            end
-            button.Size,button.Position=UDim2.fromOffset(width/scale,height/scale),UDim2.fromOffset((screen.X-offset.X)/scale,(screen.Y-offset.Y)/scale)
-            button.Visible=visible and (not rect or (screen.X-width/2>=rect[1] and screen.X+width/2<=rect[1]+rect[3] and screen.Y-height/2>=rect[2] and screen.Y+height/2<=rect[2]+rect[4]))
-            -- A screen label must never cover a pawn. Reveal the underlying
-            -- floor caption while a real avatar or bot crosses its space.
-            for _,figure in ipairs(figures) do
-                if math.abs(figure.X-screen.X)<width/2+14 and math.abs(figure.Y-screen.Y)<height/2+14 then button.Visible=false;break end
+                button.Size,button.Position=UDim2.fromOffset(w/scale,h/scale),UDim2.fromOffset((x-offset.X)/scale,(y-offset.Y)/scale)
+                button.Rotation=projected.rotation
+                local rx,ry=projected.right[1],projected.right[2]
+                local ex,ey=math.abs(rx)*w/2+math.abs(ry)*h/2,math.abs(ry)*w/2+math.abs(rx)*h/2
+                button.Visible=not rect or (x-ex>=rect[1] and x+ex<=rect[1]+rect[3] and y-ey>=rect[2] and y+ey<=rect[2]+rect[4])
+                -- Floor lettering remains within the space when a body passes
+                -- in front. An opaque screen badge must never hide that body.
+                for _,figure in ipairs(figures) do
+                    if x-ex<figure.right and x+ex>figure.left and y-ey<figure.bottom and y+ey>figure.top then button.Visible=false;break end
+                end
             end
         end
-        local tile=board and board:FindFirstChild("Tile"..index)
-        local caption=tile and tile:FindFirstChild("Caption")
+        local plate=board and board:FindFirstChild("DeedPlate"..index)
+        local caption=plate and plate:FindFirstChild("Caption")
         if caption then caption.Enabled=not button.Visible end
     end
 end

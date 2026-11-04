@@ -2,8 +2,8 @@
 local P={
     colors={card="FFFFFF",paper="F0F5FC",ink="1B2C48",muted="687B94",line="D9E4F2",green="386BF0",gold="FFC34D",mint="E9F1FF",red="ED627B",white="FFFFFF"},
     board={water="59CBE8",deepWater="3895D2",sand="F5DDA0",grass="70D594",path="F7FAFE",navy="3555A5",gold="FFC34D"},
-    defaultView="table",defaultYaw=0,defaultElevation=math.rad(78),
-    cityYaw=math.rad(18),cityElevation=math.rad(56),
+    defaultView="table",defaultYaw=math.rad(8),defaultElevation=math.rad(50),
+    cityYaw=math.rad(18),cityElevation=math.rad(46),
 }
 function P.viewAngles(mode,rotate)
     local city=mode=="city"

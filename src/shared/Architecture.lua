@@ -17,7 +17,7 @@ function Architecture.site(index)
     local side = math.floor((index - 1) / 6)
     local yaw = -side * math.pi / 2
     local s, c = math.sin(yaw), math.cos(yaw)
-    return { position[1] + s * 14, 1.8, position[3] + c * 14 }, yaw
+    return { position[1] + s * 20, 1.8, position[3] + c * 20 }, yaw
 end
 
 -- Rotation = yaw * pitch * roll. Matrix rows are Roblox CFrame components.

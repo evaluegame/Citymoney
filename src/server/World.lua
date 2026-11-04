@@ -25,7 +25,7 @@ function World.new(config)
     local entries = {}
     for _, entry in ipairs(Board.generate(config)) do
         local die=entry.interaction=="dice" and (string.match(entry.name,"^DiceBody") or string.match(entry.name,"^DiceShell") or string.match(entry.name,"^DiceEdge") or string.match(entry.name,"^DiceCorner") or string.match(entry.name,"^Pip%d$"))
-        if not die and not (entry.tileIndex and config.tiles[entry.tileIndex].kind == "property" and entry.name ~= "Tile"..entry.tileIndex and entry.name ~= "DistrictInlay") then
+        if not die and not (entry.tileIndex and config.tiles[entry.tileIndex].kind == "property" and not entry.boardSpace) then
             table.insert(entries, entry)
         end
     end
@@ -52,10 +52,18 @@ function World:cancelMotion(id)
     end
 end
 
-function World:tokenFrame(index, seat, model, from)
+function World:standingOffset(model)
     local humanoid = model and model:FindFirstChildOfClass("Humanoid")
     local root = model and model:FindFirstChild("HumanoidRootPart")
-    local height = humanoid and root and (humanoid.HipHeight+root.Size.Y/2+0.2) or 2.3
+    if not humanoid or not root then return Actors.height end
+    -- R6's HipHeight excludes its legs. Using the R15 formula buries the body
+    -- in the board, leaving only a head and a floating name visible.
+    local leg=model:FindFirstChild("Left Leg") or model:FindFirstChild("Right Leg")
+    return root.Size.Y/2+(leg and leg.Size.Y or humanoid.HipHeight)+0.2
+end
+
+function World:tokenFrame(index, seat, model, from)
+    local height = self:standingOffset(model)
     local p,yaw=Actors.pose(index,seat,height,from)
     return CFrame.new(table.unpack(p))*CFrame.Angles(0,yaw,0)
 end
@@ -67,15 +75,27 @@ function World:figure(resident)
     return model
 end
 
+function World:scaleCharacter(character,scale)
+    if character:GetAttribute("CitymoneyScale")==scale then return end
+    -- Rebuild board adornments at their intended size after scaling the body.
+    for _,name in ipairs({"PlayerColorRing","ClubAura","ClubTrail","ClubTrailStart","ClubTrailEnd"}) do
+        local part=character:FindFirstChild(name,true);if part then part:Destroy() end
+    end
+    character:SetAttribute("ClubStyle",nil)
+    local ok=pcall(function() character:ScaleTo(scale) end)
+    if ok then character:SetAttribute("CitymoneyScale",scale) end
+end
+
 function World:prepareCharacter(player, character)
     local humanoid = character:WaitForChild("Humanoid", 10)
     local root = character:WaitForChild("HumanoidRootPart", 10)
-    if not humanoid or not root or player.Character ~= character then return end
-    if character:GetAttribute("CitymoneyScale")~=self.config.avatarScale then
-        local scaled=pcall(function() character:ScaleTo(self.config.avatarScale) end)
-        if scaled then character:SetAttribute("CitymoneyScale",self.config.avatarScale) end
-    end
+    local head = character:WaitForChild("Head",10)
+    local torso=character:FindFirstChild("UpperTorso") or character:FindFirstChild("Torso")
+    if not humanoid or not root or not head or not torso or player.Character ~= character then return end
+    if not player:HasAppearanceLoaded() then return end
+    self:scaleCharacter(character,self.visiting[player.UserId] and self.config.avatarScale or self.config.boardAvatarScale)
     humanoid.DisplayDistanceType = Enum.HumanoidDisplayDistanceType.None
+    character:SetAttribute("CitymoneyPrepared",true)
     if self.visiting[player.UserId] then
         self:visit(player, self.visiting[player.UserId])
     else
@@ -84,7 +104,6 @@ function World:prepareCharacter(player, character)
             if part:IsA("BasePart") then part.CanCollide = false end
         end
     end
-    character:SetAttribute("CitymoneyPrepared",true)
     if self.state then self:sync(self.state) end
 end
 
@@ -98,7 +117,8 @@ function World:visit(player, index)
     local character = player.Character
     local humanoid = character and character:FindFirstChildOfClass("Humanoid")
     local root = character and character:FindFirstChild("HumanoidRootPart")
-    if not humanoid or not root then return false, "Your avatar is still loading." end
+    if not humanoid or not root or not character:GetAttribute("CitymoneyPrepared") then return false, "Your avatar is still loading." end
+    self:scaleCharacter(character,self.config.avatarScale)
     self:cancelMotion(player.UserId)
     self.visiting[player.UserId] = index
     local position, yaw = Architecture.porch(index)
@@ -110,7 +130,7 @@ function World:visit(player, index)
     end
     humanoid.JumpPower = 32
     root.AssemblyLinearVelocity, root.AssemblyAngularVelocity = Vector3.zero, Vector3.zero
-    character:PivotTo(CFrame.new(position[1],position[2]+humanoid.HipHeight+root.Size.Y/2,position[3]) * CFrame.Angles(0,yaw,0))
+    character:PivotTo(CFrame.new(position[1],position[2]+self:standingOffset(character)-0.2,position[3]) * CFrame.Angles(0,yaw,0))
     return true
 end
 
@@ -119,6 +139,7 @@ function World:endVisit(id)
     self.visiting[id] = nil
     local model = self.tokens[id]
     if model and model.Parent then
+        self:scaleCharacter(model,self.config.boardAvatarScale)
         local humanoid, root = model:FindFirstChildOfClass("Humanoid"), model:FindFirstChild("HumanoidRootPart")
         if humanoid and root then humanoid.WalkSpeed, humanoid.AutoRotate, root.Anchored = 0, false, true end
         for _, part in ipairs(model:GetDescendants()) do if part:IsA("BasePart") then part.CanCollide=false end end
@@ -165,8 +186,7 @@ function World:styleAvatar(model,resident)
         end
         model:SetAttribute("ClubStyle",style.id)
         if style.premium then
-            local humanoid=model:FindFirstChildOfClass("Humanoid")
-            local offset=humanoid and (humanoid.HipHeight+root.Size.Y/2) or 2.1
+            local offset=self:standingOffset(model)-0.2
             local aura=Instance.new("Part")
             aura.Name,aura.Shape,aura.Size="ClubAura",Enum.PartType.Cylinder,Vector3.new(0.05,4.1,4.1)
             aura.Material,aura.Color,aura.Transparency=Enum.Material.Neon,Color3.fromHex(style.accent),0.65
@@ -207,6 +227,12 @@ function World:sync(state)
     -- Buying immediately constructs a complete home, including its owner's sign.
     for index, view in pairs(self.propertyViews) do
         local property = state.properties[index]
+        local plate=self.root:FindFirstChild("DeedPlate"..index)
+        local caption=plate and plate:FindFirstChild("Caption")
+        if caption then
+            local text=caption:FindFirstChildOfClass("TextLabel")
+            if text then text.Text=Board.caption(self.config,index,state) end
+        end
         local styleId=self.club and self.club:visual(property.ownerId) or "classic"
         local key = tostring(property.ownerId)..":"..property.level..":"..(property.paint or 0)..":"..styleId
         if key ~= view.key then
@@ -284,7 +310,7 @@ function World:sync(state)
         local tag = model:FindFirstChild("ResidentTag")
         if not tag then
             tag=Instance.new("BillboardGui")
-            tag.Name, tag.Size, tag.StudsOffset, tag.AlwaysOnTop, tag.MaxDistance = "ResidentTag", UDim2.fromOffset(132,28),Vector3.new(0,2.5,0),true,500
+            tag.Name, tag.Size, tag.StudsOffset, tag.AlwaysOnTop, tag.MaxDistance = "ResidentTag", UDim2.fromOffset(60,16),Vector3.new(0,4.2,0),true,700
             tag.Adornee, tag.Parent = model:FindFirstChild("Head") or model.PrimaryPart, model
             local label=Instance.new("TextLabel")
             label.Size,label.BackgroundTransparency,label.TextSize,label.Font = UDim2.fromScale(1,1),0.12,12,Enum.Font.GothamBold
@@ -294,27 +320,29 @@ function World:sync(state)
         end
         local active = state.status=="playing" and state.players[state.turn].id==resident.id
         local style=Cosmetics.get(self.club and self.club:visual(resident.id) or "classic")
-        tag.TextLabel.Text = (active and "> " or "")..(style.premium and "★ " or "")..resident.name
+        tag.TextLabel.Text = active and ((style.premium and "★ " or "")..resident.name) or tostring(seat)
         tag.TextLabel.TextColor3=Color3.fromHex(self.config.playerColors[resident.colorIndex])
-        tag.Size=active and UDim2.fromOffset(132,28) or UDim2.fromOffset(88,20)
-        tag.TextLabel.TextSize=active and 12 or 10
+        tag.StudsOffset=Vector3.new(0,4.2,0)
+        tag.Size=active and UDim2.fromOffset(60,16) or UDim2.fromOffset(14,14)
+        tag.TextLabel.TextSize=active and 10 or 9
         tag.Enabled = resident.alive
         local outline=model:FindFirstChild("ResidentOutline")
         if not outline then
             outline=Instance.new("Highlight");outline.Name,outline.Adornee,outline.Parent="ResidentOutline",model,model
-            outline.DepthMode,outline.FillTransparency,outline.OutlineTransparency=Enum.HighlightDepthMode.AlwaysOnTop,1,0.1
+            outline.DepthMode=Enum.HighlightDepthMode.AlwaysOnTop
         end
         outline.OutlineColor=Color3.fromHex(self.config.playerColors[resident.colorIndex])
-        outline.Enabled=active and resident.alive and not self.visiting[resident.id]
+        outline.FillColor=Color3.fromHex(self.config.playerColors[resident.colorIndex])
+        outline.FillTransparency,outline.OutlineTransparency=active and 0.86 or 0.94,active and 0 or 0.35
+        outline.Enabled=resident.alive and not self.visiting[resident.id]
         if not model:FindFirstChild("PlayerColorRing") then
             local root=model:FindFirstChild("HumanoidRootPart") or model.PrimaryPart
-            local humanoid=model:FindFirstChildOfClass("Humanoid")
             if root then
                 local ring=Instance.new("Part")
-                ring.Name,ring.Shape,ring.Size="PlayerColorRing",Enum.PartType.Cylinder,Vector3.new(0.12,4.4,4.4)
+                ring.Name,ring.Shape,ring.Size="PlayerColorRing",Enum.PartType.Cylinder,Vector3.new(0.12,Actors.ringSize,Actors.ringSize)
                 ring.Color,ring.Transparency=Color3.fromHex(self.config.playerColors[resident.colorIndex]),0.18
                 ring.CanCollide,ring.CanTouch,ring.CanQuery,ring.Massless=false,false,false,true
-                local offset=humanoid and (humanoid.HipHeight+root.Size.Y/2) or 2.1
+                local offset=self:standingOffset(model)-0.2
                 ring.CFrame=root.CFrame*CFrame.new(0,-offset+0.06,0)*CFrame.Angles(0,0,math.pi/2)
                 ring.Parent=model
                 local weld=Instance.new("WeldConstraint");weld.Part0,weld.Part1,weld.Parent=root,ring,ring

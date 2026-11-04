@@ -28,6 +28,9 @@ for index, entry in ipairs(scene) do
     if string.match(entry.name, "^Tile%d+$") then
         check(not tiles[entry.tileIndex], "Duplicate scene tile")
         tiles[entry.tileIndex] = true
+        check(entry.size[1]==18.8 and entry.size[3]==18.8, "A narrow space leaves no room for the resident lane")
+    end
+    if string.match(entry.name, "^DeedPlate%d+$") then
         check(entry.text and string.find(entry.text, Config.tiles[entry.tileIndex].name, 1, true), "Tile label mismatches game rules")
     end
 end

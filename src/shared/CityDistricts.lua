@@ -2,6 +2,64 @@ local runtimeScript=getfenv().script
 local A=runtimeScript and require(runtimeScript.Parent.Architecture) or require("./Architecture")
 local Art=runtimeScript and require(runtimeScript.Parent.CityArt) or require("./CityArt")
 local Districts={}
+function Districts.stop(index,tile,tint)
+    local origin,yaw=A.site(index);local c,s=math.cos(yaw),math.sin(yaw)
+    local entries={}
+    local interaction=tile.kind=="park" and "contracts" or "news"
+    local function add(name,size,x,y,z,color,extra)
+        local entry={name=name,size=size,position={origin[1]+c*x+s*z,origin[2]+y,origin[3]-s*x+c*z},
+            rotation=A.rotation(yaw),color=color,material="SmoothPlastic",interaction=interaction}
+        for k,v in pairs(extra or {}) do entry[k]=v end
+        table.insert(entries,entry)
+    end
+    local function cylinder(name,diameter,height,x,y,z,color)
+        add(name,{height,diameter,diameter},x,y,z,color,{shape="Cylinder",rotation=A.rotation(yaw,0,math.pi/2)})
+    end
+    for _,entry in ipairs(Art.rounded("CityStop",{17,0.3,17},origin,2,tint,{interaction=interaction})) do table.insert(entries,entry) end
+    if tile.kind=="start" then
+        for _,x in ipairs({-5.2,5.2}) do
+            add("GatePillar",{1.8,8,2},x,4,-0.4,"FFFFFF")
+            add("GateBase",{2.8,0.6,3},x,0.5,-0.4,"386BF0")
+            add("GateCap",{2.8,0.6,3},x,8,-0.4,"FFC34D")
+        end
+        add("CityGateway",{13,2,2},0,8,-0.4,"386BF0",{text="CITY GATE",textFace="Front",textColor="FFFFFF",textSize=42})
+        add("GateMedallion",{2,2,0.2},0,10,-0.6,"FFC34D",{shape="Ball"})
+    elseif tile.kind=="park" then
+        cylinder("ParkFountain",12,0.8,0,0.7,-1,"FFFFFF")
+        cylinder("ParkWater",10.7,0.15,0,1.2,-1,"54D9F0")
+        cylinder("ParkTier",5,2,0,2,-1,"FFF1CD")
+        cylinder("ParkUpperWater",4.5,0.1,0,3.1,-1,"54D9F0")
+        add("ParkSculpture",{2.2,2.2,2.2},0,4.5,-1,"FFC34D",{shape="Ball"})
+        for _,x in ipairs({-6.3,6.3}) do add("ParkBench",{1.1,0.6,5},x,0.8,-1,"C8ACFF") end
+    else
+        local news=tile.kind=="event"
+        local bank=tile.kind=="tax"
+        local roof=news and "39BAD1" or (bank and "818FF0" or "4A7DE8")
+        add(news and "NewsKiosk" or "CivicOffice",{12,5.4,8},0,2.9,-1,"F4F9FF")
+        add("StopRoof",{13.5,0.7,9.4},0,5.95,-1,roof)
+        add("StopCornice",{13.6,0.25,9.5},0,6.4,-1,"FFFFFF")
+        for _,x in ipairs({-4.1,4.1}) do
+            add("StopWindowFrame",{3.3,3.4,0.2},x,3,-5.1,roof)
+            add("StopWindow",{2.8,2.8,0.25},x,3,-5.25,"A0E8F8",{material="Glass"})
+            add("StopWindowBar",{0.16,2.8,0.3},x,3,-5.4,"FFFFFF")
+        end
+        add("StopDoor",{2.3,4.2,0.25},0,2.3,-5.2,"386BF0")
+        add("StopCanopy",{13,0.3,2.5},0,5,-5.7,roof)
+        add("StopTitle",{10,1.1,0.2},0,7,-5.15,roof,{text=news and "CITY NEWS" or (bank and "CITY BANK" or "CITY POLICE"),textFace="Front",textColor="FFFFFF",textSize=36})
+        if bank then
+            cylinder("BankCoin",3,0.7,0,8,-1,"FFC34D")
+            for _,x in ipairs({-5.8,5.8}) do cylinder("BankColumn",0.75,4.8,x,2.6,-5.6,"FFFFFF") end
+        elseif news then
+            for i=0,2 do add("NewspaperStack",{2.4,0.22,1.8},4,0.8+i*0.25,-6.5,i%2==0 and "FFFFFF" or "B5CCF2") end
+            add("NewsAntenna",{0.15,3.6,0.15},4,8,-1,"386BF0")
+            add("NewsAntennaTip",{0.65,0.65,0.65},4,10,-1,"FFC34D",{shape="Ball"})
+        else
+            add("PoliceBeacon",{1.2,0.9,1.2},0,7,-1,"FF7C8E",{shape="Ball",material="Neon"})
+        end
+    end
+    add("CityStopLabel",{13.5,0.08,2.7},0,0.22,6.3,"FFFFFF",{text=tile.kind=="start" and "+$200" or (tile.kind=="park" and "FREE CARD" or "CITY SERVICES"),textColor="386BF0",textSize=40})
+    return entries
+end
 function Districts.generate()
     local entries={}
     local stations={

@@ -19,8 +19,8 @@ test('all six resident positions stay separated and within each rotated space',f
   for seat=1,6 do
    local x,z=Actors.offset(seat,index)
    local lx,lz=math.cos(yaw)*x-math.sin(yaw)*z,math.sin(yaw)*x+math.cos(yaw)*z
-   check(math.abs(lx)+2.2<9.4 and math.abs(lz)+2.2<5.7)
-   for _,p in ipairs(seen) do check((x-p[1])^2+(z-p[2])^2>=4.4^2-1e-6) end
+   check(math.abs(lx)+Actors.ringSize/2<9.4 and math.abs(lz)+Actors.ringSize/2<9.4)
+   for _,p in ipairs(seen) do check((x-p[1])^2+(z-p[2])^2>=Actors.ringSize^2-1e-6) end
    table.insert(seen,{x,z})
   end
  end
@@ -28,7 +28,7 @@ end)
 test('residents face their actual movement direction on every side and corner',function()
  for index=1,24 do
   local nextIndex=index%24+1
-  local _,yaw=Actors.pose(nextIndex,1,2.3,index)
+  local _,yaw=Actors.pose(nextIndex,1,nil,index)
   local a,b=A.position(index),A.position(nextIndex)
   near(-math.sin(yaw)*(b[1]-a[1])/20-math.cos(yaw)*(b[3]-a[3])/20,1)
  end
@@ -53,7 +53,7 @@ end)
 test('board and city names have modest surface-text limits',function()
  for _,entry in ipairs(Board.generate(Config)) do
   if entry.name=="CityTitle" then check(entry.size[1]<=26 and entry.textSize<=40) end
-  if string.match(entry.name,"^Tile%d+$") then check(entry.textSize<=60) end
+  if string.match(entry.name,"^DeedPlate%d+$") then check(entry.textSize<=120 and entry.size[1]<18.8 and entry.size[3]<=9) end
   if entry.name=="PublicShopSign" then check(entry.textSize<=42) end
  end
 end)

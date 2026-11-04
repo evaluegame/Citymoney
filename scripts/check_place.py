@@ -49,7 +49,8 @@ for index, entry in enumerate(scene):
     for axis, expected_component in zip(("R00","R01","R02","R10","R11","R12","R20","R21","R22"), entry.get("rotation", [1,0,0,0,1,0,0,0,1])):
         assert math.isclose(float(frame.findtext(axis)), expected_component, abs_tol=1e-4), (name, axis)
 for index in range(1, 25):
-    tile = child(board, f"Tile{index}", "Part")
+    offset = next(offset for offset, entry in enumerate(scene) if entry["name"] == f"DeedPlate{index}")
+    tile = child(board, f"DeedPlate{index}_{offset:04}", "Part")
     assert tile.find("Item[@class='SurfaceGui']") is not None, "Missing editor tile caption"
 camera = child(child(place, "Workspace", "Workspace"), "CityPreviewCamera", "Camera")
 assert child(place, "Workspace", "Workspace").findtext("Properties/Ref[@name='CurrentCamera']") == camera.attrib["referent"]

@@ -3,18 +3,18 @@ local Camera={}
 local function dot(a,b) return a[1]*b[1]+a[2]*b[2]+a[3]*b[3] end
 function Camera.cityBounds(config,architecture,state)
     local points={}
-    for _,x in ipairs({-91,91}) do for _,y in ipairs({-4,2}) do for _,z in ipairs({-91,91}) do table.insert(points,{x,y,z}) end end end
-    for index,tile in ipairs(config.tiles) do if tile.kind=="property" then
+    for _,x in ipairs({-97,97}) do for _,y in ipairs({-4,2}) do for _,z in ipairs({-97,97}) do table.insert(points,{x,y,z}) end end end
+    for index,tile in ipairs(config.tiles) do
         local site=architecture.site(index)
-        local height=29
-        if state then
+        local height=tile.kind=="property" and 29 or 13
+        if state and tile.kind=="property" then
             local property=state.properties[index]
             height=property.ownerId and ({13,20,21,29})[property.level+1] or 2.2
         end
         for _,x in ipairs({-9.5,9.5}) do for _,y in ipairs({1.5,height}) do for _,z in ipairs({-9.5,9.5}) do table.insert(points,{site[1]+x,y,site[3]+z}) end end end
-    end end
+    end
     for _,x in ipairs({-39,39}) do for _,z in ipairs({-39,39}) do table.insert(points,{x,21,z}) end end
-    return {min={-92,-4,-92},max={92,29,92},target={0,5,0},points=points}
+    return {min={-98,-4,-98},max={98,29,98},target={0,5,0},points=points}
 end
 function Camera.fromSlopes(slopes,yaw,elevation,zoom,bounds)
     local left,right,bottom,top=table.unpack(slopes)

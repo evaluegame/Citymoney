@@ -139,7 +139,8 @@ return function(sources,width,height)
     local board=node("Folder","CitymoneyBoard");board.Parent=workspace
     for index=1,24 do
         local tile=node("Part","Tile"..index);tile.Parent=board
-        local caption=node("SurfaceGui","Caption");caption.Parent=tile
+        local plate=node("Part","DeedPlate"..index);plate.Parent=board
+        local caption=node("SurfaceGui","Caption");caption.Parent=plate
     end
     local env={game=game,workspace=workspace,Instance={new=node},Enum=enum,Vector2={new=vector,zero=vector()},Vector3={new=vector,zero=vector()},
         Color3=color3,CFrame=cfApi,UDim={new=dim},UDim2={new=dimensions,fromOffset=function(x,y) return dimensions(0,x,0,y) end,fromScale=function(x,y) return dimensions(x,0,y,0) end},
@@ -202,7 +203,7 @@ return function(sources,width,height)
             for _,o in ipairs(children) do if visible(o) then
                 if guiClasses[o.ClassName] then
                     local p,s,scale=absolute(o);local corner=o:FindFirstChildOfClass("UICorner");local stroke=o:FindFirstChildOfClass("UIStroke")
-                    table.insert(elements,{class=o.ClassName,name=o.Name,x=p.X,y=p.Y,w=s.X,h=s.Y,text=o.Text or "",textAlpha=1-(o.TextTransparency or 0),size=(o.TextSize or 14)*scale,bg=hex(o.BackgroundColor3),fg=hex(o.TextColor3),alpha=1-(o.BackgroundTransparency or 0),font=o.Font and o.Font.Name or "Gotham",wrap=o.TextWrapped==true,align=o.TextXAlignment and o.TextXAlignment.Name or "Left",corner=corner and (corner.CornerRadius.Scale*math.min(s.X,s.Y)+corner.CornerRadius.Offset*scale) or 0,
+                    table.insert(elements,{class=o.ClassName,name=o.Name,x=p.X,y=p.Y,w=s.X,h=s.Y,text=o.Text or "",textAlpha=1-(o.TextTransparency or 0),rotation=o.Rotation or 0,size=(o.TextSize or 14)*scale,bg=hex(o.BackgroundColor3),fg=hex(o.TextColor3),alpha=1-(o.BackgroundTransparency or 0),font=o.Font and o.Font.Name or "Gotham",wrap=o.TextWrapped==true,align=o.TextXAlignment and o.TextXAlignment.Name or "Left",corner=corner and (corner.CornerRadius.Scale*math.min(s.X,s.Y)+corner.CornerRadius.Offset*scale) or 0,
                         stroke=stroke and {color=hex(stroke.Color or color(0.8,0.85,0.9)),alpha=1-(stroke.Transparency or 0),width=(stroke.Thickness or 1)*scale} or false})
                 end
                 walk(o)
@@ -231,10 +232,12 @@ return function(sources,width,height)
         local A,B,D=load(shared.Architecture),load(shared.Board),load(shared.Dice)
         local entries={}
         for _,entry in ipairs(B.generate(Config)) do
-            local parcel=entry.tileIndex and Config.tiles[entry.tileIndex].kind=="property" and entry.name~="Tile"..entry.tileIndex and entry.name~="DistrictInlay"
+            local parcel=entry.tileIndex and Config.tiles[entry.tileIndex].kind=="property" and not entry.boardSpace
             local die=entry.name=="DiceBody" or entry.name=="DiceShell" or entry.name=="DiceEdge" or entry.name=="DiceCorner" or string.match(entry.name,"^Pip%d$")
             if not parcel and not die then
-                if entry.name=="Tile"..tostring(entry.tileIndex) and not board:WaitForChild(entry.name):WaitForChild("Caption").Enabled then entry.text=nil end
+                if entry.name=="DeedPlate"..tostring(entry.tileIndex) then
+                    entry.text=board:WaitForChild(entry.name):WaitForChild("Caption").Enabled and B.caption(Config,entry.tileIndex,engine.state) or nil
+                end
                 table.insert(entries,entry)
             end
         end
@@ -257,7 +260,7 @@ return function(sources,width,height)
             local figure=node("Model","Figure_"..resident.id);figure.Parent=board;table.insert(figures,figure)
             local p=pose(resident,seat)
             local torso=node("Part","Torso");torso.Position=vector(table.unpack(p));torso.Parent=figure
-            local head=node("Part","Head");head.Position=torso.Position+vector(0,1.47,0);head.Parent=figure
+            local head=node("Part","Head");head.Position=torso.Position+vector(0,1.28*Actors.heightScale,0);head.Parent=figure
         end end
         services.RunService.RenderStepped:Fire(0.016);views[name]={elements=export(),camera=camera(),scene=scene()}
         for _,figure in ipairs(figures) do figure:Destroy() end
@@ -274,9 +277,15 @@ return function(sources,width,height)
         for index=1,24 do
             local badge=root:WaitForChild("DeedLabel"..index)
             assert(badge.Visible,"Missing top-view space "..index);inside(badge)
-            assert(not board:WaitForChild("Tile"..index):WaitForChild("Caption").Enabled,"Duplicate floor caption in top view")
-            local p,s,scale=absolute(badge)
-            assert(badge.TextSize*scale>=8.99,"Map text is too small")
+            assert(not board:WaitForChild("DeedPlate"..index):WaitForChild("Caption").Enabled,"Duplicate floor caption in top view")
+            local p,s=absolute(badge)
+            assert(badge.ClipsDescendants and badge.TextScaled,"Names can escape their space")
+            local Spaces=load(shared.BoardSpaces)
+            local projected=Spaces.project(index,function(point)
+                local screen=workspace.CurrentCamera:WorldToScreenPoint(vector(table.unpack(point)))
+                return {screen.X,screen.Y}
+            end)
+            assert(math.abs(s.X-projected.width)<0.01 and math.abs(s.Y-projected.height)<0.01,"A badge extends beyond its reserved area")
             for other=index+1,24 do
                 local p2,s2=absolute(root:WaitForChild("DeedLabel"..other))
                 local overlapX=math.min(p.X+s.X,p2.X+s2.X)-math.max(p.X,p2.X)
@@ -290,16 +299,16 @@ return function(sources,width,height)
     capture("main")
     local figure=node("Model","Figure_2");figure.Parent=board
     local head=node("Part","Head");head.Parent=figure
-    local spot=load(shared.Architecture).position(3);head.Position=vector(spot[1],5,spot[3])
+    local spot=load(shared.BoardSpaces).label(3);head.Position=vector(table.unpack(spot))
     services.RunService.RenderStepped:Fire(0.016)
-    assert(not root.DeedLabel3.Visible and board.Tile3.Caption.Enabled,"A map label covers the pawn")
+    assert(not root.DeedLabel3.Visible and board.DeedPlate3.Caption.Enabled,"A map label covers the pawn")
     figure:Destroy();services.RunService.RenderStepped:Fire(0.016);checkDeeds()
     player.Character=node("Model","Character")
     local realHead=node("Part","Head");realHead.Parent=player.Character
-    spot=load(shared.Architecture).position(2);realHead.Position=vector(spot[1],5,spot[3])
+    spot=load(shared.BoardSpaces).label(2);realHead.Position=vector(table.unpack(spot))
     local loadingFigure=node("Model","Figure_1");loadingFigure.Parent=board
     local loadingHead=node("Part","Head");loadingHead.Parent=loadingFigure
-    spot=load(shared.Architecture).position(5);loadingHead.Position=vector(spot[1],5,spot[3])
+    spot=load(shared.BoardSpaces).label(5);loadingHead.Position=vector(table.unpack(spot))
     services.RunService.RenderStepped:Fire(0.016)
     assert(root.DeedLabel2.Visible and not root.DeedLabel5.Visible,"A loading avatar hides the moving fallback figure")
     loadingFigure:Destroy();player.Character:SetAttribute("CitymoneyPrepared",true)
@@ -307,17 +316,17 @@ return function(sources,width,height)
     assert(not root.DeedLabel2.Visible,"A map label covers a real player's avatar")
     realHead.LocalTransparencyModifier=1;services.RunService.RenderStepped:Fire(0.016)
     assert(realHead.LocalTransparencyModifier==0,"The local avatar remains hidden after the camera controller")
-    spot=load(shared.Architecture).position(5);realHead.Position=vector(spot[1],5,spot[3])
+    spot=load(shared.BoardSpaces).label(5);realHead.Position=vector(table.unpack(spot))
     services.RunService.RenderStepped:Fire(0.016)
     assert(root.DeedLabel2.Visible and not root.DeedLabel5.Visible,"Labels do not follow the moving avatar")
     player.Character:Destroy();player.Character=nil;services.RunService.RenderStepped:Fire(0.016);checkDeeds()
     -- Exercise real camera/label adapters, including projection and reset.
     data.club.effects=false
     root.CameraDock.TableView.Activated:Fire();services.RunService.RenderStepped:Fire(0.016)
-    assert(root:GetAttribute("ViewMode")=="city" and root.CameraDock.TableView.Text=="Top view")
+    assert(root:GetAttribute("ViewMode")=="city" and root.CameraDock.TableView.Text=="Board view")
     for index=1,24 do
         assert(not root["DeedLabel"..index].Visible,"Top-view badge remained in 3D view")
-        assert(board["Tile"..index].Caption.Enabled,"3D floor caption did not return")
+        assert(board["DeedPlate"..index].Caption.Enabled,"3D floor caption did not return")
     end
     root:SetAttribute("Rotate",2);root:SetAttribute("Zoom",1.4)
     root.CameraDock.Fit.Activated:Fire();services.RunService.RenderStepped:Fire(0.016)

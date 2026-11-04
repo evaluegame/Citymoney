@@ -103,6 +103,13 @@ local function addPlayer(player)
     parties:add(player.UserId,player.DisplayName)
     club:add(player)
     player.CharacterAdded:Connect(function(character) task.spawn(function() world:prepareCharacter(player, character) end) end)
+    player.CharacterAppearanceLoaded:Connect(function(character)
+        if player.Character~=character then return end
+        -- Appearance can replace body parts after CharacterAdded. Reapply the
+        -- board presentation only once the complete outfit is available.
+        character:SetAttribute("CitymoneyScale",nil)
+        task.spawn(function() world:prepareCharacter(player,character) end)
+    end)
     if player.Character then task.spawn(function() world:prepareCharacter(player, player.Character) end) end
     publish(false)
     task.spawn(function() matcher:playerAdded(player) end)

@@ -171,7 +171,7 @@ local timeTrack=frame(control,16,104,778,3,C.paper)
 local timeFill=Instance.new("Frame");timeFill.Size,timeFill.BackgroundColor3,timeFill.BorderSizePixel,timeFill.Parent=UDim2.fromScale(1,1),C.green,0,timeTrack
 local cameraBar=frame(root,24,510,188,84)
 cameraBar.Name,cameraBar.ZIndex="CameraDock",2
-button(cameraBar,"3D view",6,6,100,30,C.paper,function() focusIndex=nil;root:SetAttribute("ViewMode",(root:GetAttribute("ViewMode") or Presentation.defaultView)=="city" and "table" or "city");render() end).Name="TableView"
+button(cameraBar,"City view",6,6,100,30,C.paper,function() focusIndex=nil;root:SetAttribute("ViewMode",(root:GetAttribute("ViewMode") or Presentation.defaultView)=="city" and "table" or "city");render() end).Name="TableView"
 button(cameraBar,"Fit",108,6,60,30,C.paper,function() focusIndex=nil;inspectorOpen=false;root:SetAttribute("ViewMode",Presentation.defaultView);render() end).Name="Fit"
 local visitBanner=frame(root,420,110,440,58,C.green)
 local visitText=text(visitBanner,"Welcome home",16,8,270,38,16,C.white,true)
@@ -564,7 +564,7 @@ render=function()
     roster.Visible=not visitIndex and not (layout and layout.compact)
     turnChip.Visible=roster.Visible
     cameraBar.Visible=not visitIndex
-    cameraBar.TableView.Text=(root:GetAttribute("ViewMode") or Presentation.defaultView)=="city" and "Top view" or "3D view"
+    cameraBar.TableView.Text=(root:GetAttribute("ViewMode") or Presentation.defaultView)=="city" and "Board view" or "City view"
     replay.Visible=isHost or (data.matchmaking and data.matchmaking.mode=="match")
     replay.Text=data.matchmaking and data.matchmaking.mode=="match" and "Return to matchmaking" or "Play again"
     if state.status=="finished" then

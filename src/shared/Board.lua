@@ -5,8 +5,18 @@ local Dice=runtimeScript and require(runtimeScript.Parent.Dice) or require("./Di
 local Art=runtimeScript and require(runtimeScript.Parent.CityArt) or require("./CityArt")
 local Districts=runtimeScript and require(runtimeScript.Parent.CityDistricts) or require("./CityDistricts")
 local Scenery=runtimeScript and require(runtimeScript.Parent.CityScenery) or require("./CityScenery")
+local Spaces=runtimeScript and require(runtimeScript.Parent.BoardSpaces) or require("./BoardSpaces")
+local Plans=runtimeScript and require(runtimeScript.Parent.PropertyPlans) or require("./PropertyPlans")
 local Board={spacing=Architecture.spacing}
 Board.position=Architecture.position
+function Board.caption(config,index,state)
+    local tile=config.tiles[index]
+    local property=state and state.properties[index]
+    if property and property.ownerId and tile.kind=="property" then
+        return tile.name.."\nRENT $"..Plans.projectedRent(config,state,property.ownerId,index,property.level)
+    end
+    return tile.name..(tile.price and ("\n$"..tile.price) or "")
+end
 function Board.generate(config)
     local parts={}
     local function add(name,size,position,color,extra)
@@ -18,9 +28,9 @@ function Board.generate(config)
         for _,entry in ipairs(Art.rounded(name,size,position,radius,color,extra)) do table.insert(parts,entry) end
     end
     add("Sea",{1400,3,1400},{0,-7,0},"56C9E6",{reflectance=0.08,canCollide=false})
-    rounded("IslandBody",{181,5,181},{0,-2,0},14,"3F9DD4")
-    rounded("IslandBeach",{179,0.7,179},{0,0.75,0},13,"F8DE9D")
-    rounded("TableSurface",{175,0.4,175},{0,1.22,0},11,"F7FAFF")
+    rounded("IslandBody",{195,5,195},{0,-2,0},14,"3F9DD4")
+    rounded("IslandBeach",{193,0.7,193},{0,0.75,0},13,"F8DE9D")
+    rounded("TableSurface",{191,0.4,191},{0,1.22,0},11,"DFECFA")
     rounded("EventPlaza",{99,0.28,99},{0,1.5,0},8,"74D6A0")
     add("CityRoad",{10,0.12,97},{0,1.75,0},"8FA9CB")
     add("CityRoad",{97,0.12,10},{0,1.75,0},"8FA9CB")
@@ -46,18 +56,16 @@ function Board.generate(config)
         local position=Board.position(index)
         local _,yaw=Architecture.site(index)
         local tint=tile.group and config.groups[tile.group].color or "7DC8F1"
-        local caption=tile.price and (tile.name.."\n$"..tile.price) or tile.name
-        local tileSize=(index-1)%6==0 and {18.8,0.4,18.8} or {18.8,0.4,11.4}
-        add("Tile"..index,tileSize,position,"FFFFFF",{rotation=Architecture.rotation(yaw),text=caption,textSize=60,textColor="29466D",tileIndex=index})
+        local caption=Board.caption(config,index)
+        add("Tile"..index,{Spaces.size,0.4,Spaces.size},position,"FFFFFF",{rotation=Architecture.rotation(yaw),tileIndex=index,boardSpace=true})
         local c,s=math.cos(yaw),math.sin(yaw)
-        add("DistrictInlay",{18.4,0.1,1.65},{position[1]+s*4.7,1.68,position[3]+c*4.7},tint,{tileIndex=index,rotation=Architecture.rotation(yaw)})
+        add("WalkingLane",{18.3,0.04,8.6},{position[1]-s*4.8,1.62,position[3]-c*4.8},"E8F3FF",{tileIndex=index,boardSpace=true,rotation=Architecture.rotation(yaw)})
+        add("DeedPlate"..index,{Spaces.labelWidth,0.04,Spaces.labelDepth},Spaces.label(index),"FFFFFF",{tileIndex=index,boardSpace=true,rotation=Architecture.rotation(yaw),text=caption,textSize=120,textColor="29466D"})
+        add("DistrictInlay",{18.4,0.1,0.45},{position[1]+s*9.05,1.68,position[3]+c*9.05},tint,{tileIndex=index,boardSpace=true,rotation=Architecture.rotation(yaw)})
         if tile.kind=="property" then
             for _,entry in ipairs(Architecture.property(config,index,false,tint,0,0)) do table.insert(parts,entry) end
         else
-            local site=Architecture.site(index)
-            for _,entry in ipairs(Art.rounded("CityStop",{16,0.3,16},site,2.5,tint)) do table.insert(parts,entry) end
-            local interaction=tile.kind=="event" and "news" or (tile.kind=="park" and "contracts" or "news")
-            add("CityStopLabel",{14,0.1,9},{site[1],2,site[3]},"FFFFFF",{rotation=Architecture.rotation(yaw),interaction=interaction,text=tile.kind=="park" and "FREE CARD" or (tile.kind=="start" and "+$200" or tile.name),textColor="386BF0",textSize=70})
+            for _,entry in ipairs(Districts.stop(index,tile,tint)) do table.insert(parts,entry) end
         end
     end
     add("LobbySpawn",{4,1,4},{0,2,44},"FFFFFF",{className="SpawnLocation",transparency=1})

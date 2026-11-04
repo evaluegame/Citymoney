@@ -12,10 +12,10 @@ Studio: https://create.roblox.com/
 
 BRIGHT CITY VIEW AND INTERACTIVE DICE
 The colorful city board has empty lots, a card market, festival stage,
-challenge hall and broadcast tower. Play starts in an aligned Top view.
-Upright badges show short names and prices; RENT marks an owned home's rent.
-Tap a badge for the full name, owner and details. 3D view switches to the
-whole waterfront. Fit restores Top view. The board camera stays fixed.
+challenge hall and broadcast tower. Play starts in a gently angled Board view.
+Inset labels show names and prices; RENT marks an owned home's rent.
+Tap a badge for the full name, owner and details. City view switches to the
+whole waterfront. Fit restores Board view. The board camera stays fixed.
 MENU [M] contains all game menus.
 EVENTS, CARDS & GOALS and MY HOMES are direct shortcuts. On phones they
 are above the board. The larger turn dock explains your next step.
@@ -127,7 +127,7 @@ City Gate, City News, the park and goals also award cards.
 WALK THROUGH / CAMERA
 Select your home > Walk through your home. Use normal Roblox controls.
 E opens your front door. B or Back to board returns. Matches keep moving.
-Use 3D view, Top view or Fit to choose the view. MENU also has Day/Night.
+Use City view, Board view or Fit to choose the view. MENU also has Day/Night.
 
 VISUAL REVIEW AND CHECKS
 docs/Play-screen-preview.png combines the actual exported client UI layout
@@ -140,3 +140,10 @@ This ZIP includes the ready-to-open place and all source. No paid assets,
 HTTP flag or API keys are required. Live matchmaking needs Roblox services.
 Automated cloud checks do not replace Studio and published-game playtests.
 README.md contains full rules, controls and development instructions.
+
+READABLE SPACES AND FULL BODIES
+Names and prices fit inside each physical board space; the blue lane is for
+residents. Tap a space for its full property card. Board view uses a fixed
+gentle 3D angle without wheel/button zoom. Pawns are larger on the board,
+with compact tags above their heads. R6 legs remain above the floor. Home
+visits restore normal size. Empty player lots stay empty until purchased.

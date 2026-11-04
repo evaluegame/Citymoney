@@ -87,7 +87,7 @@ for entry in entries:
 
 scene = bpy.context.scene
 scene.render.engine = "CYCLES"
-scene.cycles.samples = 96
+scene.cycles.samples = int(args[3]) if len(args)>3 else 96
 scene.cycles.use_denoising = getattr(bpy.app.build_options,"openimagedenoise",False)
 scene.render.resolution_x, scene.render.resolution_y = 1440, 1050
 if pass_icon: scene.render.resolution_x, scene.render.resolution_y = 512, 512
