@@ -1,0 +1,71 @@
+local Shop=require('../src/shared/RobuxShop')
+local Cosmetics=require('../src/shared/Cosmetics')
+local passed=0
+local function test(name,fn)
+ local ok,message=pcall(fn);assert(ok,'FAIL '..name..': '..tostring(message));passed=passed+1;print('PASS '..name)
+end
+local function profile(overrides)
+ local p={styleId='classic',studio=false,loading=false,ownsPass=false,passId=12345}
+ for k,v in pairs(overrides or {}) do p[k]=v end
+ return p
+end
+local product={passId=12345,state='ready',forSale=true,price=149}
+test('only a real numeric Roblox sale price enables the advertised checkout',function()
+ assert(Shop.price({IsForSale=true,PriceInRobux=149})==149)
+ assert(Shop.price({IsForSale=true,PriceInRobux=0})==0)
+ for _,p in ipairs({-1,0/0,math.huge,1.2,'149',{},9007199254740992}) do assert(Shop.price({IsForSale=true,PriceInRobux=p})==nil) end
+ for _,info in ipairs({false,'offline',{}, {IsForSale=false,PriceInRobux=149}, {IsForSale=true}}) do assert(Shop.price(info)==nil) end
+end)
+test('Robux labels distinguish free, ordinary and grouped prices',function()
+ assert(Shop.label(0)=='Unlock Club · FREE')
+ assert(Shop.label(149)=='Unlock Club · R$ 149')
+ assert(Shop.label(1499)=='Unlock Club · R$ 1,499')
+ assert(Shop.label(1000000)=='Unlock Club · R$ 1,000,000')
+end)
+test('an unconfigured live pass stays locked while Studio previews remain usable',function()
+ local text,action=Shop.action(profile({passId=0}),'gilded',product)
+ assert(text=='Club pass coming soon' and action==nil)
+ text,action=Shop.action(profile({passId=0,studio=true}),'gilded',product)
+ assert(text=='Equip in Studio preview' and action=='equip')
+end)
+test('free City Original can be equipped without a pass or product lookup',function()
+ local _,action=Shop.action(profile({styleId='rose',passId=0}),'classic',{})
+ assert(action=='equip')
+ local text; text,action=Shop.action(profile(),'classic',{})
+ assert(text=='Equipped ✓' and action==nil)
+end)
+test('only fresh metadata for the configured pass offers a purchase',function()
+ local text,action=Shop.action(profile(),'gilded',product)
+ assert(text=='Unlock Club · R$ 149' and action=='purchase')
+ local stale=table.clone(product);stale.passId=999
+ text,action=Shop.action(profile(),'gilded',stale)
+ assert(text=='Checking Robux price…' and action==nil)
+end)
+test('loading, an open native prompt and server verification never offer another charge',function()
+ local _,action=Shop.action(profile({loading=true}),'gilded',product);assert(action==nil)
+ _,action=Shop.action(profile(),'gilded',product,true);assert(action==nil)
+ _,action=Shop.action(profile({purchasePending=true}),'gilded',product);assert(action==nil)
+ _,action=Shop.action(profile(),'gilded',product,false,'checking');assert(action==nil)
+end)
+test('a product outage offers a retry and an off-sale pass cannot be purchased',function()
+ local text,action=Shop.action(profile(),'aurora',{passId=12345,state='failed'})
+ assert(text=='Retry Robux price' and action=='retry')
+ text,action=Shop.action(profile(),'aurora',{passId=12345,state='ready',forSale=false})
+ assert(text=='Pass not on sale' and action==nil)
+end)
+test('a delayed purchase requests ownership verification instead of another checkout',function()
+ local text,action=Shop.action(profile(),'gilded',product,false,'delayed')
+ assert(text=='Verify my purchase' and action=='restore')
+end)
+test('verified owners can equip all styles even when pass sales are unavailable',function()
+ for _,style in ipairs({'gilded','aurora','rose'}) do
+  local _,action=Shop.action(profile({ownsPass=true}),style,{passId=12345,state='failed'},false,'delayed')
+  assert(action=='equip')
+ end
+ local _,action=Shop.action(profile({ownsPass=true,styleId='rose'}),'rose',product);assert(action==nil)
+end)
+test('invalid selections and asset IDs cannot reach a purchase',function()
+ local _,action=Shop.action(profile(),'unknown',product);assert(action==nil)
+ for _,id in ipairs({9007199254740992,1e50,0/0,-1,'12345'}) do assert(Cosmetics.passId({clubPassId=id})==0) end
+end)
+print('\n'..passed..' Robux checkout presentation cases passed.')

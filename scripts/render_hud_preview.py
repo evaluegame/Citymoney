@@ -24,6 +24,10 @@ for item in layout["elements"]:
     radius=min(round(item["corner"]),min(w,h)//2)
     if item["alpha"]>0:
         draw.rounded_rectangle((x,y,x+w,y+h),radius=radius,fill="#"+item["bg"]+f'{round(item["alpha"]*255):02x}')
+    if item["class"]=="ViewportFrame" and len(sys.argv)>4:
+        preview=Image.open(root/sys.argv[4]).convert("RGBA").resize((w,h),Image.Resampling.LANCZOS)
+        mask=Image.new("L",(w,h));ImageDraw.Draw(mask).rounded_rectangle((0,0,w,h),radius=radius,fill=255)
+        layer.paste(preview,(x,y),mask)
     if item["stroke"]:
         stroke=item["stroke"]
         draw.rounded_rectangle((x,y,x+w,y+h),radius=radius,outline="#"+stroke["color"]+f'{round(stroke["alpha"]*255):02x}',width=max(1,round(stroke["width"])))
@@ -58,6 +62,8 @@ label=Image.new("RGBA",canvas.size)
 draw=ImageDraw.Draw(label)
 font=ImageFont.truetype(regular,11)
 caption="LAYOUT PREVIEW · Not a Studio screenshot" if canvas.width<800 else "LAYOUT PREVIEW · Client UI + scene geometry · Not a Studio screenshot"
+if len(sys.argv)>5:
+    caption=sys.argv[5]
 draw.text((max(8,canvas.width-8-draw.textlength(caption,font=font)),canvas.height-17),caption,font=font,fill=(35,65,100,220))
 canvas=Image.alpha_composite(canvas,label).convert("RGB")
 destination=root/sys.argv[3]

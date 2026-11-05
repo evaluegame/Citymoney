@@ -10,7 +10,7 @@ local Protocol=require(game:GetService("ReplicatedStorage"):WaitForChild("Citymo
 local Matchmaker={}
 Matchmaker.__index=Matchmaker
 function Matchmaker.new(config,callbacks)
-    local self=setmetatable({config=config,callbacks=callbacks,groups={},byPlayer={},errors={},ticket=nil,arrivalDeadline=nil,matchStarted=false},Matchmaker)
+    local self=setmetatable({config=config,callbacks=callbacks,groups={},byPlayer={},errors={},admitted={},ticket=nil,arrivalDeadline=nil,matchStarted=false},Matchmaker)
     self.localMode=RunService:IsStudio() or game.PlaceId==0
     self.reserved=not self.localMode and game.PrivateServerId~="" and game.PrivateServerOwnerId==0
     if not self.localMode then
@@ -32,7 +32,7 @@ function Matchmaker:isQueued(id) return self.byPlayer[id]~=nil end
 function Matchmaker:status(id)
     local group=self.groups[self.byPlayer[id]]
     if group then return {mode="lobby",queued=true,seats=group.seats,count=#group.users,status=group.status or "Searching for a match…",connecting=group.teleporting==true} end
-    if self.reserved then return {mode="match",queued=false,status=self.matchStarted and "Online match" or "Waiting for the matched players to arrive…",seats=self.ticket and self.ticket.seats or 0} end
+    if self.reserved then return {mode="match",queued=false,status=self.errors[id] or self.arrivalFailure or (self.matchStarted and "Online match" or "Waiting for the matched players to arrive…"),seats=self.ticket and self.ticket.seats or 0} end
     return {mode="lobby",queued=false,status=self.errors[id] or (self.localMode and "Studio local matchmaking" or "Online matchmaking ready"),studio=self.localMode}
 end
 function Matchmaker:clear(group)
@@ -83,6 +83,7 @@ function Matchmaker:cancel(id,force)
     group.cancelled=true;self:clear(group);self.callbacks.changed();return true
 end
 function Matchmaker:remove(id)
+    self.admitted[id]=nil
     local group=self.groups[self.byPlayer[id]]
     if not group then return end
     if group.teleporting then
@@ -183,6 +184,7 @@ function Matchmaker:playerAdded(player)
     if not ok then join={} end
     local transfer=type(join.TeleportData)=="table" and join.TeleportData or {}
     if self.reserved then
+        if self.arrivalFailed then self:backToLobby(player);return end
         local id=transfer.citymoneyMatch
         if type(id)~="string" then self:backToLobby(player);return end
         local success,ticket=pcall(function() return self.tickets:GetAsync(id) end)
@@ -190,7 +192,8 @@ function Matchmaker:playerAdded(player)
         if success and ticket and ticket.privateId==game.PrivateServerId and ticket.status=="ready" then
             for _,user in ipairs(ticket.users) do if user.id==player.UserId then admitted=true end end
         end
-        if not admitted then self:backToLobby(player);return end
+        if not admitted or self.ticket and self.ticket.id~=ticket.id then self:backToLobby(player);return end
+        self.admitted[player.UserId]=true
         self.ticket=ticket;self.arrivalDeadline=self.arrivalDeadline or os.clock()+60
         self.callbacks.changed()
         return
@@ -219,14 +222,20 @@ function Matchmaker:playerAdded(player)
 end
 function Matchmaker:tickReserved()
     if self.matchStarted or not self.ticket then return end
-    local complete=true
-    for _,user in ipairs(self.ticket.users) do if not Players:GetPlayerByUserId(user.id) then complete=false end end
+    local complete=not self.arrivalFailed
+    for _,user in ipairs(self.ticket.users) do if not self.admitted[user.id] or not Players:GetPlayerByUserId(user.id) then complete=false end end
     if complete then
         local ok=self.callbacks.start(self.ticket.users,{attackMode="destroy"})
         if ok then self.matchStarted=true;self.callbacks.changed() end
     elseif self.arrivalDeadline and os.clock()>self.arrivalDeadline then
-        self.arrivalDeadline=nil
-        for _,player in ipairs(Players:GetPlayers()) do self:backToLobby(player) end
+        self.arrivalFailed=true
+        self.arrivalFailure="Match incomplete. Returning to the public lobby…"
+        self.arrivalDeadline=os.clock()+10
+        for _,player in ipairs(Players:GetPlayers()) do
+            local ok,message=self:backToLobby(player)
+            self.errors[player.UserId]=not ok and message or nil
+        end
+        self.callbacks.changed()
     end
 end
 function Matchmaker:start()

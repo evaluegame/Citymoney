@@ -1,0 +1,297 @@
+CITYMONEY 1.0.0 — AUTOMATED TEST OUTPUT
+
+255 named cases, 600 simulated matches, four headless client layouts.
+Controlled Roblox service adapters are used; this is not a live Studio,
+purchase, teleport, or DataStore playtest. See RELEASE-CHECKS.md.
+
+PASS starts with equal cash and reset ownership
+PASS rejects invalid rosters without changing lobby
+PASS rejects out-of-turn and out-of-phase actions
+PASS roll, buy, end and next turn
+PASS declining a deed leaves it unowned
+PASS cannot buy without sufficient cash
+PASS pays rent to another owner
+PASS own properties charge no rent
+PASS matching district doubles base rent
+PASS single properties can upgrade but only on their owner's turn
+PASS build caps at three levels and requires cash
+PASS rejects malformed property indexes
+PASS sell refunds half invested cost and clears levels
+PASS passing City Gate pays exactly once
+PASS landing exactly on City Gate pays bonus
+PASS city tax is collected
+PASS detention moves player without awarding a lap
+PASS just visiting detention does not detain
+PASS event awards cash
+PASS event deducts cash
+PASS event sends to City Gate with one bonus
+PASS event sends to detention
+PASS shortfall auto-sells deeds before declaring bankruptcy
+PASS insolvency transfers remaining cash and ends two-player game
+PASS bankrupt player can end turn in multiplayer
+PASS disconnect releases deeds and advances active turn
+PASS turn limit selects highest net worth
+PASS replay resets money, properties, dice and detention
+PASS solo bot identity cannot collide with Studio test UserIds
+PASS board has complete district pairs and valid economics
+PASS owners can visit their home while another resident takes a turn
+PASS visit access rejects other owners, spectators and malformed targets
+PASS repainting changes only an owned home's appearance
+PASS sold and abandoned houses reset their exterior selection
+PASS 200 full seeded matches preserve economy and terminate
+
+35 tests passed, including 200 complete simulated matches.
+PASS all four starting levels include land and selected building costs
+PASS every property and starting level uses the same quote as the server
+PASS legacy buy defaults to the cottage without an explicit level
+PASS an unaffordable starting villa changes neither ownership nor cash
+PASS buying at exactly the selected price is allowed
+PASS malformed purchase levels are rejected without partial changes
+PASS purchase rejects other players, stale lots and stale turns
+PASS duplicate purchase confirmations cannot charge twice
+PASS one property can jump from cottage directly to grand villa
+PASS later upgrades charge only the additional levels
+PASS direct and sequential upgrades cost the same
+PASS downgrades, identical levels and malformed upgrade targets are rejected
+PASS failed upgrades preserve the previous home, paint and cash
+PASS upgrade rejects other owners and confirmations from an earlier turn
+PASS quote cards identify current levels, added cost, affordability and remaining cash
+PASS completing a district quotes the base-rent bonus before purchase
+PASS selected high-level investments are included in resale
+PASS selling another home refreshes an unaffordable upgrade quote
+
+18 purchase and upgrade tests passed.
+PASS full demolition removes a selected rival home and its paid effects
+PASS a chosen property's shield blocks demolition once
+PASS optional soft attacks remove one level and destroy cottages
+PASS wrong turn, stale turn, unknown cards and malformed targets spend nothing
+PASS only one card can be played each turn
+PASS card allowance resets on the next turn
+PASS unowned, own demolition and rival utility targets are rejected
+PASS rent demand uses the chosen property and chosen opponent
+PASS rent demands are capped and cannot target self or eliminated players
+PASS rent demand handles debt liquidation and bankruptcy
+PASS temporary rent boosts expire after exactly two paid visits
+PASS shields and boosts cannot be wastefully stacked
+PASS renovation grants upgrade chosen homes without charging cash
+PASS hands are capped and hidden from other players' snapshots
+PASS challenges require an explicit claim and cannot be claimed twice per turn
+PASS losing a home invalidates an unclaimed ownership challenge
+PASS challenge changes charge once and enforce cash and turn
+PASS paid rent tiers charge a fee and affect all future visits
+PASS rent fees reject malformed, current, lower, stale and unaffordable choices
+PASS rental quotes match server fees and preserve the house level
+PASS rent improvements are valued in wealth and resale
+PASS all city news events resolve safely and record challenge progress
+PASS 200 tactical 2/4-player matches terminate with valid economy and effects
+
+23 strategy/rent tests passed, including 200 complete tactical matches.
+PASS host can choose exactly 2 or 4 seats and outsiders cannot configure
+PASS human-only practice waits for ready players and bot fill is explicit
+PASS color choices stay unique and carry into the game
+PASS duplicate requested match colors are rejected
+PASS invited friends join a separate party and confirm readiness
+PASS parties cap at four and handle leader disconnects
+PASS leaving a party creates an independent ready solo party
+PASS completed matches combine participants without losing unique colors
+PASS 2-player queue packs two solo players
+PASS 4-player queue keeps two friend pairs together
+PASS a party of three waits for a solo and is never split
+PASS 2- and 4-player queues cannot mix
+PASS stale, cancelled, claimed and committed parties are excluded
+PASS expired uncommitted claims can match again
+PASS duplicate user records cannot put one user in two match seats
+PASS independent party color collisions are resolved for the match
+PASS fragmented parties do not block other exact-size matches
+PASS match tickets become ready only after every party is committed
+PASS competing matchmakers cannot reserve the same party twice
+PASS a queue outage releases already acquired claims
+PASS rollback never clears another matchmaker's claim
+PASS reservation failures keep party order and leave no match ticket
+PASS a cancellation during commit rolls back partial match assignments
+PASS failed final ticket writes never expose a ready match
+PASS orphaned preparing tickets recover without stealing ready matches
+
+25 party/matchmaking tests passed.
+PASS catalogue contains one free and three paid visual collections
+PASS unconfigured and malformed pass IDs never enable sales
+PASS classic is available without a pass while paid styles require verified ownership
+PASS an unconfigured live pass cannot be bypassed using saved or transferred premium selections
+PASS Studio previews make no ownership, storage or purchase calls
+PASS loading profiles reject edits until verified data is ready
+PASS saved premium selections cannot unlock an unowned pass
+PASS verified owners restore their selected collection on a new server
+PASS ownership outages fail closed without blocking ordinary play
+PASS storage outages preserve play and do not write default profiles automatically
+PASS cancelled and unrelated purchases never grant Club access
+PASS successful purchase events still require a server ownership check
+PASS a failed ownership refresh retains previously verified access
+PASS explicit revocation falls back safely and restoration recovers the preferred style
+PASS malformed selections and effect values never change a profile
+PASS saved preferences contain appearance only and ownership is never persisted
+PASS failed saves stay dirty and retry without losing the equipped collection
+PASS a preference change during a yielding save remains pending for the next write
+PASS late loads and ownership responses cannot overwrite a rejoined player's profile
+PASS an older ownership response cannot revoke a newer verified purchase
+PASS detached profiles can flush their final preference without affecting a new session
+PASS all premium plots preserve ownership markers, doors and valid geometry
+PASS unowned lots never receive premium houses or ornaments
+PASS cosmetic selection leaves game cash, rent, cards and turn untouched
+
+24 cosmetics/ownership/profile tests passed, including all 256 plot/style/level combinations.
+PASS only a real numeric Roblox sale price enables the advertised checkout
+PASS Robux labels distinguish free, ordinary and grouped prices
+PASS an unconfigured live pass stays locked while Studio previews remain usable
+PASS free City Original can be equipped without a pass or product lookup
+PASS only fresh metadata for the configured pass offers a purchase
+PASS loading, an open native prompt and server verification never offer another charge
+PASS a product outage offers a retry and an off-sale pass cannot be purchased
+PASS a delayed purchase requests ownership verification instead of another checkout
+PASS verified owners can equip all styles even when pass sales are unavailable
+PASS invalid selections and asset IDs cannot reach a purchase
+
+10 Robux checkout presentation cases passed.
+PASS table camera keeps all 24 tiles and tall homes inside the safe board area
+PASS city camera fits every rotation with the property inspector open
+PASS zooming out preserves the complete board across desktop and portrait screens
+PASS property closeups fit all levels without hiding beneath HUD panels
+PASS the center contains functional plaza destinations instead of decorative trees and houses
+PASS the editor and runtime share two complete clickable six-faced dice
+PASS dice pips are correct and opposite faces sum to seven
+PASS every final dice pose displays the server's exact rolled value on top
+PASS dice animation bounces above its tray and has finite orthonormal transforms
+PASS a new roll phase gets the full decision clock and lobbies do not advance
+PASS resolved turns automatically hand off after four seconds
+PASS unresolved purchases keep the full buying clock instead of handing off early
+PASS both buying and passing begin an automatic handoff without another confirmation
+PASS rent, detention and city-news results all enter the same short handoff
+PASS cosmetic, menu, tactical and property updates cannot extend a completed turn
+PASS an old phase clock cannot act on a later player's turn
+PASS automatic handoff happens once and gives the next player a fresh roll clock
+PASS players can still finish immediately without waiting for the handoff countdown
+PASS automatic turns skip eliminated seats and stop after the game ends
+PASS 200 complete 2/4-player games advance using the automatic phase clock
+PASS the market charges the listed game-cash price and delivers the chosen card
+PASS malformed, stale and out-of-turn market requests spend nothing
+PASS market hand caps and insufficient funds cannot consume a plaza purchase
+PASS plaza purchases are made before rolling and cannot postpone the completed-turn handoff
+PASS festivals rotate predictably every eight turns and wrap around
+PASS the lantern festival boosts the chosen home's next two rent collections
+PASS the design fair adds exactly one level and updates the building challenge
+PASS neighborhood-watch protection blocks a rival demolition once
+PASS expired festivals, rival targets, stacked effects and maximum levels reject without a charge
+PASS one plaza purchase is separate from the tactical allowance and resets next turn
+PASS bots choose a valid affordable festival target and respect the plaza allowance
+
+31 tabletop/camera/dice/automatic-turn/plaza tests passed, including 200 automatic matches.
+PASS play opens on a fixed gently angled board that shows resident bodies
+PASS primary controls and text have strong light-theme contrast
+PASS the menu and turn dock do not overlap on desktop or portrait screens
+PASS all HUD regions remain inside the safe area
+PASS direct shortcuts fit below the roster and leave the board and turn controls clear
+PASS rounded platforms have no overlapping coplanar rectangular top surfaces
+PASS rounded dice have curved edges and corners while retaining all 21 face pips
+PASS enlarged dice and flat pips stay above the tray throughout the complete tumble
+PASS unowned properties stay empty and show only a priced lot
+PASS owned homes retain wider facades, shutters and walkable doors at every level
+PASS the default camera uses the full available height instead of leaving an empty band
+PASS overview framing includes the complete playable board and every fully upgraded property
+PASS the initial city and a fully owned city stay within the geometry budget
+
+13 presentation/geometry/readability tests passed.
+PASS ordinary first City News still resolves the original event
+PASS the second City News offers a guaranteed choice without spending cash
+PASS opening a choice consumes no extra random draws
+PASS snapshots retain old stats, property and goal values without exposing private hands
+PASS cash is awarded once and repeated confirmations cannot grant it again
+PASS the card choice grants exactly one selected card and no cash
+PASS a full card hand keeps the offer open and cash remains available
+PASS malformed, out-of-range and forged reward requests spend and grant nothing
+PASS spectators, opponents and eliminated players cannot take the active reward
+PASS expired turns and sequence tokens cannot confirm a different opportunity
+PASS all five offers rotate deterministically across residents and visits
+PASS bots take useful renovation cards or safe cash according to their city
+PASS player colors do not change opportunity rewards
+PASS random card rewards use remaining hand space instead of wasting a full card type
+PASS full hands still earn challenge cash without a false card reward
+PASS AFK opportunities automatically choose cash after their decision deadline
+PASS leaving, finishing and starting a new match clear pending rewards
+PASS a roll records the actual route before a City News teleport changes its destination
+PASS detention movement records the route to the detention event before returning to jail
+PASS a board step slows at both ends without overshooting or a large jump
+PASS every space has a real stationary pause across all one-to-twelve-space routes
+PASS one route timeline reaches each space boundary and the exact final space
+PASS automatic handoff leaves four seconds to read the result after a twelve-space journey
+PASS buy and offer decision clocks start after the dice and token have arrived
+PASS refreshes, cards and menus cannot replay or postpone a journey
+PASS early finish, purchase and reward requests wait until the token arrives
+PASS an early purchase cannot advance the next player before the visible landing
+PASS historic rolls do not animate again on the next turn or after a match finishes
+
+28 opportunity, route and presentation-timing cases passed.
+PASS all six resident positions stay separated and within each rotated space
+PASS residents face their actual movement direction on every side and corner
+PASS travel holds exact centers, crosses City Gate and reaches event destinations
+PASS shared fallback residents have readable faces, clothing and owner colors
+PASS board and city names have modest surface-text limits
+PASS downtown, the boardwalk and ferry stay outside every purchasable parcel
+PASS public city buildings have windows, storefronts and a physical waterfront
+PASS 3D city framing includes the whole public waterfront across screen sizes
+PASS city details leave the route centers and all four event stations clear
+
+9 player-visibility and city-layout cases passed.
+PASS every rotated label corner stays inside its own perspective space
+PASS name and price plates fit completely inside all 24 physical spaces
+PASS physical plates show the current price or rent after upgrades, boosts and demolition
+PASS the resident lane and all player rings stay clear of the name and price band
+PASS board pawns show larger full bodies with both feet on the walking surface
+PASS new public city landmarks occupy only city-service parcels
+
+6 inset-space and full-body visibility cases passed.
+PASS dice, settled result and movement occupy separate timeline phases
+PASS every roll reserves a readable settled-dice pause before its first space
+PASS late physical dice completion shifts movement, arrival and handoff together
+PASS late dice completion preserves the full purchase and reward decision clocks
+PASS duplicate dice notifications and ordinary refreshes cannot postpone a turn
+PASS early reduced-motion settlement retains the same minimum result timeline
+PASS old, cancelled and finished dice cannot alter a different turn
+
+7 dice-result-before-movement cases passed.
+PASS board scene: closed 24-tile path, deterministic geometry, labels, sizes, and inspection targets.
+PASS homes: all 16 parcels, four building levels, walkable doors, furniture, stairs, rotation matrices and visit arrival points.
+PASS responsive layout: screenshot size, short Studio windows, desktop and portrait safe areas.
+All Roblox source files compiled successfully.
+PASS client UI adapter: desktop 1440×900; fixed camera, settled dice before movement, late clocks, player visibility, 24 map labels, goals/rewards, opportunities, upgrades, buy/skip, lobby/practice, and Robux shop pricing/cancel/verify/equip/retry.
+PASS client UI adapter: studio 1192×642; fixed camera, settled dice before movement, late clocks, player visibility, 24 map labels, goals/rewards, opportunities, upgrades, buy/skip, lobby/practice, and Robux shop pricing/cancel/verify/equip/retry.
+PASS client UI adapter: short 800×560; fixed camera, settled dice before movement, late clocks, player visibility, 24 map labels, goals/rewards, opportunities, upgrades, buy/skip, lobby/practice, and Robux shop pricing/cancel/verify/equip/retry.
+PASS client UI adapter: mobile 390×760; fixed camera, settled dice before movement, late clocks, player visibility, 24 map labels, goals/rewards, opportunities, upgrades, buy/skip, lobby/practice, and Robux shop pricing/cancel/verify/equip/retry.
+PASS native dice finish both models before any waiting mover is released
+PASS reduced motion settles exact faces before its completion callback
+PASS a superseding native roll cancels the old mover and completion
+PASS match reset cancels a waiting roll without leaking its callback into a new match
+PASS late native dice completion retimes the real turn clock before movement can begin
+PASS the real remote router accepts reward tables after arrival and rejects early or other-player choices
+6 native dice/router cases passed.
+PASS native R6 and R15 feet stand above the board instead of sinking into it
+PASS home visits restore normal body size and return to the enlarged board pawn
+PASS rescaling rebuilds adornments without enlarging names or leaving duplicate rings
+PASS unfinished or superseded characters keep the full-body fallback available
+PASS eliminated residents leave the route and regain normal spectator size
+PASS retiring a generated bot removes its body rather than spawning an invisible replacement
+6 native avatar cases passed.
+PASS native cancelled and unrelated purchase events make no entitlement requests
+PASS native delayed purchase verification retries until Roblox confirms ownership
+PASS native verification failure never grants a paid style and leaves a recovery message
+PASS duplicate native completions do not recheck or charge an already verified owner
+PASS a purchase arriving during profile loading waits before checking ownership
+PASS a departed buyer cannot overwrite a fresh profile during verification
+PASS unconfigured and Studio passes never perform real entitlement verification
+7 native Club purchase cases passed.
+PASS native two-player matchmaking starts the real engine with exactly two humans
+PASS native four-player matchmaking keeps two parties together with distinct colors
+PASS native queues reject unready party members and players already in an active match
+PASS reserved matches require each player to present the validated match ticket
+PASS a stranger cannot join a reserved match by copying its match identifier
+PASS an incomplete match retries failed lobby returns and cannot start after cancellation
+PASS departures remove a reserved admission before a player can rejoin
+7 native matchmaking cases passed.

@@ -18,7 +18,7 @@ end
 function Cosmetics.get(id: any) return Cosmetics.find(id) or Cosmetics.styles[1] end
 function Cosmetics.passId(config)
     local id=config.clubPassId
-    return type(id)=="number" and id>0 and id<math.huge and id%1==0 and id or 0
+    return type(id)=="number" and id>0 and id<=9007199254740991 and id%1==0 and id or 0
 end
 function Cosmetics.allowed(id: any,ownsPass,studio)
     local style=Cosmetics.find(id)

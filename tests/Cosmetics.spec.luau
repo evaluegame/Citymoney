@@ -125,6 +125,16 @@ test("late loads and ownership responses cannot overwrite a rejoined player's pr
     a.owns=function() p:detach(1);p:begin(1);return true end
     check(not p:refresh(1));check(not p.records[1].ownsPass)
 end)
+test("an older ownership response cannot revoke a newer verified purchase",function()
+    local p,b,a=system();load(p)
+    local nested=false
+    a.owns=function()
+        if not nested then nested=true;b.owners[1]=true;check(p:refresh(1));return false end
+        return true
+    end
+    check(not p:refresh(1));check(p:snapshot(1).ownsPass)
+    check(p:select(1,"rose",true))
+end)
 test("detached profiles can flush their final preference without affecting a new session",function()
     local p,b=system();b.owners[1]=true;load(p);check(p:select(1,"rose",false))
     local old=p:detach(1);load(p);check(p:saveRecord(1,old));equal(b.saved[1].styleId,"rose")

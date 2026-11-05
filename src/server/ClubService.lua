@@ -1,8 +1,8 @@
-local Players=game:GetService("Players")
 local Marketplace=game:GetService("MarketplaceService")
 local DataStore=game:GetService("DataStoreService")
 local RunService=game:GetService("RunService")
 local Profiles=require(game:GetService("ReplicatedStorage"):WaitForChild("Citymoney").CosmeticProfiles)
+local Cosmetics=require(game:GetService("ReplicatedStorage"):WaitForChild("Citymoney").Cosmetics)
 local Club={}
 Club.__index=Club
 function Club.new(config,changed)
@@ -21,11 +21,13 @@ function Club.new(config,changed)
         end,
     })
     Marketplace.PromptGamePassPurchaseFinished:Connect(function(player,passId,purchased)
-        if not purchased then return end
-        task.spawn(function()
-            self.profiles:purchaseFinished(player.UserId,passId,purchased)
-            if Players:GetPlayerByUserId(player.UserId) then changed() end
-        end)
+        if self.profiles.adapter.studio or passId~=Cosmetics.passId(config) or passId<=0 then return end
+        local record=self.profiles.records[player.UserId]
+        if not record then return end
+        record.checkoutSequence=(record.checkoutSequence or 0)+1
+        record.checkoutResult=purchased and "checking" or "cancelled"
+        changed()
+        if purchased then task.spawn(function() self:reconcile(player.UserId,passId) end) end
     end)
     task.spawn(function()
         while not self.closed do
@@ -53,6 +55,26 @@ function Club.new(config,changed)
         while pending>0 and os.clock()<untilTime do task.wait(0.1) end
     end)
     return self
+end
+function Club:reconcile(id,passId)
+    local record=self.profiles.records[id]
+    if not record or record.purchasePending or self.profiles.adapter.studio or passId==0 or passId~=Cosmetics.passId(self.profiles.config) then return false end
+    if record.ownsPass then record.checkoutResult="verified";self.changed();return true end
+    record.purchasePending=true;record.status="Checking your Club purchase with Roblox…";self.changed()
+    local readyBy=os.clock()+8
+    while record.loading and self.profiles.records[id]==record and os.clock()<readyBy do task.wait(0.25) end
+    for attempt=1,4 do
+        if self.profiles.records[id]~=record then return false end
+        self.profiles:purchaseFinished(id,passId,true)
+        if record.ownsPass then break end
+        if attempt<4 then task.wait(2^(attempt-1)) end
+    end
+    if self.profiles.records[id]~=record then return false end
+    record.purchasePending=false
+    record.checkoutResult=record.ownsPass and "verified" or "delayed"
+    record.status=record.ownsPass and "Your Club collection is unlocked." or "Roblox has not confirmed this purchase yet. Use Check ownership to retry."
+    self.changed()
+    return record.ownsPass
 end
 function Club:add(player)
     local record=self.profiles:begin(player.UserId)

@@ -7,7 +7,7 @@ function Profiles.new(config,adapter: any)
     return setmetatable({config=config,adapter=adapter,records={}},Profiles)
 end
 function Profiles:begin(id)
-    local record={preferred="classic",styleId="classic",effects=true,ownsPass=false,loading=true,dirty=false,revision=0,status="Loading your collection…",stamp=0}
+    local record={preferred="classic",styleId="classic",effects=true,ownsPass=false,loading=true,dirty=false,revision=0,status="Loading your collection…",stamp=0,ownershipCheck=0}
     self.records[id]=record
     return record
 end
@@ -44,8 +44,11 @@ function Profiles:refresh(id)
     local passId=Cosmetics.passId(self.config)
     if passId==0 then return false,"The Club pass is not available for sale yet." end
     if self.adapter.studio then return true end
+    record.ownershipCheck=record.ownershipCheck+1
+    local check=record.ownershipCheck
     local ok,owns=pcall(self.adapter.owns,id,passId)
     if self.records[id]~=record then return false,"You left this server." end
+    if record.ownershipCheck~=check then return false,"A newer ownership check is already available." end
     if not ok then record.status="Roblox could not verify ownership. Try Check ownership again.";return false,record.status end
     record.ownsPass=owns==true
     record.styleId=Cosmetics.allowed(record.preferred,record.ownsPass,false) and record.preferred or "classic"
@@ -81,6 +84,8 @@ function Profiles:snapshot(id)
     local record=self.records[id]
     return {styleId=record and record.styleId or "classic",effects=not record or record.effects,ownsPass=record and record.ownsPass or false,
         loading=not record or record.loading,studio=self.adapter.studio==true,passId=Cosmetics.passId(self.config),
-        status=record and record.status or "Loading your collection…",saving=record and (record.saving==true or record.dirty) or false}
+        status=record and record.status or "Loading your collection…",saving=record and (record.saving==true or record.dirty) or false,
+        purchasePending=record and record.purchasePending==true or false,
+        checkoutSequence=record and record.checkoutSequence or 0,checkoutResult=record and record.checkoutResult or "idle"}
 end
 return Profiles

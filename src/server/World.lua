@@ -214,6 +214,26 @@ function World:styleAvatar(model,resident)
     end
 end
 
+function World:releaseToken(id)
+    local model=self.tokens[id]
+    self:cancelMotion(id)
+    if model then
+        if model:GetAttribute("GeneratedFigure") then model:Destroy()
+        elseif model.Parent then
+            self:scaleCharacter(model,self.config.avatarScale)
+            for _,name in ipairs({"ResidentTag","ResidentOutline","ClubTrail"}) do
+                local object=model:FindFirstChild(name);if object then object.Enabled=false end
+            end
+            local humanoid,root=model:FindFirstChildOfClass("Humanoid"),model:FindFirstChild("HumanoidRootPart")
+            if humanoid and root then humanoid.WalkSpeed,humanoid.AutoRotate,root.Anchored=0,false,true end
+            for _,part in ipairs(model:GetDescendants()) do if part:IsA("BasePart") then part.CanCollide=false end end
+            -- Spectators wait on the boardwalk, outside the playable route.
+            model:PivotTo(CFrame.new(0,1.3+self:standingOffset(model),108))
+        end
+    end
+    self.tokens[id],self.positions[id],self.visiting[id]=nil,nil,nil
+end
+
 function World:sync(state)
     self.state = state
     if self.festivalLabel and state.turnCount~=self.festivalTurn then
@@ -292,12 +312,14 @@ function World:sync(state)
     end
     local present = {}
     for seat, resident in ipairs(state.players) do
+        if resident.alive then
         present[resident.id] = true
         local player = type(resident.id)=="number" and Players:GetPlayerByUserId(resident.id) or nil
         local character = player and player.Character
         if character and (not character:FindFirstChild("HumanoidRootPart") or not character:GetAttribute("CitymoneyPrepared")) then character=nil end
         local model = self.tokens[resident.id]
         if character and model~=character then
+            self:scaleCharacter(character,self.visiting[resident.id] and self.config.avatarScale or self.config.boardAvatarScale)
             self:cancelMotion(resident.id)
             if model and model:GetAttribute("GeneratedFigure") then model:Destroy() end
             model, self.tokens[resident.id], self.positions[resident.id] = character, character, nil
@@ -406,20 +428,11 @@ function World:sync(state)
                 end)
             end
         end
+        end
     end
-    for id, model in pairs(self.tokens) do
+    for id in pairs(self.tokens) do
         if not present[id] then
-            self:cancelMotion(id)
-            if model:GetAttribute("GeneratedFigure") then model:Destroy()
-            elseif model.Parent then
-                local tag=model:FindFirstChild("ResidentTag");if tag then tag.Enabled=false end
-                local outline=model:FindFirstChild("ResidentOutline");if outline then outline.Enabled=false end
-                local ring=model:FindFirstChild("PlayerColorRing");if ring then ring.Transparency=1 end
-                local aura=model:FindFirstChild("ClubAura");if aura then aura.Transparency=1 end
-                local trail=model:FindFirstChild("ClubTrail");if trail then trail.Enabled=false end
-                model:PivotTo(CFrame.new(0,5,42))
-            end
-            self.tokens[id],self.positions[id],self.visiting[id] = nil,nil,nil
+            self:releaseToken(id)
         end
     end
     local event=state.lastAction

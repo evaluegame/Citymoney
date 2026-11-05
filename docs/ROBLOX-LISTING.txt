@@ -1,0 +1,38 @@
+CITYMONEY — COPY-READY ROBLOX LISTING
+
+EXPERIENCE NAME
+Citymoney — Build Your City
+
+EXPERIENCE DESCRIPTION
+Roll the dice and turn empty lots into your own colorful city!
+
+Play a 2-player or 4-player match, invite your friends, or practice with bots.
+Choose your first home level, upgrade your buildings, and set higher rent.
+Collect cards, complete city challenges, join festivals and protect your homes.
+Use a demolition permit to challenge a rival's property and make your next move.
+
+Your player color marks your homes and avatar. Turns advance automatically,
+so you can focus on building your city. The optional Waterfront Club adds
+cosmetic house finishes, dice styles, a player aura and a walking trail.
+
+PASS NAME
+Waterfront Club — Signature Collection
+
+PASS DESCRIPTION
+Unlock Golden Estate, Aurora Residence and Rose Conservatory.
+Each collection includes coordinated home decorations, dice colors,
+a player aura and a walking trail. One permanent purchase unlocks all three.
+Cosmetics only: no game cash, extra rent, cards or changes to dice odds.
+
+PASS ICON TO UPLOAD
+Club-pass-icon.png in this docs folder (512 x 512 PNG).
+
+OPTIONAL STARTING PRICE
+149 Robux. Choose the actual price in Creator Dashboard.
+This text does not configure a sale. The game reads the real Roblox price,
+including applicable player-specific prices, after you add your pass ID.
+
+SETUP
+First publish the experience. Create this pass under the SAME experience,
+enable sales, then paste its numeric Asset ID into Config.clubPassId and
+republish. Do not use a developer-product ID or another game's pass.

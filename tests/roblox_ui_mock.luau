@@ -32,7 +32,7 @@ return function(sources,width,height)
     local function color(r,g,b) return {R=r or 0,G=g or 0,B=b or 0} end
     local color3={new=color,fromRGB=function(r,g,b) return color(r/255,g/255,b/255) end,fromHex=function(hex) return color(tonumber(string.sub(hex,1,2),16)/255,tonumber(string.sub(hex,3,4),16)/255,tonumber(string.sub(hex,5,6),16)/255) end}
     local cfMethods={}
-    local function cf(x,y,z) return setmetatable({Position=type(x)=="table" and x or vector(x,y,z)}, {__index=cfMethods,__mul=function(a,b) return cf(a.Position+b.Position) end}) end
+    local function cf(x,y,z,...) return setmetatable({Position=type(x)=="table" and x or vector(x,y,z),rotation=select('#',...)==9 and {...} or nil}, {__index=cfMethods,__mul=function(a,b) return cf(a.Position+b.Position) end}) end
     function cfMethods:Lerp(b,t)
         local result=cf(self.Position:Lerp(b.Position,t))
         for _,axis in ipairs({"right","up","back"}) do result[axis]=self[axis] and b[axis] and self[axis]:Lerp(b[axis],t).Unit or b[axis] end
@@ -45,7 +45,11 @@ return function(sources,width,height)
     end
     function cfMethods:VectorToWorldSpace(v) return self.right and self.right*v.X+self.up*v.Y+self.back*v.Z or v end
     function cfMethods:ToObjectSpace(b) return cf(b.Position-self.Position) end
-    local cfApi={new=cf,Angles=function() return cf(0,0,0) end,lookAt=function(p) return cf(p) end,fromMatrix=function(p,r,u,b) local result=cf(p);result.right,result.up,result.back=r,u,b;return result end}
+    local cfApi={new=cf,Angles=function() return cf(0,0,0) end,lookAt=function(p,target)
+        local back=(p-target).Unit;local right=vector(back.Z,0,-back.X).Unit
+        local up=vector(back.Y*right.Z-back.Z*right.Y,back.Z*right.X-back.X*right.Z,back.X*right.Y-back.Y*right.X)
+        local result=cf(p);result.right,result.up,result.back=right,up,back;return result
+    end,fromMatrix=function(p,r,u,b) local result=cf(p);result.right,result.up,result.back=r,u,b;return result end}
     local enum=setmetatable({},{__index=function(a,key)
                 local value=setmetatable({},{__index=function(t,name) local item={Name=name,Value=key=="RenderPriority" and name=="Camera" and 200 or 0};rawset(t,name,item);return item end});rawset(a,key,value);return value
     end})
@@ -95,7 +99,17 @@ return function(sources,width,height)
     function methods:SetAttribute(key,value) self._attrs[key]=value end
     function methods:GetAttribute(key) return self._attrs[key] end
     function methods:GetPropertyChangedSignal(key) self._signals[key]=self._signals[key] or signal();return self._signals[key] end
-    function methods:GetBoundingBox() return cf(0,10,0),vector(20,20,20) end
+    function methods:GetBoundingBox()
+        local lo,hi=vector(math.huge,math.huge,math.huge),vector(-math.huge,-math.huge,-math.huge)
+        local count=0
+        for _,part in ipairs(self:GetDescendants()) do if part:IsA("BasePart") and part.CFrame then
+            local p,s=part.CFrame.Position,part.Size;count=count+1
+            lo=vector(math.min(lo.X,p.X-s.X/2),math.min(lo.Y,p.Y-s.Y/2),math.min(lo.Z,p.Z-s.Z/2))
+            hi=vector(math.max(hi.X,p.X+s.X/2),math.max(hi.Y,p.Y+s.Y/2),math.max(hi.Z,p.Z+s.Z/2))
+        end end
+        if count==0 then return cf(0,10,0),vector(20,20,20) end
+        return cf((lo+hi)/2),hi-lo
+    end
     function methods:GetServerTimeNow() return now end
     function methods:GetMouse() return pointer end
     function methods:FireServer(...) table.insert(requests,{...}) end
@@ -161,6 +175,11 @@ return function(sources,width,height)
         for i=#scheduled,1,-1 do if scheduled[i].at<=now then table.insert(ready,table.remove(scheduled,i).callback) end end
         for _,callback in ipairs(ready) do callback() end
     end
+    local function runSpawned()
+        local work={}
+        for i=#scheduled,1,-1 do if scheduled[i].at==math.huge then table.insert(work,table.remove(scheduled,i).callback) end end
+        for _,callback in ipairs(work) do callback() end
+    end
     local Engine=load(shared.Engine);local Config=load(shared.Config)
     local engine=Engine.new(Config)
     local roster={{id=1,name="Avery"},{id=2,name="Riley"},{id=3,name="Jamie"},{id=4,name="Morgan"}}
@@ -196,6 +215,19 @@ return function(sources,width,height)
     end
     local function menu(label) root.CityMenuButton.Activated:Fire();click(label) end
     local function hex(c) return string.format("%02x%02x%02x",math.floor(c.R*255+0.5),math.floor(c.G*255+0.5),math.floor(c.B*255+0.5)) end
+    local function viewportData(viewport)
+        local camera=viewport.CurrentCamera
+        if not camera or not camera.CFrame or not camera.CFrame.right then return nil end
+        local parts={}
+        for _,part in ipairs(viewport:GetDescendants()) do if part:IsA("BasePart") then
+            local p,s=part.CFrame.Position,part.Size
+            table.insert(parts,{name=part.Name,position={p.X,p.Y,p.Z},size={s.X,s.Y,s.Z},color=hex(part.Color),
+                rotation=part.CFrame.rotation or {1,0,0,0,1,0,0,0,1},shape=part.Shape and part.Shape.Name or "Block",material=part.Material and part.Material.Name or "SmoothPlastic",transparency=part.Transparency or 0})
+        end end
+        local _,size=absolute(viewport)
+        local function values(v) return {v.X,v.Y,v.Z} end
+        return {scene=parts,width=math.floor(size.X+0.5),height=math.floor(size.Y+0.5),camera={position=values(camera.CFrame.Position),right=values(camera.CFrame.right),up=values(camera.CFrame.up),back=values(camera.CFrame.back),fov=camera.FieldOfView}}
+    end
     local function export()
         local elements={}
         local function walk(parent)
@@ -203,7 +235,7 @@ return function(sources,width,height)
             for _,o in ipairs(children) do if visible(o) then
                 if guiClasses[o.ClassName] then
                     local p,s,scale=absolute(o);local corner=o:FindFirstChildOfClass("UICorner");local stroke=o:FindFirstChildOfClass("UIStroke")
-                    table.insert(elements,{class=o.ClassName,name=o.Name,x=p.X,y=p.Y,w=s.X,h=s.Y,text=o.Text or "",textAlpha=1-(o.TextTransparency or 0),rotation=o.Rotation or 0,size=(o.TextSize or 14)*scale,bg=hex(o.BackgroundColor3),fg=hex(o.TextColor3),alpha=1-(o.BackgroundTransparency or 0),font=o.Font and o.Font.Name or "Gotham",wrap=o.TextWrapped==true,align=o.TextXAlignment and o.TextXAlignment.Name or "Left",corner=corner and (corner.CornerRadius.Scale*math.min(s.X,s.Y)+corner.CornerRadius.Offset*scale) or 0,
+                    table.insert(elements,{class=o.ClassName,name=o.Name,x=p.X,y=p.Y,w=s.X,h=s.Y,text=o.Text or "",textAlpha=1-(o.TextTransparency or 0),rotation=o.Rotation or 0,size=(o.TextSize or 14)*scale,bg=hex(o.BackgroundColor3),fg=hex(o.TextColor3),alpha=1-(o.BackgroundTransparency or 0),font=o.Font and o.Font.Name or "Gotham",wrap=o.TextWrapped==true,align=o.TextXAlignment and o.TextXAlignment.Name or "Left",corner=corner and (corner.CornerRadius.Scale*math.min(s.X,s.Y)+corner.CornerRadius.Offset*scale) or 0,viewport=o.ClassName=="ViewportFrame" and viewportData(o) or nil,
                         stroke=stroke and {color=hex(stroke.Color or color(0.8,0.85,0.9)),alpha=1-(stroke.Transparency or 0),width=(stroke.Thickness or 1)*scale} or false})
                 end
                 walk(o)
@@ -448,5 +480,75 @@ return function(sources,width,height)
     capture("lobby");inside(findText("Play together").Parent)
     click("SETTINGS");findText("Practice settings");inside(findText("Practice settings").Parent);click("×")
     click("PRACTICE WITH BOTS");assert(requests[#requests][1]=="Start","Practice requires extra setup")
+    advance(0.3)
+    menu("COSMETIC SHOP")
+    local shop=root.CosmeticShopOverlay.CosmeticShop
+    inside(shop)
+    findText("Equip in Studio preview")
+    for _,name in ipairs({"ClubCheckout","RestoreClub","CosmeticMotion","Collection_classic","Collection_gilded","Collection_aurora","Collection_rose"}) do
+        local shopControl=shop:WaitForChild(name);inside(shopControl)
+        local _,s=absolute(shopControl);assert(s.Y>=44 and s.X>=44,"Shop controls are too small to tap: "..name)
+    end
+    capture("shop-studio")
+    click("Equip in Studio preview");assert(requests[#requests][1]=="Style" and requests[#requests][2].styleId=="gilded")
+    advance(0.3)
+    local prompts,priceCalls={},0
+    local priceInfo={IsForSale=true,PriceInRobux=149}
+    local failInfo,failPrompt=false,false
+    function services.MarketplaceService:GetProductInfoAsync(id,kind)
+        assert(id==12345 and kind==enum.InfoType.GamePass);priceCalls=priceCalls+1
+        if failInfo then error("Controlled product lookup failure") end
+        return priceInfo
+    end
+    function services.MarketplaceService:PromptGamePassPurchase(buyer,id)
+        assert(buyer==player and id==12345)
+        if failPrompt then error("Controlled prompt failure") end
+        table.insert(prompts,id)
+    end
+    data.club={styleId="classic",ownsPass=false,loading=false,studio=false,passId=0,effects=true,status=""};publish()
+    findText("Club pass coming soon");assert(not shop.ClubCheckout.Active)
+    data.club=table.clone(data.club);data.club.passId=12345;publish();runSpawned()
+    local function serverCheckout(purchased)
+        data.club=table.clone(data.club)
+        data.club.checkoutSequence=(data.club.checkoutSequence or 0)+1
+        data.club.checkoutResult=purchased and "checking" or "cancelled"
+        publish()
+    end
+    findText("Unlock Club · R$ 149");capture("shop-robux")
+    click("Unlock Club · R$ 149");shop.ClubCheckout.Activated:Fire()
+    assert(#prompts==1 and not shop.ClubCheckout.Active,"Repeated clicks reopen Roblox checkout")
+    services.MarketplaceService.PromptGamePassPurchaseFinished:Fire(player,999,false)
+    assert(not shop.ClubCheckout.Active,"Another pass completion changed this purchase")
+    services.MarketplaceService.PromptGamePassPurchaseFinished:Fire(player,12345,false)
+    assert(not shop.ClubCheckout.Active,"A local event drives checkout state without server confirmation")
+    serverCheckout(false)
+    assert(shop.ClubCheckout.Active and not data.club.ownsPass,"Cancelling granted Club access")
+    click("Unlock Club · R$ 149")
+    services.MarketplaceService.PromptGamePassPurchaseFinished:Fire(player,12345,true)
+    assert(not data.club.ownsPass,"A local completion event granted ownership")
+    serverCheckout(true)
+    findText("Verifying with Roblox…");assert(not shop.ClubCheckout.Active)
+    assert(not data.club.ownsPass,"A local completion event granted ownership")
+    data.club=table.clone(data.club);data.club.checkoutResult="delayed";publish()
+    findText("Verify my purchase");advance(12.1);findText("Verify my purchase")
+    local promptsBefore=#prompts;click("Verify my purchase")
+    assert(requests[#requests][1]=="ClubRefresh" and #prompts==promptsBefore,"Verification opened another checkout")
+    advance(0.3);data.club=table.clone(data.club);data.club.ownsPass=true;publish()
+    assert(requests[#requests][1]=="Style" and requests[#requests][2].styleId=="gilded","A verified purchase did not equip the previewed collection")
+    data.club=table.clone(data.club);data.club.styleId="gilded";publish();findText("Equipped ✓")
+    capture("shop-owned")
+    advance(0.3);shop.Collection_aurora.Activated:Fire();click("Equip Aurora Residence")
+    assert(requests[#requests][1]=="Style" and requests[#requests][2].styleId=="aurora")
+    data.club=table.clone(data.club);data.club.ownsPass=false;data.club.styleId="classic";publish();advance(0.3)
+    failInfo=true;click("Check ownership");runSpawned();findText("Retry Robux price")
+    promptsBefore=#prompts;click("Retry Robux price");runSpawned();assert(#prompts==promptsBefore)
+    failInfo=false;click("Retry Robux price");runSpawned();findText("Unlock Club · R$ 149")
+    failPrompt=true;click("Unlock Club · R$ 149");assert(shop.ClubCheckout.Active and #prompts==promptsBefore)
+    failPrompt=false
+    advance(0.3);click("Unlock Club · R$ 149")
+    data.club=table.clone(data.club);data.club.ownsPass=true;publish()
+    serverCheckout(true)
+    assert(shop.ClubCheckout.Text~="Verifying with Roblox…","A late completion hides an already verified purchase")
+    assert(priceCalls>=3,"The retry did not request fresh Roblox product information")
     return {width=width,height=height,elements=views.main.elements,camera=views.main.camera,views=views,requests=#requests}
 end

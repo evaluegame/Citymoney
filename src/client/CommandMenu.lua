@@ -16,7 +16,7 @@ function Command.new(ui)
         {"CARDS & GOALS","Play a card or claim a reward",function() ui.openGoals() end},
         {"CITY EVENTS","Festival, market and news",function() ui.openCity() end},
         {"YOUR PROPERTIES","Upgrade, set rent or visit",function() ui.openHomes() end},
-        {"STYLE STUDIO","House and dice cosmetics",function() ui.openStyles() end},
+        {"COSMETIC SHOP","Styles and the Robux Club pass",function() ui.openStyles() end},
         {"HOW TO PLAY","Learn the three easy steps",function() ui.openHelp() end},
     }
     for index,item in ipairs(commands) do

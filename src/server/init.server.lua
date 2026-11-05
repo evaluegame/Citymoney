@@ -296,4 +296,4 @@ end)
 
 matcher:start()
 
-print("[Citymoney] Board ready. Open the client lobby to start a match.")
+print("[Citymoney "..Config.releaseVersion.."] Board ready. Open the client lobby to start a match.")

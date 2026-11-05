@@ -38,6 +38,7 @@ return function(sources)
   function model:SetAttribute(k,value) self.attrs[k]=value end
   function model:GetAttribute(k) return self.attrs[k] end
   function model:PivotTo(frame) self.pivot=frame end
+  function model:Destroy() self.Parent=nil end
   function model:add(name,size,class)
    local part={Name=name,ClassName=class or 'BasePart',Size=size or v(1,1,1),Parent=self}
    function part:IsA(kind) return kind==self.ClassName end
@@ -101,6 +102,23 @@ return function(sources)
   w,p,c=harness('R15');p.appearanceLoaded=false;w:prepareCharacter(p,c)
   assert(not c:GetAttribute('CitymoneyPrepared') and c.scaleCalls==0)
   assert(not w:visit(p,2),'An unfinished avatar replaced the full-body board pawn')
+ end)
+ test('eliminated residents leave the route and regain normal spectator size',function()
+  local w,p,c=harness('R6');w:prepareCharacter(p,c)
+  local tag=c:add('ResidentTag',nil,'BillboardGui');local outline=c:add('ResidentOutline',nil,'Highlight')
+  w.visiting[1]=2;w.propertyViews={};w.dice={sync=function() return false end}
+  World.sync(w,{players={{id=1,alive=false}},lastRoll=false,turnCount=2})
+  assert(w.tokens[1]==nil and w.positions[1]==nil and w.visiting[1]==nil)
+  assert(c.scale==1 and c.pivot.Position.Z==108 and not tag.Enabled and not outline.Enabled)
+  assert(w.generations[1]>0,'A retired resident still has a live motion')
+ end)
+ test('retiring a generated bot removes its body rather than spawning an invisible replacement',function()
+  local w,_,c=harness('R15');c:SetAttribute('GeneratedFigure',true)
+  w.propertyViews={};w.dice={sync=function() return false end}
+  World.sync(w,{players={{id=1,alive=false}},lastRoll=false,turnCount=2})
+  assert(c.Parent==nil and w.tokens[1]==nil)
+  World.sync(w,{players={{id=1,alive=false}},lastRoll=false,turnCount=3})
+  assert(w.tokens[1]==nil)
  end)
  return passed
 end

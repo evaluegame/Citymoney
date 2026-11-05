@@ -54,7 +54,7 @@ One plaza purchase per turn, before rolling. Playing a card is separate.
 Challenge Hall opens goals. City News shows the festival and recent events.
 
 PREMIUM VISUALS / ROBUX PASS
-Open MENU > Style Studio. Preview Golden Estate,
+Open MENU > Cosmetic Shop. Preview Golden Estate,
 Aurora Residence and Rose Conservatory. One optional cosmetic game pass
 unlocks all three, with house details, dice themes, auras and walking trails.
 City Original stays free. Pass ownership gives no gameplay advantage.
@@ -147,3 +147,10 @@ residents. Tap a space for its full property card. Board view uses a fixed
 gentle 3D angle without wheel/button zoom. Pawns are larger on the board,
 with compact tags above their heads. R6 legs remain above the floor. Home
 visits restore normal size. Empty player lots stay empty until purchased.
+
+PUBLISH THE FINAL BUILD
+Start with PUBLISH-FIRST.md. The free game is ready to open and publish.
+The optional Robux pass still needs your creator account: publish the game,
+create its pass using docs/Club-pass-icon.png and docs/ROBLOX-LISTING.txt,
+put its numeric Asset ID in Config.clubPassId, then republish.
+See docs/RELEASE-CHECKS.md for automated results and Roblox app checks.

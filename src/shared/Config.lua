@@ -1,5 +1,6 @@
 -- Original Citymoney rules and districts. Money is in-game currency, never Robux.
 local Config = {
+    releaseVersion = "1.0.0",
     startingCash = 1500,
     startBonus = 200,
     turnSeconds = 55,
