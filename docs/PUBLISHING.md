@@ -1,5 +1,7 @@
 # Publish Citymoney and enable the Club pass
 
+The game now follows each player's Roblox language: English or Thai, with English fallback for other languages. Rejoin after changing the account language. Test two clients with different settings in the same match; menus, property details and world signs should differ while player names, prices and turn state agree. The Studio editor shows the canonical English scene.
+
 The ZIP contains a ready-to-open place and its source. Publishing it and creating a pass require your Roblox account in Studio/Creator Dashboard. No Roblox account credentials are included or needed by the cloud build.
 
 ## 1. Open and try the place

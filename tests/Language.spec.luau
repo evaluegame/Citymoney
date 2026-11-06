@@ -1,0 +1,95 @@
+local Language=require('../src/shared/Language')
+local Config=require('../src/shared/Config')
+local Board=require('../src/shared/Board')
+local Engine=require('../src/shared/Engine')
+local passed=0
+local function test(name,callback)
+ local ok,message=pcall(callback);assert(ok,'FAIL '..name..': '..tostring(message));passed=passed+1;print('PASS '..name)
+end
+test('Roblox English and Thai locale variants select their supported language',function()
+ for _,id in ipairs({'th','th-th','th-TH','TH_th'}) do assert(Language.resolve(id)=='th-th') end
+ for _,id in ipairs({'en','en-us','en-GB','EN_us'}) do assert(Language.resolve(id)=='en-us') end
+end)
+test('unsupported, missing and malformed locales safely use English',function()
+ for _,id in ipairs({'fr-fr','ja-jp','thing','thai','',false,12,{}}) do assert(Language.resolve(id)=='en-us') end
+ assert(Language.resolve(nil)=='en-us')
+end)
+test('the Roblox account language takes precedence over device and player fallbacks',function()
+ local service={RobloxLocaleId='en-us',SystemLocaleId='th-th'}
+ assert(Language.read(service,{LocaleId='th-th'})=='en-us')
+ service.RobloxLocaleId='th-th';service.SystemLocaleId='en-us'
+ assert(Language.read(service,{LocaleId='en-us'})=='th-th')
+end)
+test('player locale is used only when the primary locale is unavailable',function()
+ assert(Language.read(nil,{LocaleId='th-th'})=='th-th')
+ assert(Language.read({RobloxLocaleId=''},{LocaleId='th-th'})=='th-th')
+ assert(Language.read(nil,nil)=='en-us')
+ assert(Language.read({SystemLocaleId='th-th'},nil)=='en-us')
+end)
+test('English presentation retains the exact original captions and prices',function()
+ local en=Language.new('en-us')
+ for _,value in ipairs({'ROLL DICE','Copper Lane\nRENT $108','Unlock Club · R$ 1,499',"Ready's home"}) do assert(en:text(value)==value) end
+end)
+test('Thai presentation translates the same canonical captions',function()
+ local th=Language.new('th-th')
+ assert(th:text('ROLL DICE')=='ทอยลูกเต๋า')
+ assert(th:text('Copper Lane\nRENT $108')=='ตรอกทองแดง\nค่าเช่า $108')
+ assert(th:text('Unlock Club · R$ 1,499')=='ปลดล็อกคลับ · R$ 1,499')
+end)
+test('two players maintain independent language contexts in the same match',function()
+ local en,th=Language.new('en-us'),Language.new('th-th')
+ assert(en:text('ROLL DICE')=='ROLL DICE' and th:text('ROLL DICE')=='ทอยลูกเต๋า')
+ en:setLocale('th-th');th:setLocale('en-us')
+ assert(en:text('ROLL DICE')=='ทอยลูกเต๋า' and th:text('ROLL DICE')=='ROLL DICE')
+end)
+test('localizing scene copies cannot translate the shared source or another player view',function()
+ local source={{name='Sign',text='CITY NEWS',interaction='news',tileIndex=16}}
+ local th=Language.new('th-th'):scene(source)
+ local en=Language.new('en-us'):scene(source)
+ assert(source[1].text=='CITY NEWS' and en[1].text=='CITY NEWS' and th[1].text=='ข่าวเมือง')
+ assert(th~=source and th[1]~=source[1] and en[1]~=th[1])
+ assert(th[1].interaction=='news' and th[1].tileIndex==16)
+end)
+test('all twenty-four board spaces retain canonical English and valid per-player captions',function()
+ local source=Board.generate(Config)
+ local en,th=Language.new('en-us'):scene(source),Language.new('th-th'):scene(source)
+ for i,part in ipairs(source) do if part.text then
+  assert(part.text==en[i].text and utf8.len(th[i].text))
+ end end
+ for i=1,24 do
+  local caption=Board.caption(Config,i)
+  assert(string.find(caption,Config.tiles[i].name,1,true))
+  assert(Language.new('th-th'):text(caption)~=caption)
+ end
+end)
+test('rent and demolition updates stay readable in each language',function()
+ local e=Engine.new(Config);assert(e:start({{id=1,name='Ready'},{id=2,name='สมชาย'}}))
+ local property=e.state.properties[2];property.ownerId=1;property.level=1
+ local en,th=Language.new('en-us'),Language.new('th-th')
+ assert(en:text(Board.caption(Config,2,e.state))=='Copper Lane\nRENT $36')
+ assert(th:text(Board.caption(Config,2,e.state))=='ตรอกทองแดง\nค่าเช่า $36')
+ property.ownerId=false;property.level=0
+ assert(en:text(Board.caption(Config,2,e.state))=='Copper Lane\n$90')
+ assert(th:text(Board.caption(Config,2,e.state))=='ตรอกทองแดง\n$90')
+end)
+test('compact board captions follow the locale without translating player names',function()
+ local en,th=Language.new('en-us'),Language.new('th-th')
+ assert(en:tileCaption(2,'Copper\nRENT $36')=='Copper\nRENT $36')
+ assert(th:tileCaption(2,'Copper\nRENT $36')=='ทองแดง\nค่าเช่า $36')
+ for _,name in ipairs({'Ready','Sell','สมชาย','Avery [100%]'}) do assert(th:text(name.."'s home")=='บ้านของ '..name) end
+end)
+test('equivalent locale notifications do not trigger redundant language changes',function()
+ local context=Language.new('en-gb')
+ assert(not context:setLocale('en-us'))
+ assert(context:setLocale('th-th') and not context:setLocale('TH_TH'))
+ assert(context:setLocale('fr-fr') and context.locale=='en-us')
+end)
+test('locale changes leave turn state, cards, money and configuration unchanged',function()
+ local e=Engine.new(Config);assert(e:start({{id=1,name='Avery'},{id=2,name='Riley'}}))
+ local state=e.state;local money=e:player(1).cash;local cards=e:player(1).cards.demolish
+ local context=Language.new('th-th')
+ for _,id in ipairs({'th-th','en-us','th-th','ja-jp'}) do context:setLocale(id);context:scene(Board.generate(Config));context:text(state.notice or 'ROLL DICE') end
+ assert(e.state==state and e.state.phase=='roll' and e.state.turnCount==1)
+ assert(e:player(1).cash==money and e:player(1).cards.demolish==cards and Config.tiles[2].name=='Copper Lane')
+end)
+print('\n'..passed..' per-player language cases passed.')

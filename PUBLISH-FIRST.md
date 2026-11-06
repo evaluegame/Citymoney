@@ -1,9 +1,9 @@
-# ซิตี้มันนี่ 1.2 — เปิดเกมและเผยแพร่บน Roblox
+# ซิตี้มันนี่ 1.3 — เปิดเกมและเผยแพร่บน Roblox
 
-เกมใช้เมนูภาษาไทย พร้อมมุมกระดานตรงและมองจากด้านบนมากขึ้น กล้องนิ่งระหว่างทอย เดิน ซื้อบ้าน และอัปเกรด ไม่ต้องติดตั้งปลั๊กอินเพื่อเปิดไฟล์เกม
+เกมเลือกภาษาตามการตั้งค่า Roblox ของผู้เล่นแต่ละคน: English แสดงอังกฤษ และภาษาไทยแสดงไทย ผู้เล่นต่างภาษาเล่นห้องเดียวกันได้ ชื่อผู้เล่นและกติกาเหมือนกันทุกภาษา มุมกระดานและกล้องนิ่งยังเหมือนเดิม ไม่ต้องติดตั้งปลั๊กอินเพื่อเปิดไฟล์เกม
 
 1. แตกไฟล์ **Citymoney-Publish-Ready.zip** เปิด Roblox Studio → **File → Open from File** → **Citymoney/build/Citymoney.rbxlx**
-2. กด **Play** → **เริ่มเล่น** → เลือก **2 คน** หรือ **4 คน** → **ฝึกกับบอต** เพื่อทดลองเล่น
+2. กด **Play** → **เริ่มเล่น (PLAY NOW)** → เลือก **2 คน / 4 คน (2 / 4 PLAYERS)** → **ฝึกกับบอต (PRACTICE WITH BOTS)** เพื่อทดลองเล่น
 3. หยุด Play แล้วเลือก **File → Publish to Roblox** เพื่อบันทึกเกมในบัญชีของคุณ
 4. เข้า [Creator Dashboard](https://create.roblox.com/dashboard/creations) เลือกเกมนี้ → **Monetization → Passes → Create pass** ใช้ภาพ **docs/Club-pass-icon.png** และชื่อ/คำอธิบายใน [ROBLOX-LISTING.txt](docs/ROBLOX-LISTING.txt) ตั้งราคา Robux และเปิดขาย
 5. คัดลอก **Asset ID** ของพาส ใน Studio เปิด **ReplicatedStorage → Citymoney → Config** เปลี่ยน `clubPassId = 0` เป็นเลข ID แล้วเผยแพร่ไปยังเกมเดิมอีกครั้ง

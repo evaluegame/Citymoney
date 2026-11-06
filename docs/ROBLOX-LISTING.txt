@@ -6,7 +6,7 @@ Citymoney | สร้างเมืองของคุณ
 คำอธิบายเกม
 ทอยลูกเต๋า เปลี่ยนที่ดินว่างให้เป็นเมืองสีสันสดใสของคุณ!
 
-เมนูภาษาไทย เล่นออนไลน์ 2 หรือ 4 คน ชวนเพื่อน หรือฝึกกับบอต
+เมนูไทยหรืออังกฤษตามภาษา Roblox ของแต่ละคน เล่นออนไลน์ 2 หรือ 4 คน ชวนเพื่อน หรือฝึกกับบอต
 เลือกขนาดบ้านตั้งแต่ครั้งแรก อัปเกรดและตั้งอัตราค่าเช่าได้
 เดินถึงช่องการ์ดเพื่อรับการ์ดฟรี ทำเป้าหมาย ร่วมเทศกาล และป้องกันบ้าน
 ใช้การ์ดรื้อบ้านเพื่อเลือกบ้านคู่แข่งที่จะรื้อ ที่ดินจะเปิดขายใหม่
@@ -27,3 +27,25 @@ Waterfront Club | ชุดตกแต่งเมือง
 
 สร้างพาสภายใต้เกมที่คุณเผยแพร่ ตั้งราคาและเปิดขายใน Creator Dashboard
 นำ Asset ID มาใส่ clubPassId ใน Config แล้วเผยแพร่เกมเดิมอีกครั้ง
+
+ENGLISH LISTING
+
+EXPERIENCE NAME
+Citymoney — Build Your City
+
+EXPERIENCE DESCRIPTION
+Roll the dice and build your own colorful city!
+Play online with 2 or 4 players, invite friends, or practice with bots.
+Choose your home level, upgrade buildings, and set your property's rent.
+Land on card spaces for free cards, complete goals, join festivals,
+and choose a rival home to demolish. Turns advance automatically.
+Menus and city signs follow each player's Roblox language: English or Thai.
+Optional Club cosmetics change appearance only.
+
+PASS NAME
+Waterfront Club — Signature Collection
+
+PASS DESCRIPTION
+One permanent pass unlocks Golden Estate, Aurora Residence and Rose Conservatory.
+Decorate your homes, dice, aura and walking trail. Cosmetics only:
+no game cash, higher rent, cards or changes to dice odds.

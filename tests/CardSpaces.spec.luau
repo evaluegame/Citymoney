@@ -143,6 +143,6 @@ test('card booths and their FREE labels are on the marked parcels',function()
   if part.name=='FreeCardPlaque' then labels[part.tileIndex]=true;assert(part.interaction=='cards') end
  end
  assert(plots[4] and plots[22] and labels[4] and labels[22] and faces[4]==3 and faces[22]==2)
- assert(Board.caption(Config,4)=='การ์ดกลยุทธ์\nการ์ดฟรี')
+ assert(Board.caption(Config,4)=='TACTIC CARDS\nFREE CARD')
 end)
 print('\n'..passed..' physical-card-space cases passed.')

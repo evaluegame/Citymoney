@@ -54,7 +54,7 @@ for index, entry in enumerate(scene):
                 "Size": {"UDim2": [[1, 0], [1, 0]]}, "BackgroundTransparency": 1,
                 "Text": entry["text"], "TextColor3": rgb(entry["textColor"]),
                 "TextSize": entry["textSize"], "Font": "GothamBold", "TextWrapped": True, "TextScaled": True,
-            }, "Limit": {"$className": "UITextSizeConstraint", "$properties": {"MaxTextSize": entry["textSize"], "MinTextSize": 8}}},
+            }, "$attributes": {"CitymoneyText": True}, "Limit": {"$className": "UITextSizeConstraint", "$properties": {"MaxTextSize": entry["textSize"], "MinTextSize": 8}}},
         }
     board[entry["name"] if entry["name"].startswith("Tile") else f"{entry['name']}_{index:04}"] = node
 project["tree"]["Workspace"]["CitymoneyBoard"] = board

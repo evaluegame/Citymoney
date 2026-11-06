@@ -1,6 +1,6 @@
 local Config = require("../src/shared/Config")
 local Board = require("../src/shared/Board")
-local Thai = require("../src/shared/Thai")
+local Language = require("../src/shared/Language")
 local encode
 encode = function(value: any): string
     if type(value) == "string" then
@@ -25,6 +25,8 @@ encode = function(value: any): string
     error("Unsupported scene data: " .. type(value))
 end
 local mode = ...
+local arguments={...}
+local language=Language.new(arguments[2])
 if mode=="camera" or mode=="citycamera" then
     local Camera=require("../src/shared/BoardCamera")
     local P=require("../src/shared/Presentation")
@@ -71,4 +73,4 @@ if mode == "showcase" or mode == "home" or mode=="clubhome" or mode=="clubshowca
     end
     scene = entries
 end
-print(encode(Thai.scene(scene)))
+print(encode(language:scene(scene)))

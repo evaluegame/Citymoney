@@ -1,8 +1,11 @@
-CITYMONEY 1.2 — THAI EDITION
+CITYMONEY 1.3 — AUTOMATIC ENGLISH / THAI
 
-The game now uses Thai menus and an aligned 64-degree board view.
-Read START-HERE-TH.txt or PUBLISH-FIRST.md for current game button labels.
-Start: Play > เริ่มเล่น > 2 คน / 4 คน > ฝึกกับบอต.
+The game follows each player's Roblox language setting. English Roblox uses
+English; Thai Roblox uses Thai; unsupported languages fall back to English.
+Players with different languages can share the same match. World signs and
+menus are translated locally; player names, money and rules remain shared.
+After changing your Roblox account language, rejoin to load its latest setting.
+Read START-HERE-TH.txt for Thai button names.
 
 CITYMONEY — BUILD YOUR CITY
 Thai instructions: START-HERE-TH.txt
@@ -143,7 +146,7 @@ VISUAL REVIEW AND CHECKS
 docs/Play-screen-preview.png combines the actual exported client UI layout
 with a matching geometry render. Events, phone and play-menu previews are
 also in docs/. They are NOT Studio screenshots. Automated
-logic, compilation and four headless UI checks pass; native rendering,
+logic, compilation and eight bilingual headless UI checks pass; native rendering,
 input, replication and live Roblox services require Studio/app playtests.
 
 This ZIP includes the ready-to-open place and all source. No paid assets,

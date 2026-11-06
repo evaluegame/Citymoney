@@ -1,7 +1,8 @@
-CITYMONEY 1.2.0 — AUTOMATED TEST OUTPUT
+CITYMONEY 1.3.0 — AUTOMATED TEST OUTPUT
 
-287 named cases, 600 simulated matches, four headless client layouts.
-Thai UI, dynamic captions, user names, Unicode, currency and aligned camera checked.
+300 named cases, 600 simulated matches, eight headless client runs
+(English and Thai across four screen sizes). Per-player Roblox language,
+canonical shared signs, reversible updates and protected names/input checked.
 Controlled Roblox service adapters are used; this is not a live Studio,
 purchase, teleport, or DataStore playtest. See RELEASE-CHECKS.md.
 
@@ -262,9 +263,24 @@ PASS level templates cannot mistake ordinary words for numbers
 PASS Thai and English mixed names remain valid UTF-8 during repeated updates
 PASS Thai initials and label widths count characters instead of UTF-8 bytes
 PASS Robux and ordinary money keep their exact amounts and currencies
-PASS editor and runtime board captions agree while interaction IDs stay unchanged
+PASS canonical board captions translate while interaction IDs stay unchanged
 
 12 Thai localization cases passed.
+PASS Roblox English and Thai locale variants select their supported language
+PASS unsupported, missing and malformed locales safely use English
+PASS the Roblox account language takes precedence over device and player fallbacks
+PASS player locale is used only when the primary locale is unavailable
+PASS English presentation retains the exact original captions and prices
+PASS Thai presentation translates the same canonical captions
+PASS two players maintain independent language contexts in the same match
+PASS localizing scene copies cannot translate the shared source or another player view
+PASS all twenty-four board spaces retain canonical English and valid per-player captions
+PASS rent and demolition updates stay readable in each language
+PASS compact board captions follow the locale without translating player names
+PASS equivalent locale notifications do not trigger redundant language changes
+PASS locale changes leave turn state, cards, money and configuration unchanged
+
+13 per-player language cases passed.
 PASS all six resident positions stay separated and within each rotated space
 PASS residents face their actual movement direction on every side and corner
 PASS travel holds exact centers, crosses City Gate and reaches event destinations
@@ -297,10 +313,14 @@ PASS board scene: closed 24-tile path, deterministic geometry, labels, sizes, an
 PASS homes: all 16 parcels, four building levels, walkable doors, furniture, stairs, rotation matrices and visit arrival points.
 PASS responsive layout: screenshot size, short Studio windows, desktop and portrait safe areas.
 All Roblox source files compiled successfully.
-PASS client UI adapter: desktop 1440×900; Thai menus and dynamic captions, preserved names, aligned fixed camera, settled dice before movement, player visibility, 24 labels, free cards, goals, homes, matchmaking and Robux cosmetics.
-PASS client UI adapter: studio 1192×642; Thai menus and dynamic captions, preserved names, aligned fixed camera, settled dice before movement, player visibility, 24 labels, free cards, goals, homes, matchmaking and Robux cosmetics.
-PASS client UI adapter: short 800×560; Thai menus and dynamic captions, preserved names, aligned fixed camera, settled dice before movement, player visibility, 24 labels, free cards, goals, homes, matchmaking and Robux cosmetics.
-PASS client UI adapter: mobile 390×760; Thai menus and dynamic captions, preserved names, aligned fixed camera, settled dice before movement, player visibility, 24 labels, free cards, goals, homes, matchmaking and Robux cosmetics.
+PASS client UI adapter: th-th desktop 1440×900; Roblox language preference, reversible UI/world translations, protected names, fixed camera, dice, free cards, goals, homes, matchmaking and Robux cosmetics.
+PASS client UI adapter: th-th studio 1192×642; Roblox language preference, reversible UI/world translations, protected names, fixed camera, dice, free cards, goals, homes, matchmaking and Robux cosmetics.
+PASS client UI adapter: th-th short 800×560; Roblox language preference, reversible UI/world translations, protected names, fixed camera, dice, free cards, goals, homes, matchmaking and Robux cosmetics.
+PASS client UI adapter: th-th mobile 390×760; Roblox language preference, reversible UI/world translations, protected names, fixed camera, dice, free cards, goals, homes, matchmaking and Robux cosmetics.
+PASS client UI adapter: en-us desktop 1440×900; Roblox language preference, reversible UI/world translations, protected names, fixed camera, dice, free cards, goals, homes, matchmaking and Robux cosmetics.
+PASS client UI adapter: en-us studio 1192×642; Roblox language preference, reversible UI/world translations, protected names, fixed camera, dice, free cards, goals, homes, matchmaking and Robux cosmetics.
+PASS client UI adapter: en-us short 800×560; Roblox language preference, reversible UI/world translations, protected names, fixed camera, dice, free cards, goals, homes, matchmaking and Robux cosmetics.
+PASS client UI adapter: en-us mobile 390×760; Roblox language preference, reversible UI/world translations, protected names, fixed camera, dice, free cards, goals, homes, matchmaking and Robux cosmetics.
 PASS native dice finish both models before any waiting mover is released
 PASS reduced motion settles exact faces before its completion callback
 PASS a superseding native roll cancels the old mover and completion

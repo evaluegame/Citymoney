@@ -61,7 +61,7 @@ function Lobby:buildRoster(id)
         local color=1
         while used[color] do color=color+1 end
         used[color]=true
-        table.insert(roster,{id=self.config.botId.."-"..bot,name="บอตเมือง "..bot,bot=true,colorIndex=color})
+        table.insert(roster,{id=self.config.botId.."-"..bot,name="City Bot "..bot,bot=true,colorIndex=color})
         bot=bot+1
     end
     return roster

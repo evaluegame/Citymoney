@@ -14,6 +14,8 @@ root = Path(__file__).resolve().parents[1]
 jobs = [
     ("main-desktop", "hud-desktop", "Play-screen-preview"),
     ("main-mobile", "hud-mobile", "Phone-screen-preview"),
+    ("en-main-desktop", "en-hud-desktop", "English-play-preview"),
+    ("en-main-mobile", "en-hud-mobile", "English-phone-preview"),
     ("card-space-desktop", "card-space-desktop", "Card-space-preview"),
     ("card-space-mobile", "card-space-mobile", "Card-space-phone-preview"),
     ("rent-card-space-desktop", "rent-card-space-desktop", "Rent-card-space-preview"),
@@ -47,7 +49,7 @@ if __name__ == "__main__":
         for name in pool.map(run, jobs):
             print("READY", name, flush=True)
     for mode, name in [("showcase", "review-city-scene"), ("citycamera", "review-city-camera")]:
-        result = subprocess.run([str(root / ".tools/luau"), "scripts/export_board.luau", "-a", mode], cwd=root, text=True, capture_output=True, check=True)
+        result = subprocess.run([str(root / ".tools/luau"), "scripts/export_board.luau", "-a", mode, "th-th"], cwd=root, text=True, capture_output=True, check=True)
         data = json.loads(result.stdout)
         if mode == "citycamera":
             data = {"width": 1440, "height": 1050, "camera": data}

@@ -1,7 +1,10 @@
 --!nocheck
 -- Headless GUI integration adapter. It cannot replace Roblox rendering/playtests.
-return function(sources,width,height)
-    local Thai=require('../src/shared/Thai')
+return function(sources,width,height,localeId)
+    local Language=require('../src/shared/Language')
+    localeId=localeId or 'th-th'
+    local expected=Language.new(localeId)
+    local function t(value) return expected:text(value) end
     local requests,scheduled={}, {}
     local now=100
     local function signal()
@@ -101,8 +104,12 @@ return function(sources,width,height)
     function methods:IsA(class) return self.ClassName==class or class=="GuiObject" and guiClasses[self.ClassName] or class=="BasePart" and self.ClassName=="Part" end
     function methods:Destroy() self.Parent=nil;self._props.Visible=false;self:ClearAllChildren() end
     function methods:ClearAllChildren() for _,c in ipairs(self:GetChildren()) do c:Destroy() end end
-    function methods:SetAttribute(key,value) self._attrs[key]=value end
+    function methods:SetAttribute(key,value)
+        local old=self._attrs[key];self._attrs[key]=value
+        if old~=value and self._signals['attribute:'..key] then self._signals['attribute:'..key]:Fire() end
+    end
     function methods:GetAttribute(key) return self._attrs[key] end
+    function methods:GetAttributeChangedSignal(key) return self:GetPropertyChangedSignal('attribute:'..key) end
     function methods:GetPropertyChangedSignal(key) self._signals[key]=self._signals[key] or signal();return self._signals[key] end
     function methods:GetBoundingBox()
         local lo,hi=vector(math.huge,math.huge,math.huge),vector(-math.huge,-math.huge,-math.huge)
@@ -137,12 +144,15 @@ return function(sources,width,height)
         return pos,size,parentScale*ownScale
     end
     local services={}
-    for _,name in ipairs({"Players","ReplicatedStorage","RunService","UserInputService","Lighting","StarterGui","TweenService","SocialService","HttpService","MarketplaceService"}) do services[name]=node("Service",name) end
+    for _,name in ipairs({"Players","ReplicatedStorage","RunService","UserInputService","Lighting","StarterGui","TweenService","SocialService","HttpService","MarketplaceService","LocalizationService"}) do services[name]=node("Service",name) end
+    services.LocalizationService.RobloxLocaleId=localeId
+    services.LocalizationService.SystemLocaleId=localeId=='th-th' and 'en-us' or 'th-th'
     function services.TweenService:Create(object,_info,properties) return {Play=function() for key,value in pairs(properties) do object[key]=value end end,Cancel=function() end} end
     function services.RunService:IsStudio() return true end
     function services.RunService:BindToRenderStep(_name,_priority,callback) self.RenderStepped:Connect(callback) end
     local game={PlaceId=0,JobId="mock",GetService=function(_,name) return assert(services[name],name) end}
     local player=node("Player","Avery");player.UserId=1;player.DisplayName="Avery";services.Players.LocalPlayer=player
+    player.LocaleId=services.LocalizationService.SystemLocaleId
     function services.Players:GetPlayerByUserId(id) return id==1 and player or nil end
     local playerGui=node("PlayerGui","PlayerGui");playerGui.Parent=player
     local shared=node("Folder","Citymoney");shared.Parent=services.ReplicatedStorage
@@ -205,20 +215,41 @@ return function(sources,width,height)
     publish()
     local gui=playerGui:WaitForChild("Citymoney");local root=gui:WaitForChild("Frame"):WaitForChild("CityRoot")
     local probe=node("TextLabel","ThaiProbe");probe.Text="ROLL DICE";probe.Parent=root
-    assert(probe.Text=="ทอยลูกเต๋า","New controls are not localized")
-    probe.Text="Choose your home level";assert(probe.Text=="เลือกขนาดบ้าน","Dynamic captions are not localized")
+    assert(probe.Text==t("ROLL DICE"),"New controls do not follow the Roblox language")
+    probe.Text="Choose your home level";assert(probe.Text==t("Choose your home level"),"Dynamic captions are not localized")
+    local nativeParts=load(shared.Scene).populate({{name='LanguageSign',position={0,2,0},size={5,1,3},color='FFFFFF',text="Ready's home"}},board)
+    local worldText=nativeParts[1].Caption.TextLabel
+    assert(worldText:GetAttribute('CitymoneyText') and worldText.Text==t("Ready's home"),'Scene signs do not follow this client language')
+    local originalState=engine.state;local originalCash=engine:player(1).cash
+    local rawWorldName=node('TextLabel','UntranslatedResidentName');rawWorldName.Text='Ready';rawWorldName.Parent=board
+    local input=node('TextBox','UserInput');input.Text='Ready';input.Parent=root
+    for _,newLocale in ipairs({localeId=='th-th' and 'en-us' or 'th-th',localeId}) do
+        services.LocalizationService.RobloxLocaleId=newLocale;expected:setLocale(newLocale)
+        services.RunService.RenderStepped:Fire(0.016)
+        assert(probe.Text==t('Choose your home level'),'Changing language lost the original UI source')
+        assert(worldText.Text==t("Ready's home"),'Changing language lost the original world source')
+        assert(root.TurnDock.PrimaryAction.Text==t('ROLL DICE'),'The main action did not switch languages')
+        assert(rawWorldName.Text=='Ready' and input.Text=='Ready','Localization changed a player name or player input')
+    end
+    worldText.Text='FESTIVAL\n$80';assert(worldText.Text==t('FESTIVAL\n$80'),'A replicated update ignored the client language')
+    assert(engine.state==originalState and engine:player(1).cash==originalCash,'Language switching changed the match')
+    nativeParts[1]:Destroy()
+    rawWorldName:Destroy();input:Destroy()
     probe:Destroy()
     local nameProbe=node("TextLabel","NameProbe");nameProbe.Text="Ready";nameProbe:SetAttribute("PlayerName",true);nameProbe.Parent=root
     assert(nameProbe.Text=="Ready","A player name was translated as a menu command");nameProbe:Destroy()
     local function visible(o) while o do if o.Visible==false or o.Enabled==false then return false end;o=o.Parent end;return true end
     local untranslated={}
     local function findText(text)
-        text=Thai.text(text)
+        text=t(text)
         local found
         for _,object in ipairs(gui:GetDescendants()) do if visible(object) and object.Text then
             local remainder=object.Text
             for _,allowed in ipairs({'Avery','Riley','Jamie','Morgan','Roblox','Robux','Studio'}) do remainder=string.gsub(remainder,allowed,'') end
-            if string.find(remainder,'%a%a%a+') then untranslated[object.Text]=true end
+            if expected.locale=='th-th' and string.find(remainder,'%a%a%a+') then untranslated[object.Text]=true end
+            if expected.locale=='en-us' then
+                for _,cp in utf8.codes(remainder) do if cp>=0x0e00 and cp<=0x0e7f then untranslated[object.Text]=true;break end end
+            end
             if object.Text==text then found=object end
         end end
         if found then return found end
@@ -318,7 +349,7 @@ return function(sources,width,height)
             local p,yaw=pose(resident,seat)
             for _,entry in ipairs(Actors.preview(Config.playerColors[resident.colorIndex],p,yaw)) do table.insert(entries,entry) end
         end end
-        return Thai.scene(entries)
+        return expected:scene(entries)
     end
     local function capture(name)
         local figures={}
@@ -389,7 +420,7 @@ return function(sources,width,height)
     -- Exercise real camera/label adapters, including projection and reset.
     data.club.effects=false
     root.CameraDock.TableView.Activated:Fire();services.RunService.RenderStepped:Fire(0.016)
-    assert(root:GetAttribute("ViewMode")=="city" and root.CameraDock.TableView.Text=="ดูกระดาน")
+    assert(root:GetAttribute("ViewMode")=="city" and root.CameraDock.TableView.Text==t("Board view"))
     for index=1,24 do
         assert(not root["DeedLabel"..index].Visible,"Top-view badge remained in 3D view")
         assert(board["DeedPlate"..index].Caption.Enabled,"3D floor caption did not return")
@@ -471,7 +502,7 @@ return function(sources,width,height)
     assert(engine:act(1,"Roll"))
     data.diceEndsAt=now+Config.diceSeconds;data.moveAt=now+Journey.beforeMove(Config)
     data.journeyUntil=now+Journey.duration(Config,engine.state.lastRoll);data.handoffAt=data.journeyUntil+4;data.deadline=data.journeyUntil+55
-    publish();assert(root.TurnDock.PrimaryAction.Text=="กำลังทอย…" and not root.TurnDock.PrimaryAction.Active);assert(root.TurnDock.RollDieA.Active==false)
+    publish();assert(root.TurnDock.PrimaryAction.Text==t("ROLLING...") and not root.TurnDock.PrimaryAction.Active);assert(root.TurnDock.RollDieA.Active==false)
     assert(not root.MatchMoment.Visible,"A large roll banner hides the walking route")
     assert(not root.NoticeToast.Visible and not root.PropertyHover.Visible,"Old notices cover the dice and walking route")
     assert(workspace.CurrentCamera.CFrame==fixedCamera,"Rolling zooms the camera")
@@ -616,7 +647,7 @@ return function(sources,width,height)
     advance(0.3);click("Unlock Club · R$ 149")
     data.club=table.clone(data.club);data.club.ownsPass=true;publish()
     serverCheckout(true)
-    assert(shop.ClubCheckout.Text~="กำลังตรวจสอบกับ Roblox…","A late completion hides an already verified purchase")
+    assert(shop.ClubCheckout.Text~=t("Verifying with Roblox…"),"A late completion hides an already verified purchase")
     assert(priceCalls>=3,"The retry did not request fresh Roblox product information")
     local missing={};for value in pairs(untranslated) do table.insert(missing,value) end;table.sort(missing)
     if #missing>0 then for _,value in ipairs(missing) do print('UNTRANSLATED: '..value) end end

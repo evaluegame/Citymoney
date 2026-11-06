@@ -8,6 +8,9 @@ local player = Players.LocalPlayer
 local shared = RS:WaitForChild("Citymoney")
 local Config, Architecture, Scene, Layout = require(shared.Config),require(shared.Architecture),require(shared.Scene),require(shared.Layout)
 local Thai=require(shared.Thai)
+local Language=require(shared.Language)
+local localizationService=game:GetService("LocalizationService")
+local language=Language.new(Language.read(localizationService,player))
 local Plans=require(shared.PropertyPlans)
 local Menus=require(script:WaitForChild("Menus"))
 local Boutique=require(script:WaitForChild("Boutique"))
@@ -22,7 +25,7 @@ local CityOffer=require(script:WaitForChild("CityOffer"))
 local GoalDisplay=require(script:WaitForChild("GoalDisplay"))
 local MatchFeedback=require(script:WaitForChild("MatchFeedback"))
 local Journey=require(shared.Journey)
-local boardView=BoardView.new()
+local boardView=BoardView.new(language)
 local remotes=shared:WaitForChild("Remotes")
 local action,snapshot,feedback=remotes:WaitForChild("Action"),remotes:WaitForChild("Snapshot"),remotes:WaitForChild("Feedback")
 -- The default chat and player-list panels obscured the old game HUD.
@@ -45,7 +48,9 @@ safe.Size,safe.BackgroundTransparency,safe.Parent=UDim2.fromScale(1,1),1,gui
 local root=Instance.new("Frame")
 root.Name="CityRoot"
 root.BackgroundTransparency,root.Parent=1,safe
-Thai.watch(root)
+language:watch(root)
+language:watch(workspace,true)
+language:follow(localizationService,player)
 root:SetAttribute("ViewMode",Presentation.defaultView)
 local uiScale=Instance.new("UIScale"); uiScale.Parent=root
 local function round(object,radius)

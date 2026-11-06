@@ -500,6 +500,9 @@ TURN {1} / {2}	ตาที่ {1} / {2}
 {1}'s turn	ตาของ {1}
 {1} has finished.	{1} เล่นจบตาแล้ว
 {1}'s home · {t2}	บ้านของ {1} · {t2}
+{1}'s home	บ้านของ {1}
+SOLD!	ขายแล้ว!
+UPGRADED!	อัปเกรดแล้ว!
 At home · {t1}	กำลังชมบ้าน · {t1}
 FOR SALE · from ${n1}	ขายที่ดิน · เริ่ม ${n1}
 {1} including land	{1} รวมที่ดิน
@@ -838,20 +841,4 @@ function Thai.initial(value:string):string
     return string.sub(value,1,(utf8.offset(value,2) or (#value+1))-1)
 end
 Thai.shortNames={ [1]="เริ่ม",[2]="ทองแดง",[3]="ลานอิฐ",[4]="กลยุทธ์",[5]="ตะวันตก",[6]="มะม่วง",[7]="เรือนจำ",[8]="ริมน้ำ",[9]="ท่าเรือ",[10]="ภาษี",[11]="ลอฟต์",[12]="จัตุรัส",[13]="สวน",[14]="ซอยสวน",[15]="เฟิร์น",[16]="ข่าวเมือง",[17]="นีออน",[18]="พิกเซล",[19]="ไปเรือนจำ",[20]="ท้องฟ้า",[21]="ลานเมฆ",[22]="ค่าเช่า",[23]="มงกุฎ",[24]="แกรนด์" }
-function Thai.watch(root:any)
-    local function bind(object:any)
-        if not (object:IsA("TextLabel") or object:IsA("TextButton") or object:IsA("TextBox")) then return end
-        object.AutoLocalize=false
-        local last,changing=nil,false
-        local function update()
-            if changing or object:GetAttribute("PlayerName") or object.Text==last then return end
-            last=Thai.text(object.Text)
-            if object.Text~=last then changing=true;object.Text=last;changing=false end
-        end
-        object:GetPropertyChangedSignal("Text"):Connect(update)
-        update()
-    end
-    for _,object in ipairs(root:GetDescendants()) do bind(object) end
-    root.DescendantAdded:Connect(bind)
-end
 return Thai

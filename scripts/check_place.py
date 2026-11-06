@@ -52,6 +52,10 @@ for index in range(1, 25):
     offset = next(offset for offset, entry in enumerate(scene) if entry["name"] == f"DeedPlate{index}")
     tile = child(board, f"DeedPlate{index}_{offset:04}", "Part")
     assert tile.find("Item[@class='SurfaceGui']") is not None, "Missing editor tile caption"
+    label=tile.find("Item[@class='SurfaceGui']/Item[@class='TextLabel']")
+    assert label is not None and label.findtext("Properties/string[@name='Text']")==scene[offset]["text"], "Editor caption differs from canonical source"
+    marker=label.find("Properties/BinaryString[@name='AttributesSerialize']")
+    assert marker is not None and marker.text, "Editor caption is missing client-localization attributes"
 camera = child(child(place, "Workspace", "Workspace"), "CityPreviewCamera", "Camera")
 assert child(place, "Workspace", "Workspace").findtext("Properties/Ref[@name='CurrentCamera']") == camera.attrib["referent"]
 expected_camera = json.loads((ROOT / "build/board-camera.json").read_text())

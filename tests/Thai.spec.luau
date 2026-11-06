@@ -71,8 +71,8 @@ test('Robux and ordinary money keep their exact amounts and currencies',function
  assert(Thai.text('Cost $80 · Balance after $1420')=='ราคา $80 · เงินคงเหลือ $1420')
  assert(Thai.text('RENT $108')=='ค่าเช่า $108')
 end)
-test('editor and runtime board captions agree while interaction IDs stay unchanged',function()
- assert(Board.caption(Config,4)=='การ์ดกลยุทธ์\nการ์ดฟรี')
+test('canonical board captions translate while interaction IDs stay unchanged',function()
+ assert(Thai.text(Board.caption(Config,4))=='การ์ดกลยุทธ์\nการ์ดฟรี')
  local entries=Thai.scene({{name='CardSpaceSign',text='RENT CARDS',interaction='cards',tileIndex=22}})
  assert(entries[1].text=='การ์ดค่าเช่า' and entries[1].interaction=='cards' and entries[1].tileIndex==22)
  for _,entry in ipairs(Board.generate(Config)) do if entry.text then assert(utf8.len(entry.text),entry.name) end end

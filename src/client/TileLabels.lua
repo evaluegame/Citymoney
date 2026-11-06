@@ -6,14 +6,15 @@ local Config,Plans,Spaces,Actors=require(shared.Config),require(shared.PropertyP
 local Labels={}
 Labels.__index=Labels
 local special={start={"CITY GATE","+$200"},visit={"JAIL","JUST VISIT"},park={"PARK","FREE CARD"},detention={"GO TO","JAIL"},event={"CITY","NEWS"},tax={"CITY TAX","$120"}}
-function Labels.new(root,onSelect,onInteraction)
-    local self=setmetatable({buttons={},captions={},revision=nil},Labels)
+function Labels.new(root,onSelect,onInteraction,language)
+    local self=setmetatable({language=language,buttons={},captions={},sources={},revision=nil},Labels)
     for index,tile in ipairs(Config.tiles) do
         local button=Instance.new("TextButton")
         button.Name,button.AnchorPoint,button.ZIndex="DeedLabel"..index,Vector2.new(0.5,0.5),5
         button.BackgroundColor3,button.BackgroundTransparency,button.BorderSizePixel=Color3.fromHex("FFFFFF"),0,0
         button.TextColor3,button.Font,button.TextWrapped=Color3.fromHex("1B2C48"),Enum.Font.GothamBold,false
         button.TextScaled,button.ClipsDescendants=true,true
+        button:SetAttribute("CitymoneyTile",index)
         button.Text=tile.name;button.Parent=root
         local corner=Instance.new("UICorner");corner.CornerRadius,corner.Parent=UDim.new(0,2),button
         local limit=Instance.new("UITextSizeConstraint");limit.MinTextSize,limit.Parent=1,button
@@ -75,9 +76,12 @@ function Labels:update(camera,safe,scale,data,enabled,rect)
                 local caption=self.captions[index]
                 if caption then
                     local short=special[Config.tiles[index].kind]
-                    local name=Thai.shortNames[index] or Thai.text(short and short[1] or caption.name)
-                    local value=Thai.text(short and short[2] or ((caption.owned and "RENT " or "")..caption.value))
-                    button.Text=name.."\n"..value
+                    local sourceName=short and short[1] or string.match(caption.name,"^%S+")
+                    local sourceValue=short and short[2] or ((caption.owned and "RENT " or "")..caption.value)
+                    local name=self.language:shortName(index,sourceName)
+                    local value=self.language:text(sourceValue)
+                    local source=sourceName.."\n"..sourceValue
+                    if self.sources[index]~=source then self.sources[index]=source;button.Text=source end
                     local font=math.min(12,h/2.8,w/(math.max(Thai.width(name),Thai.width(value))*0.62+1))
                     button.TextSize=math.max(1,font/scale)
                     button:FindFirstChildOfClass("UITextSizeConstraint").MaxTextSize=math.max(1,math.floor(font/scale))

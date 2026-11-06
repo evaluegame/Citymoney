@@ -25,16 +25,17 @@ encoder = (ROOT / "scripts/export_board.luau").read_text()
 encoder = encoder[encoder.index("local encode"):encoder.index("local mode = ...")]
 base = "local mock=require('../tests/roblox_ui_mock')\nlocal sources={" + ",\n".join(sources) + "}\n" + encoder
 (ROOT / "build").mkdir(exist_ok=True)
-for name, width, height in (("desktop", 1440, 900), ("studio", 1192, 642), ("short", 800, 560), ("mobile", 390, 760)):
+layouts=(("desktop", 1440, 900), ("studio", 1192, 642), ("short", 800, 560), ("mobile", 390, 760))
+for locale, prefix, name, width, height in ((locale,prefix,*layout) for locale,prefix in (("th-th",""),("en-us","en-")) for layout in layouts):
     runner = ROOT / "build/client-smoke.luau"
-    runner.write_text(base + f"\nprint(encode(mock(sources,{width},{height})))\n")
+    runner.write_text(base + f"\nprint(encode(mock(sources,{width},{height},{json.dumps(locale)})))\n")
     result = subprocess.run([str(ROOT / ".tools/luau"), str(runner)], cwd=ROOT, capture_output=True, text=True)
     if result.returncode:
         raise RuntimeError(result.stderr + result.stdout)
     data = json.loads(result.stdout.splitlines()[-1])
     for view, snapshot in data.pop("views").items():
-        (ROOT / "build" / f"{view}-{name}-scene.json").write_text(json.dumps(snapshot.pop("scene")))
+        (ROOT / "build" / f"{prefix}{view}-{name}-scene.json").write_text(json.dumps(snapshot.pop("scene")))
         if view!="main":
-            (ROOT / "build" / f"{view}-{name}.json").write_text(json.dumps({"width":width,"height":height,**snapshot}, indent=2))
-    (ROOT / "build" / f"hud-{name}.json").write_text(json.dumps(data, indent=2))
-    print(f"PASS client UI adapter: {name} {width}×{height}; Thai menus and dynamic captions, preserved names, aligned fixed camera, settled dice before movement, player visibility, 24 labels, free cards, goals, homes, matchmaking and Robux cosmetics.")
+            (ROOT / "build" / f"{prefix}{view}-{name}.json").write_text(json.dumps({"width":width,"height":height,**snapshot}, indent=2))
+    (ROOT / "build" / f"{prefix}hud-{name}.json").write_text(json.dumps(data, indent=2))
+    print(f"PASS client UI adapter: {locale} {name} {width}×{height}; Roblox language preference, reversible UI/world translations, protected names, fixed camera, dice, free cards, goals, homes, matchmaking and Robux cosmetics.")

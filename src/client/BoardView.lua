@@ -5,7 +5,7 @@ local Presentation=require(shared.Presentation)
 local City=require(shared.CityScenery)
 local View={}
 View.__index=View
-function View.new() return setmetatable({frame=nil,key=nil,wasVisiting=false,bounds=Fit.cityBounds(Config,Architecture)},View) end
+function View.new(language) return setmetatable({language=language,frame=nil,key=nil,wasVisiting=false,bounds=Fit.cityBounds(Config,Architecture)},View) end
 function View:revealCharacter(character)
     if self.character~=character then
         if self.characterAdded then self.characterAdded:Disconnect() end
@@ -58,7 +58,7 @@ function View:update(_dt,root,safe,layout,_data,_focus,_inspector,visit,player)
     end
     self.frame=self.goal
     camera.CFrame=self.frame
-    if not self.labels then self.labels=Labels.new(root,self.onProperty,self.onInteraction) end
+    if not self.labels then self.labels=Labels.new(root,self.onProperty,self.onInteraction,self.language) end
     self.labels:update(camera,safe,layout.scale,_data,mode=="table",self.rect)
 end
 return View

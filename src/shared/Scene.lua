@@ -1,5 +1,4 @@
 -- The same part descriptions power the world and the property ViewportFrames.
-local Thai=require(script.Parent.Thai)
 local Scene = {}
 function Scene.populate(entries, parent, preview)
     local objects = {}
@@ -28,7 +27,8 @@ function Scene.populate(entries, parent, preview)
             surface.Parent = object
             local label = Instance.new("TextLabel")
             label.Size, label.BackgroundTransparency = UDim2.fromScale(1,1), 1
-            label.Text, label.TextColor3 = Thai.text(entry.text), Color3.fromHex(entry.textColor or "3C5149")
+            label.Text, label.TextColor3 = entry.text, Color3.fromHex(entry.textColor or "3C5149")
+            label:SetAttribute("CitymoneyText",true)
             label.Font, label.TextWrapped, label.TextScaled = Enum.Font.GothamBold, true, true
             label.Parent = surface
             local limit = Instance.new("UITextSizeConstraint")
