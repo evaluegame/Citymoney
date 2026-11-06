@@ -417,7 +417,14 @@ do
         openStyles=function() closePanels();boutique:open();render() end}
     menus=Menus.new(ui);boutique=Boutique.new(ui);city=CityPlaza.new(ui);commandMenu=CommandMenu.new(ui);hover=HoverCard.new(ui,player)
     opportunity=CityOffer.new(ui);goals=GoalDisplay.new(ui);moments=MatchFeedback.new(ui)
-    openCity=function(tab) closePanels();city:open(tab);render() end
+    openCity=function(tab)
+        if tab=="cards" then
+            local pending=data and data.game.pendingOffer
+            if pending and pending.kind=="cardSpace" and pending.actorId==player.UserId then opportunity:open();return end
+            tab="market"
+        end
+        closePanels();city:open(tab);render()
+    end
     boardView.onProperty=function(index) selected,inspectorOpen,portfolioOpen=index,true,false;render() end
     boardView.onInteraction=function(tab) openCity(tab) end
 end
@@ -479,7 +486,7 @@ render=function()
         turnTitle.Text=myTurn and "YOUR TURN" or ((current and current.name or "A resident").."'s turn")
         if state.phase=="end" then turnTitle.Text=myTurn and "Turn complete." or ((current and current.name or "A resident").." has finished.") end
         turnHint.Text=state.notice or "A new address is waiting."
-        if myTurn then turnHint.Text=state.phase=="roll" and "Roll to move. Events are optional." or (state.phase=="buy" and "Choose a home level, or skip this lot." or (state.phase=="offer" and "Choose cash or a tactical card." or "Next player starts automatically.")) end
+        if myTurn then turnHint.Text=state.phase=="roll" and "Roll to move. Events are optional." or (state.phase=="buy" and "Choose a home level, or skip this lot." or (state.phase=="offer" and (state.pendingOffer and state.pendingOffer.kind=="cardSpace" and "Choose a free card from this space." or "Choose cash or a tactical card.") or "Next player starts automatically.")) end
         if myTurn then
             if state.phase=="roll" then mainCommand="Roll";actionButton.Text=mine.detained and "Serve detention" or "ROLL DICE"
             elseif state.phase=="buy" then
@@ -487,7 +494,7 @@ render=function()
                 mainCommand="Buy"
                 actionButton.Text="Buy home · $"..tile.price.."+"
                 passButton.Visible=true
-            elseif state.phase=="offer" then mainCommand="Offer";actionButton.Text="CHOOSE REWARD"
+            elseif state.phase=="offer" then mainCommand="Offer";actionButton.Text=state.pendingOffer and state.pendingOffer.kind=="cardSpace" and "COLLECT CARD" or "CHOOSE REWARD"
             else mainCommand="End";actionButton.Text="Next player" end
         elseif current and current.id==player.UserId and state.phase=="end" then mainCommand="End";actionButton.Text="End turn"
         else mainCommand="Plaza";actionButton.Text="City events" end

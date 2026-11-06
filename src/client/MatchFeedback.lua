@@ -63,7 +63,7 @@ function Feedback:observe(data,old)
  local opportunity=state.lastOpportunity
  if opportunity and opportunity.seq>(old.game.lastOpportunity and old.game.lastOpportunity.seq or 0) then
   local actor=resident(state,opportunity.actorId)
-  self:show("CITY REWARD!",(actor and actor.name or "A resident").." chose "..opportunity.reward..".",opportunity.card and "CARD" or "+$",self.ui.colors.green,3,true)
+  self:show(opportunity.fromCardSpace and "CARD COLLECTED!" or "CITY REWARD!",(actor and actor.name or "A resident").." chose "..opportunity.reward..".",opportunity.card and "CARD" or "+$",self.ui.colors.green,3,true)
  end
  local me,before=resident(state,self.ui.id),resident(old.game,self.ui.id)
  if me and before and me.completedChallenges>before.completedChallenges then
@@ -83,6 +83,7 @@ function Feedback:landing(journey)
   title,badge=not p.ownerId and "YOUR NEXT HOME?" or (p.ownerId==actor.id and "WELCOME HOME!" or "RENT PAID"),"HOME"
  elseif tile.kind=="start" then title,badge="PAYDAY AT CITY GATE!","+$"
  elseif tile.kind=="park" then title,badge="A CARD FOR YOUR NEXT MOVE","CARD"
+ elseif tile.kind=="card" then title,badge="COLLECT A FREE CARD","CARD"
  elseif tile.kind=="tax" then title,badge="CITY TAX","TAX"
  elseif tile.kind=="detention" then title,badge="A DETOUR TO DETENTION","CITY"
  elseif tile.kind=="visit" then title,badge="JUST VISITING","CITY"

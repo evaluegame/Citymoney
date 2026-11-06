@@ -4,7 +4,9 @@ A bright, stylized Roblox property board game with colorful houses, a rounded ci
 
 **Inset spaces and visible residents:** every name and price stays inside its board space. Wider square spaces separate a blue walking lane from the deed panel. A fixed, gentle 3D angle shows larger full-body pawns, with owner-colored rings and outlines. Both dice settle and show their result for 0.4 seconds before the first step.
 
-This release includes a clearer **Cosmetic Shop**, server-confirmed Robux checkout, recovery for delayed purchases, and cleanup for eliminated pawns. Reserved matches validate every arriving player and retry failed lobby returns.
+**Dedicated card spaces:** land on **Tactic Cards** to collect demolition, shield or renovation, or **Rent Cards** to collect rent demand or rent boost. Choose one free card after your pawn arrives. All 16 home plots remain. Tactical cards are collected through gameplay; the card market has been removed.
+
+The **Cosmetic Shop** keeps server-confirmed Robux checkout for visual collections only. Reserved matches validate every arriving player, and eliminated pawns leave the route.
 
 Includes an optional **Waterfront Club cosmetic game pass** with three luxury collections, a 3D showroom, styled dice, player auras, walking trails, saved preferences, and reduced motion. **[Publishing and pass setup guide](docs/PUBLISHING.md)**.
 
@@ -20,6 +22,14 @@ The download files are at the repository root. On a GitHub file page, use **Down
 
 [Settled dice before movement](docs/Dice-result-preview.png) · [Movement with the fixed camera](docs/Walking-screen-preview.png) · [Phone view](docs/Walking-phone-preview.png)
 
+## Collect cards on their own board spaces
+
+![Choose a free tactical card after landing on its marked space](docs/Card-space-preview.png)
+
+**Tactic Cards** and **Rent Cards** are permanent, clearly marked plots on the route, with physical card displays. Landing opens a free collection dialog after the dice and movement finish. Choose one listed card, or continue without collecting. A full card type is disabled; another available choice can still be collected. On timeout, the server selects an available card, or continues if all choices are full. Each landing can be claimed once. Cards do not cost game cash or Robux, and buying a home does not grant a card. The Card Spaces screen explains where to collect; it cannot sell cards or grant them remotely.
+
+[Phone card-space preview](docs/Card-space-phone-preview.png) · [Rent Cards preview](docs/Rent-card-space-preview.png)
+
 ## Dice finish before moving
 
 The physical dice complete their tumble and settle on their final values. The result stays visible for **0.4 seconds**, then the resident moves in separate steps. HUD dice use the same server timeline and stop changing before movement. If the physical dice finish late, movement, arrival, buying/reward deadlines and the automatic handoff shift together; the decision clock still starts after arrival.
@@ -31,7 +41,7 @@ Real avatars replace the colored fallback residents only after the body and outf
 ## Three easy steps
 
 1. Click **PLAY NOW**, choose **2 players** or **4 players**, then **PLAY ONLINE** or **PRACTICE WITH BOTS**. Practice works immediately with the default settings.
-2. On your turn, tap a large die or **ROLL DICE**. On an empty property, choose the home level you can afford and buy it, or press **SKIP**.
+2. Tap a large die or **ROLL DICE**. On an empty property, buy your chosen home level or **SKIP**. On a card space, choose one free card or **CONTINUE WITHOUT CARD**.
 3. After your token arrives and the result is resolved, the next player starts automatically after four seconds. **EVENTS**, **CARDS & GOALS**, and **MY HOMES** are direct shortcuts for optional actions before rolling.
 
 [Phone layout preview](docs/Phone-screen-preview.png) · [Play menu preview](docs/Start-menu-preview.png) · [คู่มือภาษาไทย](START-HERE-TH.txt)
@@ -58,7 +68,7 @@ The persistent interface has a wallet header, a slim color-coded roster, one **M
 
 ![The colorful city, empty lots, purchased homes and four event buildings](docs/Neighborhood-preview.png)
 
-*Model preview of the shared scene geometry, including the public downtown, boardwalk, ferry and generated residents. The market has striped awnings and a clock tower; the festival has a domed stage, the challenge hall a trophy, and City News a broadcast tower.*
+*Model preview of the shared scene geometry, including the public downtown, boardwalk, ferry and generated residents. The card-space hall has striped awnings and a clock tower; the festival has a domed stage, the challenge hall a trophy, and City News a broadcast tower.*
 
 ## Dice and automatic turns
 
@@ -68,7 +78,7 @@ After the dice and movement finish and the landing, purchase, opportunity, or pa
 
 ## The interactive city plaza
 
-The city center has four colorful, clickable destinations. Click the direct **EVENTS** shortcut, press **P**, click a station, or choose **MENU → City Events**. The overview presents four large event cards; precise clicks on small buildings are optional:
+The city center has four colorful, clickable destinations. Two additional marked route plots, Tactic Cards and Rent Cards, give free card choices when landed on. Click the direct **EVENTS** shortcut, press **P**, click a station, or choose **MENU → City Events**. The overview presents four large event cards; precise clicks on small buildings are optional:
 
 ![Large, easy-to-select city event cards](docs/Events-screen-preview.png)
 
@@ -76,12 +86,12 @@ The city center has four colorful, clickable destinations. Click the direct **EV
 
 | Destination | What it does |
 | --- | --- |
-| City Market | Buy the tactical card you choose using game cash: demolition $180, rent demand $140, rent boost $100, shield $100, renovation $160. Hand caps still apply. |
+| Card Spaces | See the free collection rules and your inventory. Land on Tactic Cards or Rent Cards to choose a card; the menu does not grant or sell cards. |
 | City Festival | Choose one of your homes for the current rotating offer: Lantern Festival gives a two-payment rent boost for $80; Design Fair adds one building level for $110; Neighborhood Watch adds a demolition shield for $60. |
 | Challenge Hall | Open your challenge progress, claim completed goals, or choose a new goal. |
 | City News | See the active festival and recent city bulletin. |
 
-Festivals rotate every **eight total turns**. The festival screen shows the current offer, price, remaining turns, and eligible homes. One eligible home is selected for you; with multiple eligible homes, choose the target yourself. The confirmation shows the fee and remaining cash, then returns you to the board after a successful purchase. Make **one plaza purchase per turn, before rolling**; a market purchase and a festival offer share that allowance. Playing a tactical card remains a separate allowance. Existing shields/boosts and fully upgraded homes cannot be purchased again wastefully. Failed, stale, unaffordable, or invalid requests spend nothing. Bots use eligible festivals and still improve their homes. All plaza prices use **game cash**, never Robux.
+Festivals rotate every **eight total turns**. The festival screen shows the current offer, price, remaining turns, and eligible homes. One eligible home is selected for you; with multiple eligible homes, choose the target yourself. The confirmation shows the fee and remaining cash, then returns you to the board after a successful purchase. Use **one festival home service per turn, before rolling**. Free card-space collection does not consume that allowance. Playing a tactical card remains a separate allowance. Existing shields/boosts and fully upgraded homes cannot be purchased again wastefully. Failed, stale, unaffordable, or invalid requests spend nothing. Bots use eligible festivals and still improve their homes. All plaza prices use **game cash**, never Robux.
 
 ## Open in Roblox Studio
 
@@ -145,7 +155,7 @@ Open **Cards & goals** to select a card, its property, and an opponent where nee
 
 Online games always use full-house demolition. Practice offers an optional one-level attack rule; under that rule, attacking an L0 cottage still returns the lot to the city. Signs mark protected homes and rental effects. Destroying a visited home returns its owner to the board.
 
-There are **20 automatic City News events**, interleaved with the five interactive opportunity choices on every second visit: cash gains/losses, card grants, extra draws, maintenance based on homes or levels, home dividends, a community street fair, and movement events. Passing City Gate and resting in Central Park also award cards, subject to the hand cap.
+The remaining **City News** space retains **20 automatic events**, interleaved with the five interactive opportunity choices on every second visit: cash gains/losses, card grants, extra draws, maintenance based on homes or levels, home dividends, a community street fair, and movement events. Passing City Gate and resting in Central Park also award cards, subject to the hand cap.
 
 Seven rotating challenges reward collecting homes, adding building levels, earning rent, passing City Gate, drawing City News, playing cards, and completing districts. Watch the main-screen **goal card** or **Cards & Goals**, then claim the cash reward and a random card during your turn. Tap a ready goal card to claim directly. Random card rewards choose a type with remaining capacity; if the entire hand is full, the cash reward is still paid and the UI shows that the hand is full. Claim one goal per turn; pay **$50** to change your goal once per turn. Rewards range from $120 to $180. Losing property can invalidate an unclaimed ownership goal. Bots also play cards and claim goals.
 
@@ -160,6 +170,7 @@ Seven rotating challenges reward collecting homes, adding building levels, earni
 | Cards, targets, challenges | **CARDS & GOALS** shortcut or **MENU → Cards & Goals**; the shortcut says **CLAIM REWARD** when one is ready |
 | Roll | Click/tap a HUD die, 3D die, or dice tray; bottom action button or **R** also works |
 | Buy / skip / finish early | Bottom action button; **SKIP** leaves the lot empty; **Space** performs the current action. Resolved turns advance automatically |
+| Collect a free card | Land on Tactic Cards / Rent Cards, then choose a card; **COLLECT CARD** reopens the dialog |
 | City plaza | **EVENTS** shortcut, a station, **P**, or **MENU → City Events** |
 | Inspect a property | Click/tap its plot or house, **MY HOMES**, or **MENU → Your Properties** |
 | Upgrade / set rent | Select your home during your turn → **Upgrade options / Rent options** |
@@ -226,14 +237,14 @@ For source editing alongside Studio, use `rojo serve default.project.json --addr
 | `Dice`, `Journey`, `server/DiceWorld`, `TurnFlow` | Exact-result dice, shared movement timing, arrival guards and automatic handoff |
 | `Opportunities`, `client/CityOffer` | Guaranteed cash/card choices, card caps, replay protection, timeout and bot decisions |
 | `client/GoalDisplay`, `client/MatchFeedback` | Visible goal progress, direct claims, staged result cards and reward effects |
-| `Plaza`, `client/CityPlaza` | Game-cash card market, rotating festivals and interactive plaza menus |
+| `Plaza`, `client/CityPlaza` | Festival home services, free-card-space guidance and interactive plaza menus |
 | `Cosmetics`, `CosmeticProfiles`, `server/ClubService`, `client/Boutique` | Cosmetic catalogue, verified ownership, saved appearance, Roblox checkout, 3D showroom |
 | `Lobby`, `Parties`, `QueuePlanner`, `MatchProtocol` | Parties, exact-size packing, colors, atomic reservations and recovery |
 | `server/Matchmaker` | MemoryStore, reserved teleports, invitations, Studio queue adapter |
 | `server/World`, `server/WorldEffects`, `server/init.server` | Physical lifecycle, home reveals, avatar visits, doors, validated remotes, timers |
 | `client/Menus`, `client/init.client` | Match/card/goal menus, rent selector, HUD, cameras, input |
 
-Checks include **255 numbered cases and 600 complete simulated matches**: 35 core engine cases (200 matches), 18 purchase/upgrade cases, 23 strategy/rent cases (200 tactical matches), 25 party/matchmaking cases, 24 cosmetic/ownership/profile cases, 31 tabletop cases (200 automatic matches), 13 presentation cases, 28 opportunity/experience cases, 9 player-visibility/city-layout cases, 7 dice timeline cases, 6 native dice/router adapter cases, 6 space/price/visibility cases, 6 native avatar adapter cases, 10 Robux shop cases, 7 native Club purchase cases, and 7 native matchmaking cases. New cases cover camera projections across desktop/portrait/inset/rotation combinations, tall homes and closeups, exact dice faces, automatic handoff and stale clocks, market prices/caps, festival rotation/targets, and bots. Cosmetic cases cover verification/storage failures, concurrent saves, reconnects, and all **256 plot/style/level combinations**. Four headless client integration checks load the actual shared/client source through a limited Roblox API adapter at desktop, Studio, short-window and mobile sizes. They exercise fixed camera framing during rolling/movement/inspection/upgrades, removed zoom inputs, dice/result/movement phases, delayed completion snapshots, body transparency recovery, reduced motion, shared actor geometry, all 24 contained map badges, labels clearing real avatar/bot bodies as they move, camera switching/reset and property/News selection, goal claims/celebrations, arrival gating, opportunity selection/reopening/full hands/other-player privacy, large dice/shortcut targets, touch interactions, chosen festival targets, disabled off-turn offers, a market purchase, buying/skipping, upgrades, one-panel navigation, lobby settings, online search and one-click practice. Purchase requests are applied to the actual game engine. They also export the visible GUI layout, matching perspective camera, and actual world geometry for every review state. A separate native avatar harness executes actual World methods for R6/R15 standing height, home/board scaling, unfinished characters and adornment cleanup. A native dice-adapter harness executes the actual DiceWorld source with a controlled heartbeat to check completion ordering, reduced motion, cancellation, resets, late completion and reward-table routing. It does not emulate native rendering or replication. Native Club tests exercise the real completion callback, cancellation, delayed verification, outages, duplicate completions and departure/rejoin behavior. Native Matchmaker tests start the real engine through 2-/4-player queues and cover readiness, ticket admission, incomplete arrivals and retries. All four GUI layouts exercise Robux prices, cancellation, server verification, automatic equipping, restores and product/prompt outages. Additional scene, home and layout checks run; pure modules are analyzed, all Roblox source compiles, and built-place scripts, interactive attributes and geometry are checked against source.
+Checks include **275 numbered cases and 600 complete simulated matches**: 35 core engine cases (200 matches), 18 purchase/upgrade cases, 23 strategy/rent cases (200 tactical matches), 25 party/matchmaking cases, 24 cosmetic/ownership/profile cases, 31 tabletop cases (200 automatic matches), 13 presentation cases, 28 opportunity/experience cases, 9 player-visibility/city-layout cases, 7 dice timeline cases, 7 native dice/router adapter cases, 6 space/price/visibility cases, 6 native avatar adapter cases, 10 Robux shop cases, 7 native Club purchase cases, 7 native matchmaking cases, and 19 physical-card-space cases. New cases cover camera projections across desktop/portrait/inset/rotation combinations, tall homes and closeups, exact dice faces, automatic handoff and stale clocks, card-space hand caps and rejected card-purchase requests, festival rotation/targets, and bots. Cosmetic cases cover verification/storage failures, concurrent saves, reconnects, and all **256 plot/style/level combinations**. Four headless client integration checks load the actual shared/client source through a limited Roblox API adapter at desktop, Studio, short-window and mobile sizes. They exercise fixed camera framing during rolling/movement/inspection/upgrades, removed zoom inputs, dice/result/movement phases, delayed completion snapshots, body transparency recovery, reduced motion, shared actor geometry, all 24 contained map badges, labels clearing real avatar/bot bodies as they move, camera switching/reset and property/News selection, goal claims/celebrations, arrival gating, opportunity selection/reopening/full hands/other-player privacy, large dice/shortcut targets, touch interactions, chosen festival targets, disabled off-turn offers, free card-space collection, three-/two-option layouts, full-hand skipping, buying/skipping, upgrades, one-panel navigation, lobby settings, online search and one-click practice. Purchase requests are applied to the actual game engine. They also export the visible GUI layout, matching perspective camera, and actual world geometry for every review state. A separate native avatar harness executes actual World methods for R6/R15 standing height, home/board scaling, unfinished characters and adornment cleanup. A native dice-adapter harness executes the actual DiceWorld source with a controlled heartbeat to check completion ordering, reduced motion, cancellation, resets, late completion and reward-table routing. It does not emulate native rendering or replication. Native Club tests exercise the real completion callback, cancellation, delayed verification, outages, duplicate completions and departure/rejoin behavior. Native Matchmaker tests start the real engine through 2-/4-player queues and cover readiness, ticket admission, incomplete arrivals and retries. All four GUI layouts exercise Robux prices, cancellation, server verification, automatic equipping, restores and product/prompt outages. Additional scene, home and layout checks run; pure modules are analyzed, all Roblox source compiles, and built-place scripts, interactive attributes and geometry are checked against source.
 
 Reservation and cosmetic service tests use in-memory adapters. **Cloud checks do not run Roblox Studio or live Roblox services.** Native rendering, thumbnails, movement, input, doors, replication, native invites, cross-server joins, actual game-pass checkout, and DataStore persistence still require Studio and published-game playtests.
 

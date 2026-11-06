@@ -187,6 +187,8 @@ function Engine:land(player)
         self:pay(player, tile.amount)
     elseif tile.kind == "detention" then
         self:sendToDetention(player)
+    elseif tile.kind == "card" then
+        Offers.openCardSpace(self,player,index)
     elseif tile.kind == "event" then
         player.stats.news=player.stats.news+1
         if Offers.open(self,player) then return end

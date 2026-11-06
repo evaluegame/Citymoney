@@ -1,4 +1,4 @@
-# Citymoney — publish the final build
+# Citymoney 1.1 — publish the final build
 
 The place is ready to open and upload in Roblox Studio. The free game works without a pass. Real Robux sales need a pass created under **your own published experience**; this bundle keeps `clubPassId = 0` until that ID is available.
 

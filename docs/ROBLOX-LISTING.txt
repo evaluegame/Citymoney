@@ -8,7 +8,8 @@ Roll the dice and turn empty lots into your own colorful city!
 
 Play a 2-player or 4-player match, invite your friends, or practice with bots.
 Choose your first home level, upgrade your buildings, and set higher rent.
-Collect cards, complete city challenges, join festivals and protect your homes.
+Land on marked card spaces to collect free cards. Complete city challenges,
+join festivals and protect your homes.
 Use a demolition permit to challenge a rival's property and make your next move.
 
 Your player color marks your homes and avatar. Turns advance automatically,

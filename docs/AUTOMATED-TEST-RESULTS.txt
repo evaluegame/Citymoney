@@ -1,6 +1,6 @@
-CITYMONEY 1.0.0 — AUTOMATED TEST OUTPUT
+CITYMONEY 1.1.0 — AUTOMATED TEST OUTPUT
 
-255 named cases, 600 simulated matches, four headless client layouts.
+275 named cases, 600 simulated matches, four headless client layouts.
 Controlled Roblox service adapters are used; this is not a live Studio,
 purchase, teleport, or DataStore playtest. See RELEASE-CHECKS.md.
 
@@ -171,16 +171,16 @@ PASS automatic handoff happens once and gives the next player a fresh roll clock
 PASS players can still finish immediately without waiting for the handoff countdown
 PASS automatic turns skip eliminated seats and stop after the game ends
 PASS 200 complete 2/4-player games advance using the automatic phase clock
-PASS the market charges the listed game-cash price and delivers the chosen card
+PASS card market requests are rejected without charging or granting cards
 PASS malformed, stale and out-of-turn market requests spend nothing
-PASS market hand caps and insufficient funds cannot consume a plaza purchase
-PASS plaza purchases are made before rolling and cannot postpone the completed-turn handoff
+PASS removed card purchases stay rejected regardless of hand size or balance
+PASS removed card purchases cannot postpone the completed-turn handoff
 PASS festivals rotate predictably every eight turns and wrap around
 PASS the lantern festival boosts the chosen home's next two rent collections
 PASS the design fair adds exactly one level and updates the building challenge
 PASS neighborhood-watch protection blocks a rival demolition once
 PASS expired festivals, rival targets, stacked effects and maximum levels reject without a charge
-PASS one plaza purchase is separate from the tactical allowance and resets next turn
+PASS one festival service is separate from the tactical allowance and resets next turn
 PASS bots choose a valid affordable festival target and respect the plaza allowance
 
 31 tabletop/camera/dice/automatic-turn/plaza tests passed, including 200 automatic matches.
@@ -229,6 +229,27 @@ PASS an early purchase cannot advance the next player before the visible landing
 PASS historic rolls do not animate again on the next turn or after a match finishes
 
 28 opportunity, route and presentation-timing cases passed.
+PASS two dedicated card spaces cover all five tactics while all sixteen homes remain
+PASS landing on Tactic Cards opens a free choice without buying or changing news progress
+PASS demolition, shield and renovation choices each grant exactly the selected free card
+PASS Rent Cards offers rent demand or rent boost with no charge
+PASS buying any home level gives only the purchased home and no bonus card
+PASS the removed card market cannot sell or grant any card
+PASS clicking a card from elsewhere cannot create a landing reward
+PASS card-space plots cannot be bought or upgraded as property
+PASS stale, malformed and out-of-range collection requests grant nothing
+PASS opponents and spectators cannot collect the current player card
+PASS a landing can be claimed once and the next landing receives a fresh token
+PASS a full card type stays capped while another choice can be collected
+PASS players can continue without a card and cannot gain cash by declining
+PASS AFK collection picks an available card when the first card is full
+PASS a completely full hand automatically continues and hands off the turn
+PASS collection waits for the settled dice and movement then receives the full decision clock
+PASS bots choose usable cards and continue safely with a full hand
+PASS a roll reaches the physical card space without an extra random draw
+PASS card booths and their FREE labels are on the marked parcels
+
+19 physical-card-space cases passed.
 PASS all six resident positions stay separated and within each rotated space
 PASS residents face their actual movement direction on every side and corner
 PASS travel holds exact centers, crosses City Gate and reaches event destinations
@@ -261,17 +282,18 @@ PASS board scene: closed 24-tile path, deterministic geometry, labels, sizes, an
 PASS homes: all 16 parcels, four building levels, walkable doors, furniture, stairs, rotation matrices and visit arrival points.
 PASS responsive layout: screenshot size, short Studio windows, desktop and portrait safe areas.
 All Roblox source files compiled successfully.
-PASS client UI adapter: desktop 1440×900; fixed camera, settled dice before movement, late clocks, player visibility, 24 map labels, goals/rewards, opportunities, upgrades, buy/skip, lobby/practice, and Robux shop pricing/cancel/verify/equip/retry.
-PASS client UI adapter: studio 1192×642; fixed camera, settled dice before movement, late clocks, player visibility, 24 map labels, goals/rewards, opportunities, upgrades, buy/skip, lobby/practice, and Robux shop pricing/cancel/verify/equip/retry.
-PASS client UI adapter: short 800×560; fixed camera, settled dice before movement, late clocks, player visibility, 24 map labels, goals/rewards, opportunities, upgrades, buy/skip, lobby/practice, and Robux shop pricing/cancel/verify/equip/retry.
-PASS client UI adapter: mobile 390×760; fixed camera, settled dice before movement, late clocks, player visibility, 24 map labels, goals/rewards, opportunities, upgrades, buy/skip, lobby/practice, and Robux shop pricing/cancel/verify/equip/retry.
+PASS client UI adapter: desktop 1440×900; fixed camera, settled dice before movement, player visibility, 24 labels, free card-space collection/skip/caps, removed card purchases, goals, City News, homes, matchmaking and Robux cosmetics.
+PASS client UI adapter: studio 1192×642; fixed camera, settled dice before movement, player visibility, 24 labels, free card-space collection/skip/caps, removed card purchases, goals, City News, homes, matchmaking and Robux cosmetics.
+PASS client UI adapter: short 800×560; fixed camera, settled dice before movement, player visibility, 24 labels, free card-space collection/skip/caps, removed card purchases, goals, City News, homes, matchmaking and Robux cosmetics.
+PASS client UI adapter: mobile 390×760; fixed camera, settled dice before movement, player visibility, 24 labels, free card-space collection/skip/caps, removed card purchases, goals, City News, homes, matchmaking and Robux cosmetics.
 PASS native dice finish both models before any waiting mover is released
 PASS reduced motion settles exact faces before its completion callback
 PASS a superseding native roll cancels the old mover and completion
 PASS match reset cancels a waiting roll without leaking its callback into a new match
 PASS late native dice completion retimes the real turn clock before movement can begin
 PASS the real remote router accepts reward tables after arrival and rejects early or other-player choices
-6 native dice/router cases passed.
+PASS the real router collects a free board card only after arrival and once
+7 native dice/router cases passed.
 PASS native R6 and R15 feet stand above the board instead of sinking into it
 PASS home visits restore normal body size and return to the enlarged board pawn
 PASS rescaling rebuilds adornments without enlarging names or leaving duplicate rings
@@ -295,3 +317,6 @@ PASS a stranger cannot join a reserved match by copying its match identifier
 PASS an incomplete match retries failed lobby returns and cannot start after cancellation
 PASS departures remove a reserved admission before a player can rejoin
 7 native matchmaking cases passed.
+
+Post-review UI verification: clipped card-guide lists and scrolling to the
+last card pass at all four layouts; updated GUI and shared scene compile.

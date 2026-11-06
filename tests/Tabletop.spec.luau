@@ -125,7 +125,7 @@ test("both buying and passing begin an automatic handoff without another confirm
     end
 end)
 test("rent, detention and city-news results all enter the same short handoff",function()
-    for _,index in ipairs({2,10,19,4}) do
+    for _,index in ipairs({2,10,19,16}) do
         local e=game();local f=Flow.new(Config);own(e,2,2);e:player(1).position=index;e:land(e:player(1));f:observe(e.state,50)
         equal(e.state.phase,"end");equal(f:due(e.state,54),"End")
     end
@@ -178,21 +178,24 @@ test("200 complete 2/4-player games advance using the automatic phase clock",fun
         equal(e.state.status,"finished")
     end
 end)
-test("the market charges the listed game-cash price and delivers the chosen card",function()
-    local e=game();local count=e:player(1).cards.shield
-    check(e:act(1,"Plaza",{shop="market",kind="shield",turn=1}))
-    equal(e:player(1).cash,1500-Config.cityMarket.shield);equal(e:player(1).cards.shield,count+1);check(e.state.plazaUsed)
+test("card market requests are rejected without charging or granting cards",function()
+    local e=game();local player=e:player(1)
+    for _,kind in ipairs(Config.cardTypes) do
+        local count=player.cards[kind]
+        check(not e:act(1,"Plaza",{shop="market",kind=kind,turn=1}))
+        equal(player.cards[kind],count);equal(player.cash,1500);check(not e.state.plazaUsed)
+    end
 end)
 test("malformed, stale and out-of-turn market requests spend nothing",function()
     local e=game()
     for _,request in ipairs({{},false,"market",{shop="market",kind="shield",turn=0},{shop="market",kind="fake",turn=1},{shop="hack",turn=1}}) do check(not e:act(1,"Plaza",request)) end
     check(not e:act(2,"Plaza",{shop="market",kind="shield",turn=1}));equal(e:player(1).cash,1500);check(not e.state.plazaUsed)
 end)
-test("market hand caps and insufficient funds cannot consume a plaza purchase",function()
+test("removed card purchases stay rejected regardless of hand size or balance",function()
     local e=game();e:player(1).cards.shield=3;check(not e:act(1,"Plaza",{shop="market",kind="shield",turn=1}))
     e:player(1).cash=0;check(not e:act(1,"Plaza",{shop="market",kind="boost",turn=1}));check(not e.state.plazaUsed)
 end)
-test("plaza purchases are made before rolling and cannot postpone the completed-turn handoff",function()
+test("removed card purchases cannot postpone the completed-turn handoff",function()
     local e=game();e.state.phase="end";local f=Flow.new(Config);f:observe(e.state,0)
     check(not e:act(1,"Plaza",{shop="market",kind="shield",turn=1}));f:observe(e.state,3);equal(f.handoffAt,4)
 end)
@@ -228,12 +231,12 @@ test("expired festivals, rival targets, stacked effects and maximum levels rejec
     e.state.turnCount=9;p.level=3;check(not e:act(1,"Plaza",{shop="festival",tile=2,turn=9,festivalId="renovation"}))
     equal(e:player(1).cash,1500);check(not e.state.plazaUsed)
 end)
-test("one plaza purchase is separate from the tactical allowance and resets next turn",function()
-    local e=game();own(e,2,1)
-    check(e:act(1,"Plaza",{shop="market",kind="shield",turn=1}));check(e:playCard(1,"shield",2,nil,1))
-    check(not e:act(1,"Plaza",{shop="market",kind="boost",turn=1}))
+test("one festival service is separate from the tactical allowance and resets next turn",function()
+    local e=game();own(e,2,1);own(e,8,2)
+    check(e:act(1,"Plaza",{shop="festival",tile=2,turn=1,festivalId="lantern"}));check(e:playCard(1,"shield",2,nil,1))
+    check(not e:act(1,"Plaza",{shop="festival",tile=2,turn=1,festivalId="lantern"}))
     e.state.phase="end";check(e:act(1,"End"));check(not e.state.plazaUsed)
-    check(e:act(2,"Plaza",{shop="market",kind="boost",turn=2}))
+    check(e:act(2,"Plaza",{shop="festival",tile=8,turn=2,festivalId="lantern"}))
 end)
 test("bots choose a valid affordable festival target and respect the plaza allowance",function()
     local e=game();own(e,2,1);own(e,24,1,2)

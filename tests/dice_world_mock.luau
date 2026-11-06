@@ -136,7 +136,7 @@ return function(sources)
  test('the real remote router accepts reward tables after arrival and rejects early or other-player choices',function()
   local c=harness();local e=c.Engine.new(c.config,function(low) return low end)
   assert(e:start({{id=1,name='Avery'},{id=2,name='Riley'}}))
-  local p=e:player(1);p.stats.news=1;p.position=4;e:land(p)
+  local p=e:player(1);p.stats.news=1;p.position=16;e:land(p)
   local flow=c.Flow.new(c.config);flow:observe(e.state,0);flow.journeyUntil=0.2;flow.journeyTurn=1
   local handle,result=c:router(e,flow);local a,b={UserId=1},{UserId=2}
   local request=c.Offers.request(e.state,1)
@@ -144,6 +144,16 @@ return function(sources)
   c:advance(0.25);handle(b,'Offer',request);assert(p.cash==1500 and #result.errors==2)
   c:advance(0.25);handle(a,'Offer',request)
   assert(p.cash==1590 and e.state.phase=='end' and result.published==1,'The reward was discarded by the native index filter')
+ end)
+ test('the real router collects a free board card only after arrival and once',function()
+  local c=harness();local e=c.Engine.new(c.config,function(low) return low end)
+  assert(e:start({{id=1,name='Avery'},{id=2,name='Riley'}}))
+  local p=e:player(1);p.cash=0;p.position=4;e:land(p)
+  local flow=c.Flow.new(c.config);flow:observe(e.state,0);flow.journeyUntil=0.2;flow.journeyTurn=1
+  local handle,result=c:router(e,flow);local buyer={UserId=1};local request=c.Offers.request(e.state,3)
+  handle(buyer,'Offer',request);assert(p.cards.repair==1 and p.cash==0)
+  c:advance(0.3);handle(buyer,'Offer',request);assert(p.cards.repair==2 and p.cash==0 and result.published==1)
+  c:advance(0.3);handle(buyer,'Offer',request);assert(p.cards.repair==2 and result.published==1)
  end)
  return passed
 end

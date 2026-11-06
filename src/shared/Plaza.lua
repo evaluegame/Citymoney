@@ -1,4 +1,4 @@
--- Predictable festival offers and a fixed-price card market, all in game cash.
+-- Festival home services. Tactical cards are collected on the board, never sold.
 local runtimeScript=getfenv().script
 local Tactics=runtimeScript and require(runtimeScript.Parent.Tactics) or require("./Tactics")
 local Plaza={}
@@ -11,16 +11,10 @@ function Plaza.act(engine,id,request: any)
     local player=engine:current()
     if state.status~="playing" or not player or player.id~=id or not player.alive then return false,"Visit the plaza during your turn." end
     if type(request)~="table" or request.turn~=state.turnCount then return false,"That plaza offer expired. Open it again." end
+    if request.shop=="market" then return false,"Cards are collected for free. Land on a Tactic Cards or Rent Cards space." end
     if state.phase~="roll" then return false,"Use the city plaza before rolling your dice." end
     if state.plazaUsed then return false,"You can make one plaza purchase per turn." end
-    if request.shop=="market" then
-        local cost=type(request.kind)=="string" and config.cityMarket[request.kind]
-        if not cost then return false,"Choose a card from the market." end
-        if (player.cards[request.kind] or 0)>=config.cardLimit then return false,"Your hand already holds the maximum of this card." end
-        if player.cash<cost then return false,"This card costs $"..cost.." in game cash." end
-        player.cash=player.cash-cost;Tactics.grant(engine,player,request.kind,1)
-        engine:log(player.name.." bought "..config.cardDefinitions[request.kind].name.." from City Market for $"..cost..".")
-    elseif request.shop=="festival" then
+    if request.shop=="festival" then
         local offer=Plaza.festival(config,state)
         if request.festivalId~=offer.id then return false,"The festival changed. Review the current offer." end
         local index=request.tile
@@ -37,7 +31,7 @@ function Plaza.act(engine,id,request: any)
         else property.level=property.level+1;player.stats.upgrades=player.stats.upgrades+1 end
         state.lastAction={seq=(state.lastAction and state.lastAction.seq or 0)+1,kind=offer.kind,tile=index,actorId=id,targetId=id,blocked=false,amount=offer.cost}
         engine:log(player.name.." joined "..offer.name.." at "..config.tiles[index].name.." for $"..offer.cost..".")
-    else return false,"Choose City Market or the festival." end
+    else return false,"Choose a festival service for your home." end
     state.plazaUsed=true;Tactics.refresh(engine)
     return true
 end

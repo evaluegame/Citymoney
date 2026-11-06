@@ -1,6 +1,6 @@
 -- Original Citymoney rules and districts. Money is in-game currency, never Robux.
 local Config = {
-    releaseVersion = "1.0.0",
+    releaseVersion = "1.1.0",
     startingCash = 1500,
     startBonus = 200,
     turnSeconds = 55,
@@ -20,7 +20,6 @@ local Config = {
         {name="City Makeover",description="An empty skyline makes room for a new plan. Pick your advantage.",choices={{label="Take $70",detail="Add $70 to your balance now.",cash=70},{label="Demolition permit",detail="Choose a rival home to demolish when you play this card.",card="demolish"}}},
     },
     festivalTurns = 8,
-    cityMarket = {demolish=180,collect=140,boost=100,shield=100,repair=160},
     festivals = {
         {id="lantern",name="Lantern Festival",kind="boost",cost=80,description="Sponsor one of your homes: +50% rent for its next two paid collections."},
         {id="renovation",name="Design Fair",kind="repair",cost=110,description="Choose one of your homes and add a building level for $110, up to L3."},
@@ -50,8 +49,8 @@ local Config = {
     challengeSwapCost = 50,
     cardTypes = { "demolish", "collect", "boost", "shield", "repair" },
     cardDefinitions = {
-        demolish = { name="Demolition permit", description="Choose a rival's house. The lobby's attack rule determines whether it loses one level or is fully demolished.", target="rival" },
-        collect = { name="Rent demand", description="Choose your property and an opponent. Demand 2× its current rent immediately, capped at $350.", target="demand" },
+        demolish = { name="Demolition permit", description="Choose a rival's home. Match rules set full demolition or one-level damage.", target="rival" },
+        collect = { name="Rent demand", description="Choose your home and a rival. Collect 2× its rent now (up to $350).", target="demand" },
         boost = { name="Rent boost", description="Choose your property. Raise rent by 50% for its next two rent payments.", target="own" },
         shield = { name="Property shield", description="Choose your property. Block the next demolition attempt on it.", target="own" },
         repair = { name="Renovation grant", description="Choose your property. Add one home level for free, up to level 3.", target="own" },
@@ -80,7 +79,7 @@ local Config = {
         { name = "CITY GATE", kind = "start" },
         { name = "Copper Lane", kind = "property", group = "old", price = 90, rent = 12, upgrade = 60 },
         { name = "Brick Courtyard", kind = "property", group = "old", price = 110, rent = 16, upgrade = 60 },
-        { name = "CITY NEWS", kind = "event" },
+        { name = "TACTIC CARDS", kind = "card", color="FF9A78", cardChoices={"demolish","shield","repair"} },
         { name = "Sunset Street", kind = "property", group = "sunset", price = 140, rent = 20, upgrade = 80 },
         { name = "Mango Market", kind = "property", group = "sunset", price = 160, rent = 24, upgrade = 80 },
         { name = "DETENTION", kind = "visit" },
@@ -98,7 +97,7 @@ local Config = {
         { name = "GO TO DETENTION", kind = "detention" },
         { name = "Sky Avenue", kind = "property", group = "sky", price = 340, rent = 60, upgrade = 180 },
         { name = "Cloud Court", kind = "property", group = "sky", price = 360, rent = 64, upgrade = 180 },
-        { name = "CITY NEWS", kind = "event" },
+        { name = "RENT CARDS", kind = "card", color="B4A1F5", cardChoices={"collect","boost"} },
         { name = "Crown Heights", kind = "property", group = "crown", price = 380, rent = 70, upgrade = 200 },
         { name = "Grand Boulevard", kind = "property", group = "crown", price = 400, rent = 80, upgrade = 200 },
     },

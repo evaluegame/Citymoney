@@ -28,7 +28,7 @@ function Hover:update(data,layout,safe,blocked)
     local tile=index and Config.tiles[index]
     local interaction=target and (target:GetAttribute("Interaction") or target.Parent:GetAttribute("Interaction"))
     if interaction then
-        local descriptions={market={"City Market","Choose a tactical card","Click to open the market"},contracts={"Challenge Hall","Your city goals and rewards","Click to view challenges"},news={"City News","See what is happening","Click to read the bulletin"},dice={"Let's roll!","Your next move starts here","Click the dice on your turn"}}
+        local descriptions={market={"Card Spaces","Land on a marked space for a free card","Click to see how cards work"},cards={tile and tile.name or "Card Space","Land here to choose a free card","Click to view cards"},contracts={"Challenge Hall","Your city goals and rewards","Click to view challenges"},news={"City News","See what is happening","Click to read the bulletin"},dice={"Let's roll!","Your next move starts here","Click the dice on your turn"}}
         local details=descriptions[interaction]
         if interaction=="festival" then
             local offer,remaining=Plaza.festival(Config,data.game)

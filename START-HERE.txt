@@ -11,7 +11,7 @@ OPEN IN ROBLOX STUDIO
 Studio: https://create.roblox.com/
 
 BRIGHT CITY VIEW AND INTERACTIVE DICE
-The colorful city board has empty lots, a card market, festival stage,
+The colorful city board has empty lots, card-space displays, a festival stage,
 challenge hall and broadcast tower. Play starts in a gently angled Board view.
 Inset labels show names and prices; RENT marks an owned home's rent.
 Tap a badge for the full name, owner and details. City view switches to the
@@ -45,12 +45,16 @@ Menus do not pause the handoff countdown.
 
 CITY PLAZA
 The center now has clickable stations instead of decorative houses/trees.
-EVENTS or P opens four big choices: Festival, Card Market, Challenges, News.
-City Market sells chosen tactical cards for game cash. Select a card and
-review its price before confirming. Successful offers return to the board.
+EVENTS or P opens four big choices: Festival, Card Spaces, Challenges, News.
+Cards are FREE: land on Tactic Cards for demolition/shield/renovation,
+or Rent Cards for rent demand/boost. Choose one after your pawn arrives.
+Use CONTINUE WITHOUT CARD to skip. Full types cannot be collected again.
+The timeout collects an available card or skips when all choices are full.
+Card Spaces in the events menu is a guide, not a shop. Buying homes gives
+no bonus card. Starting cards, goals, the park and City News remain free.
 The festival rotates every eight turns: rent boost ($80), one added building
-level ($110), or a demolition shield ($60), applied to your chosen home.
-One plaza purchase per turn, before rolling. Playing a card is separate.
+level ($110), or a demolition shield ($60), applied directly to your home.
+One festival service per turn before rolling. No cards are sold there.
 Challenge Hall opens goals. City News shows the festival and recent events.
 
 PREMIUM VISUALS / ROBUX PASS

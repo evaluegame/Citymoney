@@ -1,4 +1,4 @@
--- Large event choices and explicit prices; transactions remain server-validated.
+-- Free card-space guidance and server-validated festival home services.
 local shared=game:GetService("ReplicatedStorage"):WaitForChild("Citymoney")
 local Plaza=require(shared.Plaza)
 local City={}
@@ -22,6 +22,8 @@ function City.new(ui)
     self.description=ui.text(self.card,"",24,194,472,54,16,C.muted)
     self.period=ui.text(self.card,"",24,254,472,26,13,C.green,true)
     self.rows=Instance.new("ScrollingFrame")
+    self.rows.Name,self.rows.ClipsDescendants,self.rows.ScrollingDirection="CityEventOptions",true,Enum.ScrollingDirection.Y
+    self.rows.ScrollBarImageColor3=C.green
     self.rows.Position,self.rows.Size=UDim2.fromOffset(24,292),UDim2.fromOffset(472,194)
     self.rows.BackgroundTransparency,self.rows.BorderSizePixel,self.rows.ScrollBarThickness,self.rows.Parent=1,0,6,self.card
     self.detail=ui.text(self.card,"",24,498,472,36,15,C.ink,true)
@@ -34,7 +36,7 @@ function City.new(ui)
     self.options={}
     local destinations={
         {"festival","FESTIVAL","Improve one of your homes","FF9DCF"},
-        {"market","CARD MARKET","Buy the card you choose","FFC34D"},
+        {"market","CARD SPACES","Land on a space, collect a card","FFC34D"},
         {"contracts","CHALLENGES","Complete goals, collect rewards","AFACFF"},
         {"news","CITY NEWS","Read the city bulletin","75D9EC"},
     }
@@ -47,7 +49,7 @@ function City.new(ui)
         local note=ui.text(button,"OPEN >",16,121,198,23,14,C.green,true)
         self.options[item[1]]={button=button,note=note}
     end
-    ui.text(self.overview,"One paid city offer per turn, before rolling.\nAll prices use game cash.",0,354,472,66,16,C.muted)
+    ui.text(self.overview,"Cards are free on marked board spaces.\nFestival home services use game cash.",0,354,472,66,16,C.muted)
     return self
 end
 function City:isOpen() return self.shade.Visible end
@@ -62,7 +64,8 @@ function City:feedback(message)
 end
 function City:confirmOffer()
     local data=self.ui.data()
-    if not data or self.pending or (self.tab~="festival" and self.tab~="market") then return end
+    if self.tab=="market" then self.shade.Visible=false;self.ui.openGoals();return end
+    if not data or self.pending or self.tab~="festival" then return end
     local festival=Plaza.festival(self.ui.config,data.game)
     local request={shop=self.tab,kind=self.kind,tile=self.tile,turn=data.game.turnCount,festivalId=festival.id}
     if self.ui.send("Plaza",request) then
@@ -83,7 +86,7 @@ function City:render(data)
     local myTurn=state.status=="playing" and me and me.alive and current and current.id==ui.id
     if self.pending and self.pending.turn~=state.turnCount then self.pending=nil;self.error="Your turn changed. Review the current offer."
     elseif self.pending and state.plazaUsed then
-        local message=self.pending.shop=="festival" and "Festival applied to your home!" or "Card added! Open Cards & Goals to play it."
+        local message="Festival applied to your home!"
         self.pending=nil;self.error=nil;self.shade.Visible=false;ui.notify(message);return
     end
     local canBuy=myTurn and state.phase=="roll" and not state.plazaUsed and not self.pending
@@ -92,13 +95,11 @@ function City:render(data)
     for _,object in ipairs({self.title,self.description,self.period,self.rows,self.detail,self.status,self.confirm}) do object.Visible=not overview end
     self.done.Position,self.done.Size=UDim2.fromOffset(overview and 24 or 368,574),UDim2.fromOffset(overview and 472 or 128,64)
     self.done.Text=overview and "BACK TO BOARD" or "CLOSE"
-    self.heading.Text=overview and "Choose an event." or (self.tab=="market" and "Pick a card." or (self.tab=="news" and "Around the city." or "Join the festival."))
+    self.heading.Text=overview and "Choose an event." or (self.tab=="market" and "Collect cards on the board." or (self.tab=="news" and "Around the city." or "Join the festival."))
     local festival,remaining=Plaza.festival(ui.config,state)
     if overview then
         self.options.festival.note.Text=festival.name.." · $"..festival.cost
-        local cheapest=math.huge
-        for _,price in pairs(ui.config.cityMarket) do cheapest=math.min(cheapest,price) end
-        self.options.market.note.Text="CARDS FROM $"..cheapest.." >"
+        self.options.market.note.Text="FREE CARD SPACES >"
         self.options.contracts.note.Text=me and me.challenge and me.challenge.ready and "REWARD READY >" or "VIEW YOUR GOAL >"
         self.options.news.note.Text="LATEST UPDATES >"
         return
@@ -128,23 +129,28 @@ function City:render(data)
             local chosen=self.tile==index
             option(ui.config.tiles[index].name,explanation,chosen and "CHOSEN" or ("L"..property.level),chosen,enabled,function() self.tile=index;self.error=nil;self:render(ui.data()) end)
         end end
-        if count==0 then ui.text(self.rows,"Buy a home first to join this festival.\nYou can still visit the Card Market.",12,22,440,100,18,C.muted) end
+        if count==0 then ui.text(self.rows,"Buy a home first to join this festival.\nCollect free cards on the marked board spaces.",12,22,440,100,18,C.muted) end
         cost=festival.cost;valid=self.tile~=nil
         self.detail.Text=valid and ("Cost $"..cost.." · Balance after $"..((me and me.cash or 0)-cost)) or ("Choose a home · festival costs $"..cost)
     elseif self.tab=="market" then
-        self.title.Text="Choose exactly what you get."
-        self.description.Text="Buy a card, then open Cards & Goals to choose its target and play it."
-        self.period.Text="One purchase per turn · up to 3 of each card"
+        self.title.Text="Land, choose, collect."
+        self.description.Text="Tactic Cards offers demolition, shields or renovation. Rent Cards offers rent demand or rent boost."
+        self.period.Text="FREE · up to "..ui.config.cardLimit.." each · scroll for all "..#ui.config.cardTypes.." cards"
         for _,kind in ipairs(ui.config.cardTypes) do
             local definition=ui.config.cardDefinitions[kind]
             local owned=me and me.cards[kind] or 0
             local chosen=self.kind==kind
-            local enabled=owned<ui.config.cardLimit
-            option(definition.name,(chosen and "SELECTED · " or "")..owned.." / 3 in your hand","$"..ui.config.cityMarket[kind],chosen,enabled,function() self.kind=kind;self.error=nil;self:render(ui.data()) end)
+            local location=(kind=="collect" or kind=="boost") and "Rent Cards space" or "Tactic Cards space"
+            option(definition.name,owned.." / "..ui.config.cardLimit.." in your hand · "..location,"FREE",chosen,true,function() self.kind=kind;self.error=nil;self:render(ui.data()) end)
         end
         self.detail.Text=ui.config.cardDefinitions[self.kind].description
         self.detail.TextSize=14
-        cost=ui.config.cityMarket[self.kind];valid=me and (me.cards[self.kind] or 0)<ui.config.cardLimit or false
+        self.status.Text="Collect free cards when your pawn lands on the marked spaces."
+        self.status.TextColor3=C.muted
+        self.confirm.Text="VIEW CARDS & GOALS"
+        ui.available(self.confirm,me~=nil,C.green)
+        self.rows.CanvasSize=UDim2.fromOffset(0,count*70)
+        return
     else
         self.title.Text="Current festival: "..festival.name
         self.description.Text=festival.description
@@ -162,6 +168,6 @@ function City:render(data)
     elseif not canBuy then self.confirm.Text="BROWSE FOR NEXT TURN"
     elseif not valid then self.confirm.Text=self.tab=="festival" and "CHOOSE A HOME" or "CARD LIMIT REACHED"
     elseif me.cash<cost then self.confirm.Text="NEED $"..(cost-me.cash).." MORE"
-    else self.confirm.Text=(self.tab=="market" and "BUY CARD · $" or "JOIN FESTIVAL · $")..cost end
+    else self.confirm.Text="JOIN FESTIVAL · $"..cost end
 end
 return City

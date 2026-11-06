@@ -18,7 +18,7 @@ function Labels.new(root,onSelect,onInteraction)
         local limit=Instance.new("UITextSizeConstraint");limit.MinTextSize,limit.Parent=1,button
         local outline=Instance.new("UIStroke");outline.Color,outline.Thickness,outline.ApplyStrokeMode,outline.Parent=Color3.fromHex(tile.group and Config.groups[tile.group].color or "85A393"),0.8,Enum.ApplyStrokeMode.Border,button
         button.Activated:Connect(function()
-            if tile.kind=="property" then onSelect(index) else onInteraction(tile.kind=="park" and "contracts" or "news") end
+            if tile.kind=="property" then onSelect(index) else onInteraction(tile.kind=="card" and "cards" or (tile.kind=="park" and "contracts" or "news")) end
         end)
         self.buttons[index]=button
     end
@@ -32,10 +32,10 @@ function Labels:update(camera,safe,scale,data,enabled,rect)
             local property=data.game.properties[index]
             local owner
             for _,resident in ipairs(data.game.players) do if resident.id==property.ownerId then owner=resident end end
-            local value=tile.kind=="property" and ("$"..(owner and Plans.projectedRent(Config,data.game,owner.id,index,property.level) or tile.price)) or ""
+            local value=tile.kind=="property" and ("$"..(owner and Plans.projectedRent(Config,data.game,owner.id,index,property.level) or tile.price)) or (tile.kind=="card" and "FREE CARD" or "")
             self.captions[index]={name=tile.name,value=value,owned=owner~=nil}
             local stroke=self.buttons[index]:FindFirstChildOfClass("UIStroke")
-            stroke.Color=Color3.fromHex(owner and Config.playerColors[owner.colorIndex] or (tile.group and Config.groups[tile.group].color or "85A393"))
+            stroke.Color=Color3.fromHex(owner and Config.playerColors[owner.colorIndex] or (tile.group and Config.groups[tile.group].color or tile.color or "85A393"))
             stroke.Thickness=owner and 1.2 or 0.8
         end
     end

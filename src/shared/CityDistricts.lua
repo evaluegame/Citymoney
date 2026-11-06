@@ -2,7 +2,43 @@ local runtimeScript=getfenv().script
 local A=runtimeScript and require(runtimeScript.Parent.Architecture) or require("./Architecture")
 local Art=runtimeScript and require(runtimeScript.Parent.CityArt) or require("./CityArt")
 local Districts={}
+function Districts.cardSpace(index,tile)
+    local origin,yaw=A.site(index);local c,s=math.cos(yaw),math.sin(yaw)
+    local entries={}
+    local function add(name,size,x,y,z,color,extra)
+        local part={name=name,size=size,position={origin[1]+c*x+s*z,origin[2]+y,origin[3]-s*x+c*z},
+            rotation=A.rotation(yaw),color=color,material="SmoothPlastic",interaction="cards",tileIndex=index}
+        for k,v in pairs(extra or {}) do part[k]=v end
+        table.insert(entries,part)
+    end
+    for _,part in ipairs(Art.rounded("CardSpacePlatform",{17,0.3,17},origin,2,tile.color,{interaction="cards",tileIndex=index})) do table.insert(entries,part) end
+    add("CardDisplayStand",{15,0.8,6},0,0.7,0.4,"FFFFFF")
+    local labels={demolish="DEMO",shield="SHIELD",repair="UPGRADE",collect="RENT",boost="BOOST"}
+    for order,kind in ipairs(tile.cardChoices) do
+        local x=(order-(#tile.cardChoices+1)/2)*4.9
+        local color=kind=="demolish" and "FF956D" or (kind=="shield" and "68CFC1" or (kind=="repair" and "8A9FF4" or (kind=="collect" and "B9A0F6" or "FFC65F")))
+        add("BoardCardBorder",{4.5,6.5,0.55},x,4.15,0,color)
+        add("BoardCardFace",{4.05,6,0.12},x,4.15,-0.35,"FFFFFF")
+        add("BoardCardLabel",{3.7,0.9,0.1},x,2.2,-0.45,color,{text=labels[kind],textFace="Front",textSize=28,textColor="FFFFFF"})
+        if kind=="demolish" then
+            add("CardHammerHandle",{0.45,2.5,0.18},x,4.4,-0.49,"45678F")
+            add("CardHammerHead",{2.6,1,0.2},x,5.7,-0.5,color)
+        elseif kind=="shield" then
+            add("CardShield",{2.3,2.6,0.2},x,4.9,-0.5,color)
+            add("CardShieldMark",{0.4,1.6,0.15},x,4.9,-0.65,"FFFFFF")
+        elseif kind=="repair" then
+            add("CardUpgradeVertical",{0.5,2.8,0.2},x,4.9,-0.5,color)
+            add("CardUpgradeHorizontal",{2.8,0.5,0.2},x,4.9,-0.5,color)
+        else
+            add("CardRentSymbol",{3,2.8,0.12},x,4.9,-0.5,"FFFFFF",{text=kind=="collect" and "$" or "%",textFace="Front",textSize=100,textColor=color})
+        end
+    end
+    add("CardSpaceSign",{15,1.2,0.25},0,8.3,1,tile.color,{text=tile.name,textFace="Front",textSize=40,textColor="FFFFFF"})
+    add("FreeCardPlaque",{13,0.08,3.4},0,0.22,6,"FFFFFF",{text="LAND HERE · FREE CARD",textSize=42,textColor="3555A5"})
+    return entries
+end
 function Districts.stop(index,tile,tint)
+    if tile.kind=="card" then return Districts.cardSpace(index,tile) end
     local origin,yaw=A.site(index);local c,s=math.cos(yaw),math.sin(yaw)
     local entries={}
     local interaction=tile.kind=="park" and "contracts" or "news"
@@ -63,7 +99,7 @@ end
 function Districts.generate()
     local entries={}
     local stations={
-        {id="market",x=-27,z=27,color="FF9A65",title="CARD MARKET"},
+        {id="market",x=-27,z=27,color="FF9A65",title="CARD SPACES"},
         {id="festival",x=27,z=27,color="F58EC2",title="FESTIVAL"},
         {id="contracts",x=-27,z=-27,color="818FF0",title="CHALLENGES"},
         {id="news",x=27,z=-27,color="62CDE1",title="CITY NEWS"},

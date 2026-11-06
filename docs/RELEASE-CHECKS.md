@@ -1,12 +1,13 @@
-# Citymoney 1.0 — release verification
+# Citymoney 1.1 — release verification
 
 This report distinguishes the automated checks from Roblox account tests.
 
 | Area | Automated result |
 | --- | --- |
 | Rules and full matches | 600 complete simulated matches; purchases, chosen starting levels, upgrades, rent tiers, insolvency, victory, events and tactical cards pass. |
-| Named cases | 255 cases across the engine, plans, strategy, parties, matchmaking, cosmetics, dice timelines, layout, city geometry, avatars and Robux checkout. |
+| Named cases | 275 cases across the engine, plans, strategy, parties, matchmaking, cosmetics, dice timelines, layout, city geometry, avatars and Robux checkout. |
 | Desktop and phone UI | The actual client modules pass four headless layouts: 1440×900, 1192×642, 800×560 and 390×760. Shop controls, prices, cancellation, server confirmation, restoration, automatic equipping and lookup/prompt outages are included. |
+| Physical card spaces | Two marked card plots, all five card types, no purchases/home bonuses, full hands, bots, skips, AFK recovery, duplicate/stale requests and post-arrival collection pass. |
 | Dice and automatic turns | Both dice settle before the 0.4-second result hold and step-by-step movement. Late completion shifts movement and decision deadlines together. Automatic handoffs and stale requests pass. |
 | Homes and city | All 16 purchasable parcels, four home levels, 256 plot/style/level combinations, doors, furniture, ownership markers, empty plots and contained deed labels pass. |
 | Avatar lifecycle | Actual World methods pass R6/R15 placement, board/home scaling, loading/replacement, spectator cleanup and removed bot tests through controlled native-service adapters. |

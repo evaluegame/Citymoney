@@ -63,6 +63,7 @@ return function(sources,width,height)
         creationOrder=creationOrder+1
         local object={_props={ClassName=class,Name=name or class,Size=dimensions(0,100,0,100),Position=dimensions(0,0,0,0),AnchorPoint=vector(),Visible=true,Enabled=true,Active=true,ZIndex=1,BackgroundTransparency=0,Text="",TextSize=14,Font=enum.Font.Gotham,TextColor3=color(0,0,0),BackgroundColor3=color(1,1,1)},_children={},_signals={},_attrs={}}
         object._props.TextXAlignment=class=="TextButton" and enum.TextXAlignment.Center or enum.TextXAlignment.Left
+        object._props.ClipsDescendants=class=="ScrollingFrame"
         object._props.creationOrder=creationOrder
         return setmetatable(object,{
             __index=function(self,key)
@@ -128,6 +129,7 @@ return function(sources,width,height)
         local own=object:FindFirstChildOfClass("UIScale");local ownScale=own and own.Scale or 1
         local size=vector((parentSize.X*object.Size.X.Scale+object.Size.X.Offset*parentScale)*ownScale,(parentSize.Y*object.Size.Y.Scale+object.Size.Y.Offset*parentScale)*ownScale)
         local pos=vector(parentPos.X+parentSize.X*object.Position.X.Scale+object.Position.X.Offset*parentScale-size.X*object.AnchorPoint.X,parentPos.Y+parentSize.Y*object.Position.Y.Scale+object.Position.Y.Offset*parentScale-size.Y*object.AnchorPoint.Y)
+        if object.Parent.ClassName=="ScrollingFrame" then pos=pos-(object.Parent.CanvasPosition or vector())*parentScale end
         return pos,size,parentScale*ownScale
     end
     local services={}
@@ -230,12 +232,25 @@ return function(sources,width,height)
     end
     local function export()
         local elements={}
+        local function clipBounds(object)
+            local left,top,right,bottom=0,0,width,height
+            local ancestor,clipped=object.Parent,false
+            while ancestor do
+                if ancestor.ClipsDescendants then
+                    local p,s=absolute(ancestor);clipped=true
+                    left,top=math.max(left,p.X),math.max(top,p.Y)
+                    right,bottom=math.min(right,p.X+s.X),math.min(bottom,p.Y+s.Y)
+                end
+                ancestor=ancestor.Parent
+            end
+            return clipped and {x=left,y=top,w=math.max(0,right-left),h=math.max(0,bottom-top)} or nil
+        end
         local function walk(parent)
             local children=parent:GetChildren();table.sort(children,function(a,b) if a.ZIndex==b.ZIndex then return a.creationOrder<b.creationOrder end;return (a.ZIndex or 1)<(b.ZIndex or 1) end)
             for _,o in ipairs(children) do if visible(o) then
                 if guiClasses[o.ClassName] then
                     local p,s,scale=absolute(o);local corner=o:FindFirstChildOfClass("UICorner");local stroke=o:FindFirstChildOfClass("UIStroke")
-                    table.insert(elements,{class=o.ClassName,name=o.Name,x=p.X,y=p.Y,w=s.X,h=s.Y,text=o.Text or "",textAlpha=1-(o.TextTransparency or 0),rotation=o.Rotation or 0,size=(o.TextSize or 14)*scale,bg=hex(o.BackgroundColor3),fg=hex(o.TextColor3),alpha=1-(o.BackgroundTransparency or 0),font=o.Font and o.Font.Name or "Gotham",wrap=o.TextWrapped==true,align=o.TextXAlignment and o.TextXAlignment.Name or "Left",corner=corner and (corner.CornerRadius.Scale*math.min(s.X,s.Y)+corner.CornerRadius.Offset*scale) or 0,viewport=o.ClassName=="ViewportFrame" and viewportData(o) or nil,
+                    table.insert(elements,{class=o.ClassName,name=o.Name,x=p.X,y=p.Y,w=s.X,h=s.Y,clip=clipBounds(o),text=o.Text or "",textAlpha=1-(o.TextTransparency or 0),rotation=o.Rotation or 0,size=(o.TextSize or 14)*scale,bg=hex(o.BackgroundColor3),fg=hex(o.TextColor3),alpha=1-(o.BackgroundTransparency or 0),font=o.Font and o.Font.Name or "Gotham",wrap=o.TextWrapped==true,align=o.TextXAlignment and o.TextXAlignment.Name or "Left",corner=corner and (corner.CornerRadius.Scale*math.min(s.X,s.Y)+corner.CornerRadius.Offset*scale) or 0,viewport=o.ClassName=="ViewportFrame" and viewportData(o) or nil,
                         stroke=stroke and {color=hex(stroke.Color or color(0.8,0.85,0.9)),alpha=1-(stroke.Transparency or 0),width=(stroke.Thickness or 1)*scale} or false})
                 end
                 walk(o)
@@ -374,7 +389,7 @@ return function(sources,width,height)
     assert(workspace.CurrentCamera.CFrame==fixedCamera,"Property inspection zooms the board")
     root.CameraDock.Fit.Activated:Fire();services.RunService.RenderStepped:Fire(0.016)
     assert(not root.PropertyCard.Visible,"Fit did not close the property inspector");checkDeeds()
-    root.DeedLabel4.Activated:Fire();findText("Around the city.");click("X")
+    root.DeedLabel4.Activated:Fire();findText("Collect cards on the board.");click("X")
     data.club.effects=true
     click("ROLL DICE");assert(requests[#requests][1]=="Roll","Roll button did not send a roll");advance(0.3)
     local target=node("Part","Tile2");target.Parent=board;target:SetAttribute("TileIndex",2);pointer.Target=target
@@ -386,11 +401,19 @@ return function(sources,width,height)
     findText("Join the festival.");findText("JOIN FESTIVAL · $80")
     click("X")
     root.QuickActions.OpenEvents.Activated:Fire();findText("Choose an event.");capture("events")
-    click("CARD MARKET");findText("Pick a card.")
-    click("BUY CARD · $100")
-    local request=requests[#requests];assert(request[1]=="Plaza" and request[2].shop=="market" and request[2].kind=="shield")
-    assert(engine:act(1,"Plaza",request[2]));publish()
-    findText("Card added! Open Cards & Goals to play it.")
+    local requestsBeforeCards=#requests
+    click("CARD SPACES");findText("Collect cards on the board.");findText("FREE · up to 3 each · scroll for all 5 cards")
+    local cardRows=findText("Demolition permit").Parent.Parent
+    assert(cardRows.ClipsDescendants and cardRows.CanvasSize.Y.Offset==350,"The five-card list does not clip or scroll")
+    cardRows.CanvasPosition=vector(0,156)
+    local rowPos,rowSize=absolute(findText("Renovation grant").Parent);local listPos,listSize=absolute(cardRows)
+    assert(rowPos.Y>=listPos.Y and rowPos.Y+rowSize.Y<=listPos.Y+listSize.Y,"The final card is unreachable by scrolling")
+    cardRows.CanvasPosition=vector()
+    capture("card-guide")
+    click("VIEW CARDS & GOALS");findText("Cards & challenges")
+    assert(#requests==requestsBeforeCards,"Card-space information sends a purchase request")
+    click("×")
+    local request
     advance(0.3)
     engine.state.turn=2;publish();root.QuickActions.OpenEvents.Activated:Fire();click("FESTIVAL")
     assert(findText("BROWSE FOR NEXT TURN").Active==false,"Off-turn event purchase is enabled");click("CLOSE")
@@ -454,7 +477,7 @@ return function(sources,width,height)
     if engine.state.phase=="buy" then click("Back");click("SKIP");assert(engine:act(1,"Skip"));publish() end
     data.club.effects=false;data.diceEndsAt=nil;data.moveAt=nil
     -- A waiting opportunity opens only when its token reaches the news space.
-    engine:player(1).stats.news=1;engine:player(1).position=4;engine:land(engine:player(1))
+    engine:player(1).stats.news=1;engine:player(1).position=16;engine:land(engine:player(1))
     data.journeyUntil=now+2;data.deadline=now+57;publish()
     assert(root.OpportunityOverlay.Visible==false,"Choice opened before movement finished")
     advance(2.1);services.RunService.RenderStepped:Fire(0.016)
@@ -467,9 +490,35 @@ return function(sources,width,height)
     findText("HAND FULL · TAKE CASH INSTEAD");local count=#requests
     click("Renovation card");assert(#requests==count,"A full hand still sent a card request")
     click("Take $90");request=requests[#requests];assert(engine:act(1,"Offer",request[2]));publish();advance(0.3)
-    engine.state.turn=2;engine:player(2).stats.news=1;engine:player(2).position=4;engine:land(engine:player(2));publish()
+    engine.state.turn=2;engine:player(2).stats.news=1;engine:player(2).position=16;engine:land(engine:player(2));publish()
     assert(root.OpportunityOverlay.Visible==false,"Another player's reward opened for this client")
     assert(engine:act(2,"Offer",load(shared.Opportunities).request(engine.state,1)));publish()
+    advance(0.3)
+    engine.state.turn=1;engine:player(1).position=4
+    for _,kind in ipairs(Config.tiles[4].cardChoices) do engine:player(1).cards[kind]=1 end
+    engine:land(engine:player(1))
+    data.journeyUntil=now+2;data.deadline=now+57;publish()
+    assert(not root.OpportunityOverlay.Visible,"Card collection opens before movement finishes")
+    advance(2.1);services.RunService.RenderStepped:Fire(0.016)
+    findText("FREE CARD SPACE");findText("TACTIC CARDS");findText("Demolition permit");findText("Property shield");findText("Renovation grant")
+    inside(findText("TACTIC CARDS").Parent);capture("card-space")
+    click("X");click("COLLECT CARD");findText("FREE CARD SPACE")
+    local cardsBefore=engine:player(1).cards.shield;local cashBefore=engine:player(1).cash
+    click("Property shield");request=requests[#requests]
+    assert(request[1]=="Offer" and request[2].option==2)
+    assert(engine:act(1,"Offer",request[2]));publish();findText("CARD COLLECTED!")
+    assert(engine:player(1).cards.shield==cardsBefore+1 and engine:player(1).cash==cashBefore,"Collecting a free card changed the cash balance")
+    advance(0.3)
+    for _,kind in ipairs(Config.tiles[4].cardChoices) do engine:player(1).cards[kind]=3 end
+    engine:land(engine:player(1));data.journeyUntil=0;publish();services.RunService.RenderStepped:Fire(0.016)
+    local fullCount=#requests;click("Demolition permit");assert(#requests==fullCount,"A full card type still sends a request")
+    root.OpportunityOverlay:WaitForChild("Frame"):WaitForChild("SkipCardReward").Activated:Fire()
+    request=requests[#requests];assert(request[1]=="Offer" and request[2].option==0)
+    assert(engine:act(1,"Offer",request[2]));publish();advance(0.3)
+    engine:player(1).position=22;engine:player(1).cards.boost=1;engine:land(engine:player(1));publish();services.RunService.RenderStepped:Fire(0.016)
+    findText("RENT CARDS");findText("Rent demand");findText("Rent boost");capture("rent-card-space")
+    click("Rent boost");request=requests[#requests];assert(engine:act(1,"Offer",request[2]));publish();advance(0.3)
+    assert(engine:player(1).cards.boost==2)
     engine=Engine.new(Config);data.lobby={members[1]};data.lobbyConfig.seats=2;publish()
     assert(root.QuickActions.Visible==false,"Match shortcuts appear before a game starts")
     click("PLAY NOW");click("4 PLAYERS")

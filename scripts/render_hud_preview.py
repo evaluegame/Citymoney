@@ -6,7 +6,7 @@ This is an offline layout preview, not a Roblox screenshot or engine playtest.
 from pathlib import Path
 import json
 import sys
-from PIL import Image, ImageDraw, ImageFont
+from PIL import Image, ImageChops, ImageDraw, ImageFont
 
 root=Path(__file__).resolve().parents[1]
 layout=json.loads((root / sys.argv[1]).read_text())
@@ -56,6 +56,15 @@ for item in layout["elements"]:
             draw.text((tx,top+i*line_height),line,font=font,fill="#"+item["fg"]+f'{round(item.get("textAlpha",1)*255):02x}')
     if item.get("rotation"):
         layer=layer.rotate(-item["rotation"],resample=Image.Resampling.BICUBIC,center=(x+w/2,y+h/2))
+    if item.get("clip"):
+        clip=item["clip"]
+        left,top=round(clip["x"]),round(clip["y"])
+        right,bottom=round(clip["x"]+clip["w"]),round(clip["y"]+clip["h"])
+        if right<=left or bottom<=top:
+            continue
+        mask=Image.new("L",canvas.size)
+        ImageDraw.Draw(mask).rectangle((left,top,right-1,bottom-1),fill=255)
+        layer.putalpha(ImageChops.multiply(layer.getchannel("A"),mask))
     canvas=Image.alpha_composite(canvas,layer)
 
 label=Image.new("RGBA",canvas.size)

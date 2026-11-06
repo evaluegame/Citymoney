@@ -11,6 +11,7 @@ local Board={spacing=Architecture.spacing}
 Board.position=Architecture.position
 function Board.caption(config,index,state)
     local tile=config.tiles[index]
+    if tile.kind=="card" then return tile.name.."\nFREE CARD" end
     local property=state and state.properties[index]
     if property and property.ownerId and tile.kind=="property" then
         return tile.name.."\nRENT $"..Plans.projectedRent(config,state,property.ownerId,index,property.level)
@@ -55,7 +56,7 @@ function Board.generate(config)
     for index,tile in ipairs(config.tiles) do
         local position=Board.position(index)
         local _,yaw=Architecture.site(index)
-        local tint=tile.group and config.groups[tile.group].color or "7DC8F1"
+        local tint=tile.group and config.groups[tile.group].color or tile.color or "7DC8F1"
         local caption=Board.caption(config,index)
         add("Tile"..index,{Spaces.size,0.4,Spaces.size},position,"FFFFFF",{rotation=Architecture.rotation(yaw),tileIndex=index,boardSpace=true})
         local c,s=math.cos(yaw),math.sin(yaw)

@@ -49,7 +49,7 @@ function Flow:due(state,now)
     if state.status~="playing" or self.key~=Flow.key(state) then return nil end
     if state.phase=="end" and self.handoffAt>0 and now>=self.handoffAt then return "End" end
     if now>=self.deadline then
-        if state.phase=="offer" then return "Offer",Offers.request(state,1) end
+        if state.phase=="offer" then return "Offer",Offers.timeoutRequest(self.config,state) end
         return state.phase=="roll" and "Roll" or (state.phase=="buy" and "Skip" or "End")
     end
     return nil

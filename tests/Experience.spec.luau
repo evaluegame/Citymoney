@@ -17,10 +17,10 @@ local function game(random)
  check(e:start({{id=1,name='Avery'},{id=2,name='Riley'}}));return e
 end
 local function open(e)
- local p=e:player(1);p.stats.news=1;p.position=4;e:land(p);return e.state.pendingOffer
+ local p=e:player(1);p.stats.news=1;p.position=16;e:land(p);return e.state.pendingOffer
 end
 test('ordinary first City News still resolves the original event',function()
- local e=game();local p=e:player(1);p.position=4;e:land(p)
+ local e=game();local p=e:player(1);p.position=16;e:land(p)
  equal(p.stats.news,1);equal(p.cash,1620);equal(e.state.phase,'end');check(not e.state.pendingOffer)
 end)
 test('the second City News offers a guaranteed choice without spending cash',function()
@@ -72,7 +72,7 @@ test('expired turns and sequence tokens cannot confirm a different opportunity',
 end)
 test('all five offers rotate deterministically across residents and visits',function()
  for seat=1,2 do for visit=1,#Config.opportunities do
-  local e=game();local p=e:player(seat);p.stats.news=visit*2-1;p.position=4;e:land(p)
+  local e=game();local p=e:player(seat);p.stats.news=visit*2-1;p.position=16;e:land(p)
   local expected=(visit+seat-2)%#Config.opportunities+1
   equal(e.state.pendingOffer.definition,expected)
   local choices=Config.opportunities[expected].choices;check(choices[1].cash>0 and Config.cardDefinitions[choices[2].card]~=nil)
@@ -113,8 +113,8 @@ test('leaving, finishing and starting a new match clear pending rewards',functio
 end)
 test('a roll records the actual route before a City News teleport changes its destination',function()
  local e=game(function(low,high) return high==6 and 3 or (high==#Config.events and 6 or low) end)
- e:player(1).position=22;check(e:act(1,'Roll'))
- local roll=e.state.lastRoll;equal(roll.from,22);equal(roll.landedTile,4);equal(roll.to,1);equal(roll.steps,6)
+ e:player(1).position=10;check(e:act(1,'Roll'))
+ local roll=e.state.lastRoll;equal(roll.from,10);equal(roll.landedTile,16);equal(roll.to,1);equal(roll.steps,6)
  equal(e:player(1).position,1)
 end)
 test('detention movement records the route to the detention event before returning to jail',function()

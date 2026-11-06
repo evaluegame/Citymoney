@@ -153,7 +153,7 @@ test("all city news events resolve safely and record challenge progress",functio
     for chosen=1,#Config.events do
         local e=game(nil,4);own(e,2,1,1)
         e.random=function(low,high) return high==#Config.events and chosen or low end
-        e:player(1).position=4;e:land(e:player(1));equal(e:player(1).stats.news,1)
+        e:player(1).position=16;e:land(e:player(1));equal(e:player(1).stats.news,1)
         for _,player in ipairs(e.state.players) do check(player.cash>=0);for _,count in pairs(player.cards) do check(count>=0 and count<=Config.cardLimit) end end
     end
 end)

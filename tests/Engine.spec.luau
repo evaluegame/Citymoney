@@ -173,22 +173,26 @@ test("just visiting detention does not detain", function()
 end)
 test("event awards cash", function()
     local engine = gameWith({ 1, 2, 1 })
+    engine:player(1).position = 13
     engine:act(1, "Roll")
     equal(engine:player(1).cash, 1620)
 end)
 test("event deducts cash", function()
     local engine = gameWith({ 1, 2, 3 })
+    engine:player(1).position = 13
     engine:act(1, "Roll")
     equal(engine:player(1).cash, 1410)
 end)
 test("event sends to City Gate with one bonus", function()
     local engine = gameWith({ 1, 2, 6 })
+    engine:player(1).position = 13
     engine:act(1, "Roll")
     equal(engine:player(1).position, 1)
     equal(engine:player(1).cash, 1700)
 end)
 test("event sends to detention", function()
     local engine = gameWith({ 1, 2, 5 })
+    engine:player(1).position = 13
     engine:act(1, "Roll")
     equal(engine:player(1).position, 7)
     expect(engine:player(1).detained)
@@ -350,7 +354,7 @@ test("200 full seeded matches preserve economy and terminate", function()
                 level=(match+engine.state.turnCount)%4
                 while level>0 and tile.price+level*tile.upgrade>current.cash-100 do level=level-1 end
             end
-            expect(engine:act(current.id, command,command=="Offer" and Offers.request(engine.state,1) or nil,level,engine.state.turnCount))
+            expect(engine:act(current.id, command,command=="Offer" and Offers.timeoutRequest(Config,engine.state) or nil,level,engine.state.turnCount))
             actions = actions + 1
             expect(actions < 500, "Match did not terminate")
             for _, entry in ipairs(engine.state.players) do
