@@ -7,6 +7,7 @@ from pathlib import Path
 import json
 import sys
 from PIL import Image, ImageChops, ImageDraw, ImageFont
+from preview_fonts import ensure_fonts
 
 root=Path(__file__).resolve().parents[1]
 layout=json.loads((root / sys.argv[1]).read_text())
@@ -14,6 +15,7 @@ canvas=Image.open(root / sys.argv[2]).convert("RGBA")
 assert canvas.size==(layout["width"],layout["height"])
 regular="/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf"
 bold="/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf"
+thai_regular,thai_bold=ensure_fonts()
 
 for item in layout["elements"]:
     x,y,w,h=(round(item[k]) for k in ("x","y","w","h"))
@@ -32,7 +34,9 @@ for item in layout["elements"]:
         stroke=item["stroke"]
         draw.rounded_rectangle((x,y,x+w,y+h),radius=radius,outline="#"+stroke["color"]+f'{round(stroke["alpha"]*255):02x}',width=max(1,round(stroke["width"])))
     if item["text"] and item.get("textAlpha",1)>0:
-        font=ImageFont.truetype(bold if "Bold" in item["font"] or "Black" in item["font"] else regular,max(1,int(item["size"]) if item["name"].startswith("DeedLabel") else round(item["size"])))
+        thai=any('\u0e00'<=char<='\u0e7f' for char in item["text"])
+        font_path=(thai_bold if "Bold" in item["font"] or "Black" in item["font"] else thai_regular) if thai else (bold if "Bold" in item["font"] or "Black" in item["font"] else regular)
+        font=ImageFont.truetype(font_path,max(1,int(item["size"]) if item["name"].startswith("DeedLabel") else round(item["size"])))
         lines=[]
         for paragraph in item["text"].splitlines():
             if item["wrap"]:
@@ -48,7 +52,7 @@ for item in layout["elements"]:
                 while len(paragraph)>1 and draw.textlength(paragraph,font=font)>w-2:
                     paragraph=paragraph[:-2]+"…"
                 lines.append(paragraph)
-        line_height=font.size*1.1 if item["name"].startswith("DeedLabel") else font.size+2
+        line_height=font.size*(1.25 if thai else 1.1) if item["name"].startswith("DeedLabel") else font.size*(1.3 if thai else 1)+2
         lines=lines[:max(1,int(h//line_height))]
         top=y+(h-len(lines)*line_height)/2
         for i,line in enumerate(lines):

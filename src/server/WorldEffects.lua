@@ -26,7 +26,7 @@ function Effects.reveal(model,position,color,level,upgrade,animated)
         tag.StudsOffsetWorldSpace,tag.Adornee,tag.Parent=Vector3.new(0,9+level*6.5,0),anchor,anchor
         local label=Instance.new("TextLabel")
         label.Size,label.BackgroundTransparency,label.Font,label.TextSize=UDim2.fromScale(1,1),1,Enum.Font.GothamBlack,23
-        label.Text,label.TextColor3,label.TextStrokeTransparency,label.Parent=upgrade and "UPGRADED!" or "SOLD!",Color3.fromHex(color),0.7,tag
+        label.Text,label.TextColor3,label.TextStrokeTransparency,label.Parent=upgrade and "อัปเกรดแล้ว!" or "ขายแล้ว!",Color3.fromHex(color),0.7,tag
         Tween:Create(label,TweenInfo.new(1),{TextTransparency=1,TextStrokeTransparency=1}):Play()
         Debris:AddItem(tag,1.1)
     end

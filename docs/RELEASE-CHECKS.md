@@ -1,11 +1,12 @@
-# Citymoney 1.1 — release verification
+# Citymoney 1.2 — release verification
 
 This report distinguishes the automated checks from Roblox account tests.
 
 | Area | Automated result |
 | --- | --- |
 | Rules and full matches | 600 complete simulated matches; purchases, chosen starting levels, upgrades, rent tiers, insolvency, victory, events and tactical cards pass. |
-| Named cases | 275 cases across the engine, plans, strategy, parties, matchmaking, cosmetics, dice timelines, layout, city geometry, avatars and Robux checkout. |
+| Named cases | 287 cases across the engine, plans, strategy, parties, matchmaking, cosmetics, dice timelines, layout, city geometry, avatars, Thai localization and Robux checkout. |
+| Thai and readable view | Thai menus, cards, goals, news, property names, dynamic prices and statuses; UTF-8 initials, non-spacing Thai marks, preserved player names and currency values pass. All 24 slots fit the aligned 64-degree view with a 28-degree field of view; zoom/follow remain disabled. |
 | Desktop and phone UI | The actual client modules pass four headless layouts: 1440×900, 1192×642, 800×560 and 390×760. Shop controls, prices, cancellation, server confirmation, restoration, automatic equipping and lookup/prompt outages are included. |
 | Physical card spaces | Two marked card plots, all five card types, no purchases/home bonuses, full hands, bots, skips, AFK recovery, duplicate/stale requests and post-arrival collection pass. |
 | Dice and automatic turns | Both dice settle before the 0.4-second result hold and step-by-step movement. Late completion shifts movement and decision deadlines together. Automatic handoffs and stale requests pass. |

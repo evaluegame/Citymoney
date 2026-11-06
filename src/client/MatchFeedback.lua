@@ -56,7 +56,7 @@ function Feedback:observe(data,old)
   local name=self.ui.config.tiles[action.tile].name
   local titles={demolish=action.blocked and "SHIELD SAVED THE HOUSE!" or "DEMOLITION!",repair=(action.amount or 0)>0 and "HOME UPGRADED!" or "FREE HOME UPGRADE!",boost="RENT BOOST ACTIVATED",shield="HOME PROTECTED",collect="RENT DEMAND!"}
   local title=titles[action.kind]
-  local detail=(actor and actor.name or "A resident").." · "..name
+  local detail=(actor and actor.name or "A resident").." at "..name
   if action.kind=="collect" then detail=(actor and actor.name or "A resident").." collected $"..action.amount.." using "..name.."." end
   if title then self:show(title,detail,"CARD",self.ui.colors.green,3,action.kind~="demolish") end
  end

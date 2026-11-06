@@ -1,5 +1,6 @@
 local Board = require("../src/shared/Board")
 local Config = require("../src/shared/Config")
+local Thai = require("../src/shared/Thai")
 local function check(condition, message) assert(condition, message) end
 local positions = {}
 for index = 1, #Config.tiles do
@@ -31,7 +32,7 @@ for index, entry in ipairs(scene) do
         check(entry.size[1]==18.8 and entry.size[3]==18.8, "A narrow space leaves no room for the resident lane")
     end
     if string.match(entry.name, "^DeedPlate%d+$") then
-        check(entry.text and string.find(entry.text, Config.tiles[entry.tileIndex].name, 1, true), "Tile label mismatches game rules")
+        check(entry.text and string.find(entry.text, Thai.text(Config.tiles[entry.tileIndex].name), 1, true), "Tile label mismatches game rules")
     end
 end
 for index = 1, 24 do check(tiles[index], "Scene is missing a game tile") end

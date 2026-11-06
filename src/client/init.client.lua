@@ -7,6 +7,7 @@ local StarterGui = game:GetService("StarterGui")
 local player = Players.LocalPlayer
 local shared = RS:WaitForChild("Citymoney")
 local Config, Architecture, Scene, Layout = require(shared.Config),require(shared.Architecture),require(shared.Scene),require(shared.Layout)
+local Thai=require(shared.Thai)
 local Plans=require(shared.PropertyPlans)
 local Menus=require(script:WaitForChild("Menus"))
 local Boutique=require(script:WaitForChild("Boutique"))
@@ -44,6 +45,7 @@ safe.Size,safe.BackgroundTransparency,safe.Parent=UDim2.fromScale(1,1),1,gui
 local root=Instance.new("Frame")
 root.Name="CityRoot"
 root.BackgroundTransparency,root.Parent=1,safe
+Thai.watch(root)
 root:SetAttribute("ViewMode",Presentation.defaultView)
 local uiScale=Instance.new("UIScale"); uiScale.Parent=root
 local function round(object,radius)
@@ -57,17 +59,19 @@ local function frame(parent,x,y,w,h,tint)
     local stroke=Instance.new("UIStroke");stroke.Color,stroke.Transparency,stroke.Parent=C.line,0.42,object
     return object
 end
-local function text(parent,value,x,y,w,h,size,tint,bold)
+local function text(parent,value,x,y,w,h,size,tint,bold,playerName)
     local object=Instance.new("TextLabel");place(object,x,y,w,h)
     object.BackgroundTransparency,object.Text,object.TextColor3=1,value,tint or C.ink
     object.TextSize,object.Font=size or 16,bold and Enum.Font.GothamBold or Enum.Font.Gotham
     object.TextXAlignment,object.TextYAlignment,object.TextWrapped=Enum.TextXAlignment.Left,Enum.TextYAlignment.Center,true
+    if playerName then object:SetAttribute("PlayerName",true) end
     object.Parent=parent;return object
 end
-local function button(parent,value,x,y,w,h,tint,callback)
+local function button(parent,value,x,y,w,h,tint,callback,playerName)
     local object=Instance.new("TextButton");place(object,x,y,w,h)
     object.Text,object.TextSize,object.Font=value,14,Enum.Font.GothamBold
     object.BackgroundColor3,object.TextColor3,object.BorderSizePixel=tint or C.green,(tint==C.paper or tint==C.card or tint==C.gold) and C.ink or C.white,0
+    if playerName then object:SetAttribute("PlayerName",true) end
     object.Parent=parent;round(object,11)
     object.Activated:Connect(function() if object.Active then callback() end end)
     Motion.button(object,root)
@@ -454,7 +458,7 @@ render=function()
         local tint=Color3.fromHex(Config.playerColors[entry.colorIndex or seat] or "DCC098")
         local dot=frame(row,0,7,5,34,tint);round(dot,3)
         local avatar=frame(row,8,10,30,30,tint);round(avatar,15)
-        local initial=text(avatar,string.sub(entry.name,1,1),0,0,30,30,16,C.white,true);initial.TextXAlignment=Enum.TextXAlignment.Center
+        local initial=text(avatar,Thai.initial(entry.name),0,0,30,30,16,C.white,true,true);initial.TextXAlignment=Enum.TextXAlignment.Center
         if type(entry.id)=="number" and entry.id>0 and portraits[entry.id]==nil then
             portraits[entry.id]=false
             task.spawn(function()
@@ -467,7 +471,7 @@ render=function()
             local image=Instance.new("ImageLabel");image.Size,image.BackgroundTransparency,image.Image,image.Parent=UDim2.fromScale(1,1),1,portraits[entry.id],avatar
             round(image,15);initial.Visible=false
         end
-        local name=text(row,entry.name,44,4,84,18,12,entry.alive==false and C.muted or C.ink,true);truncate(name)
+        local name=text(row,entry.name,44,4,84,18,12,entry.alive==false and C.muted or C.ink,true,true);truncate(name)
         text(row,entry.cash and ("$"..entry.cash..(entry.alive==false and " · out" or "")) or "READY",44,24,84,19,14,C.green,true)
     end
     roster.Size=UDim2.fromOffset(154,44+math.min(#entries,4)*54)

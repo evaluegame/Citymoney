@@ -1,15 +1,16 @@
-# Citymoney 1.1 — publish the final build
+# ซิตี้มันนี่ 1.2 — เปิดเกมและเผยแพร่บน Roblox
 
-The place is ready to open and upload in Roblox Studio. The free game works without a pass. Real Robux sales need a pass created under **your own published experience**; this bundle keeps `clubPassId = 0` until that ID is available.
+เกมใช้เมนูภาษาไทย พร้อมมุมกระดานตรงและมองจากด้านบนมากขึ้น กล้องนิ่งระหว่างทอย เดิน ซื้อบ้าน และอัปเกรด ไม่ต้องติดตั้งปลั๊กอินเพื่อเปิดไฟล์เกม
 
-1. Extract **Citymoney-Publish-Ready.zip**. In Studio, choose **File → Open from File** and open **Citymoney/build/Citymoney.rbxlx**.
-2. Press **Play → PLAY NOW → PRACTICE WITH BOTS** to try the game. Stop Play, then choose **File → Publish** and save it to your Roblox account.
-3. In [Creator Dashboard](https://create.roblox.com/dashboard/creations), select that experience → **Monetization → Passes → Create pass**. Upload `docs/Club-pass-icon.png`. Copy the pass name and description from [ROBLOX-LISTING.txt](docs/ROBLOX-LISTING.txt), enable sales, and set your Robux price.
-4. Copy the pass's **Asset ID**. In Studio, open **ReplicatedStorage → Citymoney → Config**. Replace `clubPassId = 0` with that numeric ID. Publish to the **same experience** again.
-5. In Creator Dashboard, set the audience/access for your intended players. Join a new server in the Roblox app and test **MENU → COSMETIC SHOP**, an owned pass, a cancelled prompt, and a 2-/4-player match before making the game public.
+1. แตกไฟล์ **Citymoney-Publish-Ready.zip** เปิด Roblox Studio → **File → Open from File** → **Citymoney/build/Citymoney.rbxlx**
+2. กด **Play** → **เริ่มเล่น** → เลือก **2 คน** หรือ **4 คน** → **ฝึกกับบอต** เพื่อทดลองเล่น
+3. หยุด Play แล้วเลือก **File → Publish to Roblox** เพื่อบันทึกเกมในบัญชีของคุณ
+4. เข้า [Creator Dashboard](https://create.roblox.com/dashboard/creations) เลือกเกมนี้ → **Monetization → Passes → Create pass** ใช้ภาพ **docs/Club-pass-icon.png** และชื่อ/คำอธิบายใน [ROBLOX-LISTING.txt](docs/ROBLOX-LISTING.txt) ตั้งราคา Robux และเปิดขาย
+5. คัดลอก **Asset ID** ของพาส ใน Studio เปิด **ReplicatedStorage → Citymoney → Config** เปลี่ยน `clubPassId = 0` เป็นเลข ID แล้วเผยแพร่ไปยังเกมเดิมอีกครั้ง
+6. เข้าเซิร์ฟเวอร์ใหม่ผ่านแอป Roblox ทดสอบ **เมนู → ร้านของตกแต่ง** การยกเลิกซื้อ ผู้ที่มีพาส และเกมออนไลน์ **2 / 4 คน** ก่อนเปิดให้ผู้เล่นทั่วไป
 
-The shop reads the real Roblox price for each player and uses Roblox checkout. One permanent pass unlocks all three collections: house finishes, dice styles, player auras and walking trails. Premium styles do not change game cash, rent, cards or dice odds.
+พาสซื้อครั้งเดียวปลดล็อกของตกแต่ง 3 สไตล์ ได้แก่ บ้าน ลูกเต๋า ออร่า และเอฟเฟกต์เดิน ไม่มีผลต่อเงิน ค่าเช่า การ์ด หรือโอกาสทอย ระบบแสดงราคา Robux จาก Roblox และตรวจสอบสิทธิ์บนเซิร์ฟเวอร์
 
-The pass icon, listing and checkout code are prepared. Creating the actual pass requires your signed-in Creator Dashboard; no pass or Roblox account was created by this cloud build.
+เกมฟรีเล่นได้โดยไม่ต้องมีพาส ขณะนี้ `clubPassId = 0` จึงยังไม่เปิดซื้อจริง การสร้างพาสต้องทำผ่าน Creator Dashboard ที่ลงชื่อเข้าใช้บัญชีของคุณ
 
-Automated checks and build verification are recorded in [RELEASE-CHECKS.md](docs/RELEASE-CHECKS.md). Native Studio rendering, live teleports, purchases and persistence require the Roblox app/Studio checks described in the [full publishing guide](docs/PUBLISHING.md).
+อ่าน [คู่มือเล่นภาษาไทย](START-HERE-TH.txt) และ [ผลตรวจรุ่นนี้](docs/RELEASE-CHECKS.md) ภาพตัวอย่างสร้างจากซอร์ส ไม่ใช่ภาพจาก Studio การแสดงผลจริง การย้ายเซิร์ฟเวอร์ และการซื้อ Robux ยังต้องทดสอบใน Roblox

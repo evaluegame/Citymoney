@@ -1,3 +1,9 @@
+CITYMONEY 1.2 — THAI EDITION
+
+The game now uses Thai menus and an aligned 64-degree board view.
+Read START-HERE-TH.txt or PUBLISH-FIRST.md for current game button labels.
+Start: Play > เริ่มเล่น > 2 คน / 4 คน > ฝึกกับบอต.
+
 CITYMONEY — BUILD YOUR CITY
 Thai instructions: START-HERE-TH.txt
 
@@ -12,7 +18,7 @@ Studio: https://create.roblox.com/
 
 BRIGHT CITY VIEW AND INTERACTIVE DICE
 The colorful city board has empty lots, card-space displays, a festival stage,
-challenge hall and broadcast tower. Play starts in a gently angled Board view.
+challenge hall and broadcast tower. Play starts in an aligned 64-degree overhead Board view.
 Inset labels show names and prices; RENT marks an owned home's rent.
 Tap a badge for the full name, owner and details. City view switches to the
 whole waterfront. Fit restores Board view. The board camera stays fixed.
@@ -148,7 +154,7 @@ README.md contains full rules, controls and development instructions.
 READABLE SPACES AND FULL BODIES
 Names and prices fit inside each physical board space; the blue lane is for
 residents. Tap a space for its full property card. Board view uses a fixed
-gentle 3D angle without wheel/button zoom. Pawns are larger on the board,
+64-degree overhead angle without wheel/button zoom. Pawns are larger on the board,
 with compact tags above their heads. R6 legs remain above the floor. Home
 visits restore normal size. Empty player lots stay empty until purchased.
 

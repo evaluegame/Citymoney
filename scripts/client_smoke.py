@@ -37,4 +37,4 @@ for name, width, height in (("desktop", 1440, 900), ("studio", 1192, 642), ("sho
         if view!="main":
             (ROOT / "build" / f"{view}-{name}.json").write_text(json.dumps({"width":width,"height":height,**snapshot}, indent=2))
     (ROOT / "build" / f"hud-{name}.json").write_text(json.dumps(data, indent=2))
-    print(f"PASS client UI adapter: {name} {width}×{height}; fixed camera, settled dice before movement, player visibility, 24 labels, free card-space collection/skip/caps, removed card purchases, goals, City News, homes, matchmaking and Robux cosmetics.")
+    print(f"PASS client UI adapter: {name} {width}×{height}; Thai menus and dynamic captions, preserved names, aligned fixed camera, settled dice before movement, player visibility, 24 labels, free cards, goals, homes, matchmaking and Robux cosmetics.")

@@ -12,6 +12,7 @@ cd "$project_dir"
 .tools/luau tests/Presentation.spec.luau
 .tools/luau tests/Experience.spec.luau
 .tools/luau tests/CardSpaces.spec.luau
+.tools/luau tests/Thai.spec.luau
 .tools/luau tests/CityView.spec.luau
 .tools/luau tests/Spaces.spec.luau
 .tools/luau tests/DiceSequence.spec.luau

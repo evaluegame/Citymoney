@@ -1,6 +1,7 @@
 --!nocheck
 -- Headless GUI integration adapter. It cannot replace Roblox rendering/playtests.
 return function(sources,width,height)
+    local Thai=require('../src/shared/Thai')
     local requests,scheduled={}, {}
     local now=100
     local function signal()
@@ -85,7 +86,10 @@ return function(sources,width,height)
                         local ancestor=value
                         while ancestor do if ancestor._signals.DescendantAdded then ancestor._signals.DescendantAdded:Fire(self) end;ancestor=ancestor.Parent end
                     end
-                else self._props[key]=value end
+                else
+                    local old=self._props[key];self._props[key]=value
+                    if old~=value and self._signals[key] then self._signals[key]:Fire() end
+                end
             end,
         })
     end
@@ -114,10 +118,10 @@ return function(sources,width,height)
     function methods:GetServerTimeNow() return now end
     function methods:GetMouse() return pointer end
     function methods:FireServer(...) table.insert(requests,{...}) end
-    function methods:ScreenPointToRay(x,y) local t=math.tan(math.rad(36)/2);return {Origin=self.CFrame.Position,Direction=self.CFrame:VectorToWorldSpace(vector((2*x/width-1)*t*width/height,(1-2*y/height)*t,-1)).Unit} end
+    function methods:ScreenPointToRay(x,y) local t=math.tan(math.rad(self.FieldOfView or 36)/2);return {Origin=self.CFrame.Position,Direction=self.CFrame:VectorToWorldSpace(vector((2*x/width-1)*t*width/height,(1-2*y/height)*t,-1)).Unit} end
     function methods:WorldToScreenPoint(point)
         local p=self.CFrame:VectorToObjectSpace(point-self.CFrame.Position)
-        local depth=-p.Z;local t=math.tan(math.rad(36)/2)
+        local depth=-p.Z;local t=math.tan(math.rad(self.FieldOfView or 36)/2)
         local screen=vector((p.X/(depth*t*width/height)+1)*width/2,(1-p.Y/(depth*t))*height/2,depth)
         return screen,depth>0 and screen.X>=0 and screen.X<=width and screen.Y>=0 and screen.Y<=height
     end
@@ -200,9 +204,24 @@ return function(sources,width,height)
     end
     publish()
     local gui=playerGui:WaitForChild("Citymoney");local root=gui:WaitForChild("Frame"):WaitForChild("CityRoot")
+    local probe=node("TextLabel","ThaiProbe");probe.Text="ROLL DICE";probe.Parent=root
+    assert(probe.Text=="ทอยลูกเต๋า","New controls are not localized")
+    probe.Text="Choose your home level";assert(probe.Text=="เลือกขนาดบ้าน","Dynamic captions are not localized")
+    probe:Destroy()
+    local nameProbe=node("TextLabel","NameProbe");nameProbe.Text="Ready";nameProbe:SetAttribute("PlayerName",true);nameProbe.Parent=root
+    assert(nameProbe.Text=="Ready","A player name was translated as a menu command");nameProbe:Destroy()
     local function visible(o) while o do if o.Visible==false or o.Enabled==false then return false end;o=o.Parent end;return true end
+    local untranslated={}
     local function findText(text)
-        for _,object in ipairs(gui:GetDescendants()) do if object.Text==text and visible(object) then return object end end
+        text=Thai.text(text)
+        local found
+        for _,object in ipairs(gui:GetDescendants()) do if visible(object) and object.Text then
+            local remainder=object.Text
+            for _,allowed in ipairs({'Avery','Riley','Jamie','Morgan','Roblox','Robux','Studio'}) do remainder=string.gsub(remainder,allowed,'') end
+            if string.find(remainder,'%a%a%a+') then untranslated[object.Text]=true end
+            if object.Text==text then found=object end
+        end end
+        if found then return found end
         error("Missing visible text: "..text)
     end
     local function inside(o)
@@ -299,7 +318,7 @@ return function(sources,width,height)
             local p,yaw=pose(resident,seat)
             for _,entry in ipairs(Actors.preview(Config.playerColors[resident.colorIndex],p,yaw)) do table.insert(entries,entry) end
         end end
-        return entries
+        return Thai.scene(entries)
     end
     local function capture(name)
         local figures={}
@@ -370,7 +389,7 @@ return function(sources,width,height)
     -- Exercise real camera/label adapters, including projection and reset.
     data.club.effects=false
     root.CameraDock.TableView.Activated:Fire();services.RunService.RenderStepped:Fire(0.016)
-    assert(root:GetAttribute("ViewMode")=="city" and root.CameraDock.TableView.Text=="Board view")
+    assert(root:GetAttribute("ViewMode")=="city" and root.CameraDock.TableView.Text=="ดูกระดาน")
     for index=1,24 do
         assert(not root["DeedLabel"..index].Visible,"Top-view badge remained in 3D view")
         assert(board["DeedPlate"..index].Caption.Enabled,"3D floor caption did not return")
@@ -452,7 +471,7 @@ return function(sources,width,height)
     assert(engine:act(1,"Roll"))
     data.diceEndsAt=now+Config.diceSeconds;data.moveAt=now+Journey.beforeMove(Config)
     data.journeyUntil=now+Journey.duration(Config,engine.state.lastRoll);data.handoffAt=data.journeyUntil+4;data.deadline=data.journeyUntil+55
-    publish();assert(root.TurnDock.PrimaryAction.Text=="ROLLING..." and not root.TurnDock.PrimaryAction.Active);assert(root.TurnDock.RollDieA.Active==false)
+    publish();assert(root.TurnDock.PrimaryAction.Text=="กำลังทอย…" and not root.TurnDock.PrimaryAction.Active);assert(root.TurnDock.RollDieA.Active==false)
     assert(not root.MatchMoment.Visible,"A large roll banner hides the walking route")
     assert(not root.NoticeToast.Visible and not root.PropertyHover.Visible,"Old notices cover the dice and walking route")
     assert(workspace.CurrentCamera.CFrame==fixedCamera,"Rolling zooms the camera")
@@ -597,7 +616,10 @@ return function(sources,width,height)
     advance(0.3);click("Unlock Club · R$ 149")
     data.club=table.clone(data.club);data.club.ownsPass=true;publish()
     serverCheckout(true)
-    assert(shop.ClubCheckout.Text~="Verifying with Roblox…","A late completion hides an already verified purchase")
+    assert(shop.ClubCheckout.Text~="กำลังตรวจสอบกับ Roblox…","A late completion hides an already verified purchase")
     assert(priceCalls>=3,"The retry did not request fresh Roblox product information")
+    local missing={};for value in pairs(untranslated) do table.insert(missing,value) end;table.sort(missing)
+    if #missing>0 then for _,value in ipairs(missing) do print('UNTRANSLATED: '..value) end end
+    assert(#missing==0,"Untranslated game captions: "..#missing)
     return {width=width,height=height,elements=views.main.elements,camera=views.main.camera,views=views,requests=#requests}
 end

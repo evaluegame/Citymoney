@@ -52,7 +52,9 @@ bpy.ops.object.transform_apply(location=False,rotation=True,scale=False)
 cylinder=bpy.context.object.data.copy();bpy.data.objects.remove(bpy.context.object,do_unlink=True)
 unit_meshes={"Block":cube,"Ball":ball,"Cylinder":cylinder}
 mesh_cache={}
-font_path=Path("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf")
+font_path=Path("build/CitymoneyThai-Bold.ttf")
+if not font_path.exists():
+    font_path=Path("/usr/share/fonts/truetype/noto/NotoSansThai-Bold.ttf")
 world_font=bpy.data.fonts.load(str(font_path)) if font_path.exists() else None
 for entry in entries:
     if entry.get("transparency",0)>=1:

@@ -34,7 +34,7 @@ function View:update(_dt,root,safe,layout,_data,_focus,_inspector,visit,player)
     end
     if self.wasVisiting then self.frame=nil;self.key=nil end
     self.wasVisiting=false
-    camera.CameraType,camera.FieldOfView=Enum.CameraType.Scriptable,36
+    camera.CameraType,camera.FieldOfView=Enum.CameraType.Scriptable,Fit.fov
     local size,offset=camera.ViewportSize,safe.AbsolutePosition
     local mode=root:GetAttribute("ViewMode") or Presentation.defaultView
     -- Only an explicit view choice or a resized window reframes the board.

@@ -49,13 +49,13 @@ end)
 test('physical plates show the current price or rent after upgrades, boosts and demolition',function()
  local e=Engine.new(Config);assert(e:start({{id=1,name='Avery'},{id=2,name='Riley'}}))
  local property=e.state.properties[2]
- assert(Board.caption(Config,2,e.state)=='Copper Lane\n$90')
+ assert(Board.caption(Config,2,e.state)=='ตรอกทองแดง\n$90')
  property.ownerId,property.level=1,1
- assert(Board.caption(Config,2,e.state)=='Copper Lane\nRENT $36')
+ assert(Board.caption(Config,2,e.state)=='ตรอกทองแดง\nค่าเช่า $36')
  property.rentTier,property.boost=3,2
- assert(Board.caption(Config,2,e.state)=='Copper Lane\nRENT $108')
+ assert(Board.caption(Config,2,e.state)=='ตรอกทองแดง\nค่าเช่า $108')
  property.ownerId=false
- assert(Board.caption(Config,2,e.state)=='Copper Lane\n$90')
+ assert(Board.caption(Config,2,e.state)=='ตรอกทองแดง\n$90')
 end)
 test('the resident lane and all player rings stay clear of the name and price band',function()
  for index=1,24 do for seat=1,6 do

@@ -247,7 +247,7 @@ function Menus:render(data)
         for _,entry in ipairs(state.players) do
             if entry.alive and entry.id~=ui.id then
                 if entry.id==self.targetId then activeOpponent=true end
-                local select=ui.button(self.opponents,entry.name, row*157,0,150,52,entry.id==self.targetId and C.green or C.paper,function() self.targetId=entry.id;self.error=nil;self:render(ui.data()) end)
+                local select=ui.button(self.opponents,entry.name, row*157,0,150,52,entry.id==self.targetId and C.green or C.paper,function() self.targetId=entry.id;self.error=nil;self:render(ui.data()) end,true)
                 select.TextSize=15;row=row+1
             end
         end

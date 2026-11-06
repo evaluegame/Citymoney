@@ -1,8 +1,16 @@
 # Citymoney · Build Your City
 
+**ซิตี้มันนี่ 1.2 — เกมภาษาไทยและมุมมองที่อ่านง่ายขึ้น**
+
+เมนู การ์ด เป้าหมาย ข่าว ชื่อที่ดิน และรายละเอียดบ้านเป็นภาษาไทย กระดานวางตรง มุมมองด้านบน 64 องศา ลดความเพี้ยนของช่องด้านหน้าและด้านหลัง กล้องนิ่งระหว่างเล่น ชื่อย่อกับราคาอยู่ในช่อง และแตะดูรายละเอียดได้
+
+เปิด **Citymoney/build/Citymoney.rbxlx** ใน Roblox Studio แล้วกด **Play → เริ่มเล่น → 2 คน / 4 คน → ฝึกกับบอต** อ่าน [คู่มือภาษาไทย](START-HERE-TH.txt) และ [วิธีเผยแพร่และสร้างพาส](PUBLISH-FIRST.md)
+
+![เกมภาษาไทยและมุมกระดานใหม่ — ภาพตรวจจากซอร์ส ไม่ใช่ภาพจาก Studio](docs/Play-screen-preview.png)
+
 A bright, stylized Roblox property board game with colorful houses, a rounded city board, interactive 3D dice, automatic turn handoffs, and four playable city destinations. Play through **2- or 4-player online queues**, invite friends, choose your property's rent, and decide which rival house to demolish.
 
-**Inset spaces and visible residents:** every name and price stays inside its board space. Wider square spaces separate a blue walking lane from the deed panel. A fixed, gentle 3D angle shows larger full-body pawns, with owner-colored rings and outlines. Both dice settle and show their result for 0.4 seconds before the first step.
+**Inset spaces and visible residents:** every name and price stays inside its board space. Wider square spaces separate a blue walking lane from the deed panel. An aligned 64° overhead angle shows larger full-body pawns, with owner-colored rings and outlines. Both dice settle and show their result for 0.4 seconds before the first step.
 
 **Dedicated card spaces:** land on **Tactic Cards** to collect demolition, shield or renovation, or **Rent Cards** to collect rent demand or rent boost. Choose one free card after your pawn arrives. All 16 home plots remain. Tactical cards are collected through gameplay; the card market has been removed.
 
@@ -34,15 +42,15 @@ The download files are at the repository root. On a GitHub file page, use **Down
 
 The physical dice complete their tumble and settle on their final values. The result stays visible for **0.4 seconds**, then the resident moves in separate steps. HUD dice use the same server timeline and stop changing before movement. If the physical dice finish late, movement, arrival, buying/reward deadlines and the automatic handoff shift together; the decision clock still starts after arrival.
 
-The board camera stays at the same position through rolls, walking, purchases, upgrades and property inspection. Automatic follow, zoom buttons, mouse-wheel zoom and the board close-up control have been removed. **City view / Board view** explicitly switch between two views; **Fit** restores Board view. Window resizing still fits the board to the available screen. Smaller map names and the city title keep the view clean.
+The board camera stays at the same position through rolls, walking, purchases, upgrades and property inspection. Automatic follow, zoom buttons, mouse-wheel zoom and the board close-up control have been removed. **City view / Board view** explicitly switch between two views; **จัดกลาง** restores Board view. Window resizing still fits the board to the available screen. Smaller map names and the city title keep the view clean.
 
-Real avatars replace the colored fallback residents only after the body and outfit finish loading. Board avatars use a 1.8× scale; home visits restore normal size, and returning restores the board scale. R6 standing height includes its legs, keeping the whole body above the board; R15 uses its hip height. Both remain visible after a first-person visit. Idle residents face the board viewer, and moving residents face their route. Small name/seat tags sit above their heads, and player-colored outlines remain visible behind scenery. Labels clear the body from head to feet while it passes. The city includes **eight public downtown buildings**, a city gateway, news kiosks, a bank, police offices, a park fountain, waterfront boardwalks, lamps, benches and a ferry. Public services occupy city-service parcels; unowned player plots remain empty until bought. **City view** shows the whole waterfront.
+Real avatars replace the colored fallback residents only after the body and outfit finish loading. Board avatars use a 1.8× scale; home visits restore normal size, and returning restores the board scale. R6 standing height includes its legs, keeping the whole body above the board; R15 uses its hip height. Both remain visible after a first-person visit. Idle residents face the board viewer, and moving residents face their route. Small name/seat tags sit above their heads, and player-colored outlines remain visible behind scenery. Labels clear the body from head to feet while it passes. The city includes **eight public downtown buildings**, a city gateway, news kiosks, a bank, police offices, a park fountain, waterfront boardwalks, lamps, benches and a ferry. Public services occupy city-service parcels; unowned player plots remain empty until bought. **ดูเมือง** shows the whole waterfront.
 
 ## Three easy steps
 
-1. Click **PLAY NOW**, choose **2 players** or **4 players**, then **PLAY ONLINE** or **PRACTICE WITH BOTS**. Practice works immediately with the default settings.
-2. Tap a large die or **ROLL DICE**. On an empty property, buy your chosen home level or **SKIP**. On a card space, choose one free card or **CONTINUE WITHOUT CARD**.
-3. After your token arrives and the result is resolved, the next player starts automatically after four seconds. **EVENTS**, **CARDS & GOALS**, and **MY HOMES** are direct shortcuts for optional actions before rolling.
+1. กด **เริ่มเล่น** เลือก **2 คน / 4 คน** แล้วกด **เล่นออนไลน์** หรือ **ฝึกกับบอต**
+2. แตะลูกเต๋าหรือ **ทอยลูกเต๋า** ถึงที่ดินว่างให้เลือกขนาดบ้านแล้วซื้อหรือ **ข้าม** ถึงช่องการ์ดให้เลือกใบฟรีหรือ **ข้ามการรับการ์ด**
+3. ทำรายการเสร็จแล้วเปลี่ยนตาอัตโนมัติใน 4 วินาที ใช้ปุ่ม **กิจกรรม**, **การ์ดและเป้าหมาย**, **บ้านของฉัน** เพื่อจัดการก่อนทอย
 
 [Phone layout preview](docs/Phone-screen-preview.png) · [Play menu preview](docs/Start-menu-preview.png) · [คู่มือภาษาไทย](START-HERE-TH.txt)
 
@@ -62,9 +70,9 @@ Tokens move **one space at a time**, taking **0.38 seconds per space**: a gentle
 
 ## A clearer city and play screen
 
-The game opens in **Board view** at a gentle 50° angle with a small 8° rotation, showing resident bodies and building fronts. The camera fits the complete route and maximum building heights into the free HUD area, including window resizing and device safe areas. Every space is 18.8 × 18.8 studs, with a separate walking lane and an inset name/price band. Clickable labels follow their tile’s orientation; all four corners stay inside their projected physical plate, including the side rows. Their text scales to the available space, and owner-colored borders distinguish rent from sale prices. Tapping opens the full name, owner, level and rent in a larger property card. Physical floor lettering shows current rent after upgrades and boosts, and restores the land price after a sale or demolition. **City view** shows the entire waterfront; **Board view** returns. **Fit** restores the playable board. The Studio editor opens at the same angle. Purchases, upgrades and property cards keep the camera fixed.
+The game opens in **ดูกระดาน** at an aligned 64° angle with no yaw and a 28° field of view, showing resident bodies and building fronts. The camera fits the complete route and maximum building heights into the free HUD area, including window resizing and device safe areas. Every space is 18.8 × 18.8 studs, with a separate walking lane and an inset name/price band. Clickable labels follow their tile’s orientation; all four corners stay inside their projected physical plate, including the side rows. Their text scales to the available space, and owner-colored borders distinguish rent from sale prices. Tapping opens the full name, owner, level and rent in a larger property card. Physical floor lettering shows current rent after upgrades and boosts, and restores the land price after a sale or demolition. **ดูเมือง** shows the entire waterfront; **ดูกระดาน** returns. **จัดกลาง** restores the playable board. The Studio editor opens at the same angle. Purchases, upgrades and property cards keep the camera fixed.
 
-The persistent interface has a wallet header, a slim color-coded roster, one **MENU [M]** button, direct **EVENTS / CARDS & GOALS / MY HOMES** shortcuts, and a turn dock with larger beveled pip dice and one large gold action. The dock explains the next step and shows the rolled total. Phone layouts enlarge the shortcuts, dice, camera controls and property panels. Real players use Roblox avatar thumbnails with a colored initial while loading; bots use initials. The menu opens **Play Together**, **Cards & Goals**, **City Events**, **Your Properties**, **Cosmetic Shop**, and **How to Play**. Day/night lighting is also in the menu. Buttons respond to hover/press, cash changes float beside the wallet, and purchases/upgrades reveal the home with a short owner-colored celebration. Reduced motion disables movement effects.
+The persistent interface has a wallet header, a slim color-coded roster, one **เมนู [M]** button, direct **EVENTS / CARDS & GOALS / MY HOMES** shortcuts, and a turn dock with larger beveled pip dice and one large gold action. The dock explains the next step and shows the rolled total. Phone layouts enlarge the shortcuts, dice, camera controls and property panels. Real players use Roblox avatar thumbnails with a colored initial while loading; bots use initials. The menu opens **Play Together**, **การ์ดและเป้าหมาย**, **City Events**, **Your Properties**, **Cosmetic Shop**, and **How to Play**. Day/night lighting is also in the menu. Buttons respond to hover/press, cash changes float beside the wallet, and purchases/upgrades reveal the home with a short owner-colored celebration. Reduced motion disables movement effects.
 
 ![The colorful city, empty lots, purchased homes and four event buildings](docs/Neighborhood-preview.png)
 
@@ -78,7 +86,7 @@ After the dice and movement finish and the landing, purchase, opportunity, or pa
 
 ## The interactive city plaza
 
-The city center has four colorful, clickable destinations. Two additional marked route plots, Tactic Cards and Rent Cards, give free card choices when landed on. Click the direct **EVENTS** shortcut, press **P**, click a station, or choose **MENU → City Events**. The overview presents four large event cards; precise clicks on small buildings are optional:
+The city center has four colorful, clickable destinations. Two additional marked route plots, Tactic Cards and Rent Cards, give free card choices when landed on. Click the direct **กิจกรรม** shortcut, press **P**, click a station, or choose **เมนู → กิจกรรมเมือง**. The overview presents four large event cards; precise clicks on small buildings are optional:
 
 ![Large, easy-to-select city event cards](docs/Events-screen-preview.png)
 
@@ -98,7 +106,7 @@ Festivals rotate every **eight total turns**. The festival screen shows the curr
 1. Install [Roblox Studio](https://create.roblox.com/) on Windows or macOS and sign in.
 2. Download and extract **Citymoney-Waterfront.zip**.
 3. Choose **File → Open from File** (Ctrl+O / Cmd+O) and open **Citymoney/build/Citymoney.rbxlx**.
-4. Press **Play (F5)**. Click **PLAY NOW** or **MENU → Play Together**, choose **2 players** or **4 players**, click **PRACTICE WITH BOTS**. Optional bot and demolition settings are under **SETTINGS**.
+4. Press **Play (F5)** → **เริ่มเล่น** → **2 คน / 4 คน** → **ฝึกกับบอต**. Optional bot and demolition settings are under **ตั้งค่า**.
 
 The neighborhood is visible in the editor; menus appear during Play. The place contains its models and scripts. No paid assets, API keys, plugins, or HTTP access are needed to play it.
 
@@ -106,13 +114,13 @@ The neighborhood is visible in the editor; menus appear during Play. The place c
 
 1. Open the updated place and use **File → Publish** (called **Publish to Roblox** in some Studio versions) in your account.
 2. In Creator Dashboard, make the experience available to your intended players. A **12-player server capacity** allows several parties to wait in the public lobby. Each reserved match admits exactly **2 or 4 matched humans**.
-3. Join the published experience using the Roblox app. Open **MENU → Play Together**, choose a size and optional color, then click **PLAY ONLINE**.
-4. To play together, click **INVITE FRIENDS** before starting the search. A friend accepting that invitation is brought to your public server and joins your party. Guests click **I'm ready to play**. The party leader queues everyone together.
+3. Join the published experience using the Roblox app. Open **เมนู → เล่นกับเพื่อน**, choose a size and optional color, then click **เล่นออนไลน์**.
+4. To play together, click **ชวนเพื่อน** before starting the search. A friend accepting that invitation is brought to your public server and joins your party. Guests click **ฉันพร้อมแล้ว**. The party leader queues everyone together.
 5. Parties contain up to four people and are never split: two pairs can fill a four-player match, or three friends can wait for one solo player. Online queues never fill seats with bots.
 
 Every match assigns distinct player colors. If separate parties chose the same color, matching gives the later resident an unused color. Roofs, lot borders, flags, mailboxes, avatar rings, and HUD labels use those match colors; house signs also show the owner's name.
 
-Use **CANCEL SEARCH** while searching or **Leave party** to form a new solo party. Once a match is connecting, wait for the teleport. In an online match, **Return to lobby / Leave match** returns you to a public server; leaving an ongoing match forfeits your deeds. Invite your friends again from the lobby for another party.
+Use **ยกเลิกค้นหา** while searching or **ออกจากกลุ่ม** to form a new solo party. Once a match is connecting, wait for the teleport. In an online match, **กลับห้องรอ / ออกจากเกม** returns you to a public server; leaving an ongoing match forfeits your deeds. Invite your friends again from the lobby for another party.
 
 Matching uses Roblox **MemoryStoreService** and **TeleportService** to create a reserved server in the same place. Access codes stay on the server. The destination validates each player’s ticket and roster before marking them admitted, then waits for the matched players. Presence alone cannot start the match. Failed teleports retry; an incomplete arrival times out after 60 seconds and returns arrivals to a public lobby.
 
@@ -143,7 +151,7 @@ For example, Copper Lane costs $90 for land and $60 per building level. A Townho
 
 ## Cards, events, and challenges
 
-Open **Cards & goals** to select a card, its property, and an opponent where needed. You start with one of each type and can hold up to **three of each type**. Hands are private. Play **one tactical card per turn**, alongside normal rolls, purchases, upgrades, and rent improvements.
+Open **การ์ดและเป้าหมาย** to select a card, its property, and an opponent where needed. You start with one of each type and can hold up to **three of each type**. Hands are private. Play **one tactical card per turn**, alongside normal rolls, purchases, upgrades, and rent improvements.
 
 | Card | Chosen target and effect |
 | --- | --- |
@@ -157,28 +165,28 @@ Online games always use full-house demolition. Practice offers an optional one-l
 
 The remaining **City News** space retains **20 automatic events**, interleaved with the five interactive opportunity choices on every second visit: cash gains/losses, card grants, extra draws, maintenance based on homes or levels, home dividends, a community street fair, and movement events. Passing City Gate and resting in Central Park also award cards, subject to the hand cap.
 
-Seven rotating challenges reward collecting homes, adding building levels, earning rent, passing City Gate, drawing City News, playing cards, and completing districts. Watch the main-screen **goal card** or **Cards & Goals**, then claim the cash reward and a random card during your turn. Tap a ready goal card to claim directly. Random card rewards choose a type with remaining capacity; if the entire hand is full, the cash reward is still paid and the UI shows that the hand is full. Claim one goal per turn; pay **$50** to change your goal once per turn. Rewards range from $120 to $180. Losing property can invalidate an unclaimed ownership goal. Bots also play cards and claim goals.
+Seven rotating challenges reward collecting homes, adding building levels, earning rent, passing City Gate, drawing City News, playing cards, and completing districts. Watch the main-screen **goal card** or **การ์ดและเป้าหมาย**, then claim the cash reward and a random card during your turn. Tap a ready goal card to claim directly. Random card rewards choose a type with remaining capacity; if the entire hand is full, the cash reward is still paid and the UI shows that the hand is full. Claim one goal per turn; pay **$50** to change your goal once per turn. Rewards range from $120 to $180. Losing property can invalidate an unclaimed ownership goal. Bots also play cards and claim goals.
 
 ## Controls
 
 | Action | Control |
 | --- | --- |
-| Main menu | **MENU [M]** or **M** |
+| Main menu | **เมนู [M]** or **M** |
 | Goal progress / reward | Main-screen goal card; tap to view the goal, or to claim a ready reward on your turn |
-| City Opportunity | Choose cash or a card in the reward window; **CHOOSE REWARD** reopens it if closed |
-| Matchmaking, party, color, practice | **MENU → Play Together**; **PLAY NOW** in the lobby |
-| Cards, targets, challenges | **CARDS & GOALS** shortcut or **MENU → Cards & Goals**; the shortcut says **CLAIM REWARD** when one is ready |
+| City Opportunity | Choose cash or a card in the reward window; **เลือกรางวัล** reopens it if closed |
+| Matchmaking, party, color, practice | **เมนู → เล่นกับเพื่อน**; **เริ่มเล่น** in the lobby |
+| Cards, targets, challenges | **การ์ดและเป้าหมาย** shortcut or **เมนู → การ์ดและเป้าหมาย**; the shortcut says **รับรางวัล** when one is ready |
 | Roll | Click/tap a HUD die, 3D die, or dice tray; bottom action button or **R** also works |
-| Buy / skip / finish early | Bottom action button; **SKIP** leaves the lot empty; **Space** performs the current action. Resolved turns advance automatically |
-| Collect a free card | Land on Tactic Cards / Rent Cards, then choose a card; **COLLECT CARD** reopens the dialog |
-| City plaza | **EVENTS** shortcut, a station, **P**, or **MENU → City Events** |
-| Inspect a property | Click/tap its plot or house, **MY HOMES**, or **MENU → Your Properties** |
-| Upgrade / set rent | Select your home during your turn → **Upgrade options / Rent options** |
+| Buy / skip / finish early | Bottom action button; **ข้าม** leaves the lot empty; **Space** performs the current action. Resolved turns advance automatically |
+| Collect a free card | Land on Tactic Cards / Rent Cards, then choose a card; **รับการ์ด** reopens the dialog |
+| City plaza | **กิจกรรม** shortcut, a station, **P**, or **เมนู → กิจกรรมเมือง** |
+| Inspect a property | Click/tap its plot or house, **บ้านของฉัน**, or **เมนู → ที่ดินของฉัน** |
+| Upgrade / set rent | Select your home during your turn → **อัปเกรด / ตั้งค่าเช่า** |
 | Repaint / sell | Property card during your turn; repainting is free, sales ask for confirmation |
-| Visit your home | Property card → **Walk through your home**, including during another player's turn |
-| Walk / door / return | Roblox walking controls; **E** operates your door; **B** or **Back to board** returns |
-| Camera | **City view / Board view / Fit**; fixed during play |
-| Lighting | **Day / Night** in the main menu |
+| Visit your home | Property card → **เดินชมบ้าน**, including during another player's turn |
+| Walk / door / return | Roblox walking controls; **E** operates your door; **B** or **กลับกระดาน** returns |
+| Camera | **ดูเมือง / ดูกระดาน / จัดกลาง**; fixed during play |
+| Lighting | **กลางวัน / กลางคืน** in the main menu |
 
 Visits do not change your game position, cash, or turn. The match continues while you explore. Rolling/ending your turn returns you to the board. Selling or losing a visited home returns you; upgrades/repainting move you safely onto its front path.
 
@@ -244,7 +252,7 @@ For source editing alongside Studio, use `rojo serve default.project.json --addr
 | `server/World`, `server/WorldEffects`, `server/init.server` | Physical lifecycle, home reveals, avatar visits, doors, validated remotes, timers |
 | `client/Menus`, `client/init.client` | Match/card/goal menus, rent selector, HUD, cameras, input |
 
-Checks include **275 numbered cases and 600 complete simulated matches**: 35 core engine cases (200 matches), 18 purchase/upgrade cases, 23 strategy/rent cases (200 tactical matches), 25 party/matchmaking cases, 24 cosmetic/ownership/profile cases, 31 tabletop cases (200 automatic matches), 13 presentation cases, 28 opportunity/experience cases, 9 player-visibility/city-layout cases, 7 dice timeline cases, 7 native dice/router adapter cases, 6 space/price/visibility cases, 6 native avatar adapter cases, 10 Robux shop cases, 7 native Club purchase cases, 7 native matchmaking cases, and 19 physical-card-space cases. New cases cover camera projections across desktop/portrait/inset/rotation combinations, tall homes and closeups, exact dice faces, automatic handoff and stale clocks, card-space hand caps and rejected card-purchase requests, festival rotation/targets, and bots. Cosmetic cases cover verification/storage failures, concurrent saves, reconnects, and all **256 plot/style/level combinations**. Four headless client integration checks load the actual shared/client source through a limited Roblox API adapter at desktop, Studio, short-window and mobile sizes. They exercise fixed camera framing during rolling/movement/inspection/upgrades, removed zoom inputs, dice/result/movement phases, delayed completion snapshots, body transparency recovery, reduced motion, shared actor geometry, all 24 contained map badges, labels clearing real avatar/bot bodies as they move, camera switching/reset and property/News selection, goal claims/celebrations, arrival gating, opportunity selection/reopening/full hands/other-player privacy, large dice/shortcut targets, touch interactions, chosen festival targets, disabled off-turn offers, free card-space collection, three-/two-option layouts, full-hand skipping, buying/skipping, upgrades, one-panel navigation, lobby settings, online search and one-click practice. Purchase requests are applied to the actual game engine. They also export the visible GUI layout, matching perspective camera, and actual world geometry for every review state. A separate native avatar harness executes actual World methods for R6/R15 standing height, home/board scaling, unfinished characters and adornment cleanup. A native dice-adapter harness executes the actual DiceWorld source with a controlled heartbeat to check completion ordering, reduced motion, cancellation, resets, late completion and reward-table routing. It does not emulate native rendering or replication. Native Club tests exercise the real completion callback, cancellation, delayed verification, outages, duplicate completions and departure/rejoin behavior. Native Matchmaker tests start the real engine through 2-/4-player queues and cover readiness, ticket admission, incomplete arrivals and retries. All four GUI layouts exercise Robux prices, cancellation, server verification, automatic equipping, restores and product/prompt outages. Additional scene, home and layout checks run; pure modules are analyzed, all Roblox source compiles, and built-place scripts, interactive attributes and geometry are checked against source.
+Checks include **287 numbered cases and 600 complete simulated matches**: 35 core engine cases (200 matches), 18 purchase/upgrade cases, 23 strategy/rent cases (200 tactical matches), 25 party/matchmaking cases, 24 cosmetic/ownership/profile cases, 31 tabletop cases (200 automatic matches), 13 presentation cases, 28 opportunity/experience cases, 9 player-visibility/city-layout cases, 7 dice timeline cases, 7 native dice/router adapter cases, 6 space/price/visibility cases, 6 native avatar adapter cases, 10 Robux shop cases, 7 native Club purchase cases, 7 native matchmaking cases, 19 physical-card-space cases, and 12 Thai-localization cases. New cases cover camera projections across desktop/portrait/inset/rotation combinations, tall homes and closeups, exact dice faces, automatic handoff and stale clocks, card-space hand caps and rejected card-purchase requests, festival rotation/targets, and bots. Cosmetic cases cover verification/storage failures, concurrent saves, reconnects, and all **256 plot/style/level combinations**. Four headless client integration checks load the actual shared/client source through a limited Roblox API adapter at desktop, Studio, short-window and mobile sizes. They exercise fixed camera framing during rolling/movement/inspection/upgrades, removed zoom inputs, dice/result/movement phases, delayed completion snapshots, body transparency recovery, reduced motion, shared actor geometry, all 24 contained map badges, labels clearing real avatar/bot bodies as they move, camera switching/reset and property/News selection, goal claims/celebrations, arrival gating, opportunity selection/reopening/full hands/other-player privacy, large dice/shortcut targets, touch interactions, chosen festival targets, disabled off-turn offers, free card-space collection, three-/two-option layouts, full-hand skipping, buying/skipping, upgrades, one-panel navigation, lobby settings, online search and one-click practice. Purchase requests are applied to the actual game engine. They also export the visible GUI layout, matching perspective camera, and actual world geometry for every review state. A separate native avatar harness executes actual World methods for R6/R15 standing height, home/board scaling, unfinished characters and adornment cleanup. A native dice-adapter harness executes the actual DiceWorld source with a controlled heartbeat to check completion ordering, reduced motion, cancellation, resets, late completion and reward-table routing. It does not emulate native rendering or replication. Native Club tests exercise the real completion callback, cancellation, delayed verification, outages, duplicate completions and departure/rejoin behavior. Native Matchmaker tests start the real engine through 2-/4-player queues and cover readiness, ticket admission, incomplete arrivals and retries. All four GUI layouts exercise Robux prices, cancellation, server verification, automatic equipping, restores and product/prompt outages. Additional scene, home and layout checks run; pure modules are analyzed, all Roblox source compiles, and built-place scripts, interactive attributes and geometry are checked against source.
 
 Reservation and cosmetic service tests use in-memory adapters. **Cloud checks do not run Roblox Studio or live Roblox services.** Native rendering, thumbnails, movement, input, doors, replication, native invites, cross-server joins, actual game-pass checkout, and DataStore persistence still require Studio and published-game playtests.
 

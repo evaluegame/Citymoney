@@ -8,6 +8,9 @@ from pathlib import Path
 import json
 import subprocess
 import sys
+from preview_fonts import ensure_fonts
+
+ensure_fonts()
 
 root = Path(__file__).resolve().parents[1]
 view = sys.argv[1] if len(sys.argv) > 1 else "shop-robux-desktop"

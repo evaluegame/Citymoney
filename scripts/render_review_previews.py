@@ -8,6 +8,7 @@ from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 import json
 import subprocess
+from preview_fonts import ensure_fonts
 
 root = Path(__file__).resolve().parents[1]
 jobs = [
@@ -41,6 +42,7 @@ def run(job):
 
 
 if __name__ == "__main__":
+    ensure_fonts()
     with ThreadPoolExecutor(max_workers=2) as pool:
         for name in pool.map(run, jobs):
             print("READY", name, flush=True)

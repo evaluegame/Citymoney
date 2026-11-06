@@ -55,6 +55,7 @@ for index in range(1, 25):
 camera = child(child(place, "Workspace", "Workspace"), "CityPreviewCamera", "Camera")
 assert child(place, "Workspace", "Workspace").findtext("Properties/Ref[@name='CurrentCamera']") == camera.attrib["referent"]
 expected_camera = json.loads((ROOT / "build/board-camera.json").read_text())
+assert math.isclose(float(camera.findtext("Properties/float[@name='FieldOfView']")), expected_camera["fov"], abs_tol=1e-4), "Editor field of view differs from runtime"
 camera_frame = camera.find("Properties/CoordinateFrame[@name='CFrame']")
 rotation = [value for row in zip(expected_camera["right"], expected_camera["up"], expected_camera["back"]) for value in row]
 for axis, value in zip(("X", "Y", "Z", "R00", "R01", "R02", "R10", "R11", "R12", "R20", "R21", "R22"), expected_camera["position"] + rotation):

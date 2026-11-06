@@ -239,7 +239,7 @@ function World:sync(state)
     if self.festivalLabel and state.turnCount~=self.festivalTurn then
         self.festivalTurn=state.turnCount
         local event=Plaza.festival(self.config,state)
-        self.festivalLabel.TextLabel.Text="FESTIVAL\n$"..event.cost
+        self.festivalLabel.TextLabel.Text="เทศกาล\n$"..event.cost
     end
     local newRoll=self.dice:sync(state,self.club)
     if newRoll then self.moveReadyAt=workspace:GetServerTimeNow()+Journey.beforeMove(self.config)

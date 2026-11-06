@@ -1,5 +1,5 @@
 -- Perspective fitting into a HUD-free screen rectangle, including tall houses.
-local Camera={}
+local Camera={fov=28}
 local function dot(a,b) return a[1]*b[1]+a[2]*b[2]+a[3]*b[3] end
 function Camera.cityBounds(config,architecture,state)
     local points={}
@@ -45,10 +45,10 @@ function Camera.fromSlopes(slopes,yaw,elevation,zoom,bounds)
     local offsetU=(uMax+uMin-(top+bottom)*distance)/2
     local position={}
     for axis=1,3 do position[axis]=target[axis]+back[axis]*distance+rightAxis[axis]*offsetR+up[axis]*offsetU end
-    return {position=position,right=rightAxis,up=up,back=back,fov=36}
+    return {position=position,right=rightAxis,up=up,back=back,fov=Camera.fov}
 end
 function Camera.fit(width,height,rect,yaw,elevation,zoom,bounds)
-    local tanV=math.tan(math.rad(36)/2)
+    local tanV=math.tan(math.rad(Camera.fov)/2)
     local tanH=tanV*width/height
     local left,right=((rect[1]+10)/width*2-1)*tanH,((rect[1]+rect[3]-10)/width*2-1)*tanH
     local bottom,top=(1-(rect[2]+rect[4]-10)/height*2)*tanV,(1-(rect[2]+10)/height*2)*tanV

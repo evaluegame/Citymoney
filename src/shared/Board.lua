@@ -7,16 +7,17 @@ local Districts=runtimeScript and require(runtimeScript.Parent.CityDistricts) or
 local Scenery=runtimeScript and require(runtimeScript.Parent.CityScenery) or require("./CityScenery")
 local Spaces=runtimeScript and require(runtimeScript.Parent.BoardSpaces) or require("./BoardSpaces")
 local Plans=runtimeScript and require(runtimeScript.Parent.PropertyPlans) or require("./PropertyPlans")
+local Thai=runtimeScript and require(runtimeScript.Parent.Thai) or require("./Thai")
 local Board={spacing=Architecture.spacing}
 Board.position=Architecture.position
 function Board.caption(config,index,state)
     local tile=config.tiles[index]
-    if tile.kind=="card" then return tile.name.."\nFREE CARD" end
+    if tile.kind=="card" then return Thai.text(tile.name.."\nFREE CARD") end
     local property=state and state.properties[index]
     if property and property.ownerId and tile.kind=="property" then
-        return tile.name.."\nRENT $"..Plans.projectedRent(config,state,property.ownerId,index,property.level)
+        return Thai.text(tile.name.."\nRENT $"..Plans.projectedRent(config,state,property.ownerId,index,property.level))
     end
-    return tile.name..(tile.price and ("\n$"..tile.price) or "")
+    return Thai.text(tile.name..(tile.price and ("\n$"..tile.price) or ""))
 end
 function Board.generate(config)
     local parts={}
@@ -70,6 +71,6 @@ function Board.generate(config)
         end
     end
     add("LobbySpawn",{4,1,4},{0,2,44},"FFFFFF",{className="SpawnLocation",transparency=1})
-    return parts
+    return Thai.scene(parts)
 end
 return Board

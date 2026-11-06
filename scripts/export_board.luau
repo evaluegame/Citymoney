@@ -1,5 +1,6 @@
 local Config = require("../src/shared/Config")
 local Board = require("../src/shared/Board")
+local Thai = require("../src/shared/Thai")
 local encode
 encode = function(value: any): string
     if type(value) == "string" then
@@ -70,4 +71,4 @@ if mode == "showcase" or mode == "home" or mode=="clubhome" or mode=="clubshowca
     end
     scene = entries
 end
-print(encode(scene))
+print(encode(Thai.scene(scene)))

@@ -1,6 +1,7 @@
 -- Clickable labels fit inside their physical space, including perspective sides.
 local shared=game:GetService("ReplicatedStorage"):WaitForChild("Citymoney")
 local Players=game:GetService("Players")
+local Thai=require(shared.Thai)
 local Config,Plans,Spaces,Actors=require(shared.Config),require(shared.PropertyPlans),require(shared.BoardSpaces),require(shared.Actors)
 local Labels={}
 Labels.__index=Labels
@@ -74,10 +75,10 @@ function Labels:update(camera,safe,scale,data,enabled,rect)
                 local caption=self.captions[index]
                 if caption then
                     local short=special[Config.tiles[index].kind]
-                    local name=short and short[1] or string.match(caption.name,"^%S+")
-                    local value=short and short[2] or ((caption.owned and "RENT " or "")..caption.value)
+                    local name=Thai.shortNames[index] or Thai.text(short and short[1] or caption.name)
+                    local value=Thai.text(short and short[2] or ((caption.owned and "RENT " or "")..caption.value))
                     button.Text=name.."\n"..value
-                    local font=math.min(10.5,h/2.3,w/(math.max(#name,#value)*0.67+1))
+                    local font=math.min(12,h/2.8,w/(math.max(Thai.width(name),Thai.width(value))*0.62+1))
                     button.TextSize=math.max(1,font/scale)
                     button:FindFirstChildOfClass("UITextSizeConstraint").MaxTextSize=math.max(1,math.floor(font/scale))
                 end

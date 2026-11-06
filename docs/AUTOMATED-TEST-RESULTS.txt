@@ -1,6 +1,7 @@
-CITYMONEY 1.1.0 — AUTOMATED TEST OUTPUT
+CITYMONEY 1.2.0 — AUTOMATED TEST OUTPUT
 
-275 named cases, 600 simulated matches, four headless client layouts.
+287 named cases, 600 simulated matches, four headless client layouts.
+Thai UI, dynamic captions, user names, Unicode, currency and aligned camera checked.
 Controlled Roblox service adapters are used; this is not a live Studio,
 purchase, teleport, or DataStore playtest. See RELEASE-CHECKS.md.
 
@@ -184,7 +185,7 @@ PASS one festival service is separate from the tactical allowance and resets nex
 PASS bots choose a valid affordable festival target and respect the plaza allowance
 
 31 tabletop/camera/dice/automatic-turn/plaza tests passed, including 200 automatic matches.
-PASS play opens on a fixed gently angled board that shows resident bodies
+PASS play opens on an aligned overhead board that shows resident bodies
 PASS primary controls and text have strong light-theme contrast
 PASS the menu and turn dock do not overlap on desktop or portrait screens
 PASS all HUD regions remain inside the safe area
@@ -250,6 +251,20 @@ PASS a roll reaches the physical card space without an extra random draw
 PASS card booths and their FREE labels are on the marked parcels
 
 19 physical-card-space cases passed.
+PASS all twenty-four tile names and eight districts have Thai captions
+PASS all home levels and their descriptions are translated
+PASS all five cards and seven goals have complete Thai descriptions
+PASS news events, festivals and free opportunity choices are translated
+PASS free and premium collections use Thai names without changing their IDs
+PASS dynamic captions preserve user names including punctuation and Thai
+PASS nested property, card and home captions translate without changing numbers
+PASS level templates cannot mistake ordinary words for numbers
+PASS Thai and English mixed names remain valid UTF-8 during repeated updates
+PASS Thai initials and label widths count characters instead of UTF-8 bytes
+PASS Robux and ordinary money keep their exact amounts and currencies
+PASS editor and runtime board captions agree while interaction IDs stay unchanged
+
+12 Thai localization cases passed.
 PASS all six resident positions stay separated and within each rotated space
 PASS residents face their actual movement direction on every side and corner
 PASS travel holds exact centers, crosses City Gate and reaches event destinations
@@ -282,10 +297,10 @@ PASS board scene: closed 24-tile path, deterministic geometry, labels, sizes, an
 PASS homes: all 16 parcels, four building levels, walkable doors, furniture, stairs, rotation matrices and visit arrival points.
 PASS responsive layout: screenshot size, short Studio windows, desktop and portrait safe areas.
 All Roblox source files compiled successfully.
-PASS client UI adapter: desktop 1440×900; fixed camera, settled dice before movement, player visibility, 24 labels, free card-space collection/skip/caps, removed card purchases, goals, City News, homes, matchmaking and Robux cosmetics.
-PASS client UI adapter: studio 1192×642; fixed camera, settled dice before movement, player visibility, 24 labels, free card-space collection/skip/caps, removed card purchases, goals, City News, homes, matchmaking and Robux cosmetics.
-PASS client UI adapter: short 800×560; fixed camera, settled dice before movement, player visibility, 24 labels, free card-space collection/skip/caps, removed card purchases, goals, City News, homes, matchmaking and Robux cosmetics.
-PASS client UI adapter: mobile 390×760; fixed camera, settled dice before movement, player visibility, 24 labels, free card-space collection/skip/caps, removed card purchases, goals, City News, homes, matchmaking and Robux cosmetics.
+PASS client UI adapter: desktop 1440×900; Thai menus and dynamic captions, preserved names, aligned fixed camera, settled dice before movement, player visibility, 24 labels, free cards, goals, homes, matchmaking and Robux cosmetics.
+PASS client UI adapter: studio 1192×642; Thai menus and dynamic captions, preserved names, aligned fixed camera, settled dice before movement, player visibility, 24 labels, free cards, goals, homes, matchmaking and Robux cosmetics.
+PASS client UI adapter: short 800×560; Thai menus and dynamic captions, preserved names, aligned fixed camera, settled dice before movement, player visibility, 24 labels, free cards, goals, homes, matchmaking and Robux cosmetics.
+PASS client UI adapter: mobile 390×760; Thai menus and dynamic captions, preserved names, aligned fixed camera, settled dice before movement, player visibility, 24 labels, free cards, goals, homes, matchmaking and Robux cosmetics.
 PASS native dice finish both models before any waiting mover is released
 PASS reduced motion settles exact faces before its completion callback
 PASS a superseding native roll cancels the old mover and completion
@@ -317,6 +332,3 @@ PASS a stranger cannot join a reserved match by copying its match identifier
 PASS an incomplete match retries failed lobby returns and cannot start after cancellation
 PASS departures remove a reserved admission before a player can rejoin
 7 native matchmaking cases passed.
-
-Post-review UI verification: clipped card-guide lists and scrolling to the
-last card pass at all four layouts; updated GUI and shared scene compile.
