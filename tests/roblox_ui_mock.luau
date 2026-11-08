@@ -86,8 +86,12 @@ return function(sources,width,height,localeId)
                     self._props.Parent=value
                     if value then
                         table.insert(value._children,self)
+                        local added={self};for _,child in ipairs(self:GetDescendants()) do table.insert(added,child) end
                         local ancestor=value
-                        while ancestor do if ancestor._signals.DescendantAdded then ancestor._signals.DescendantAdded:Fire(self) end;ancestor=ancestor.Parent end
+                        while ancestor do
+                            if ancestor._signals.DescendantAdded then for _,child in ipairs(added) do ancestor._signals.DescendantAdded:Fire(child) end end
+                            ancestor=ancestor.Parent
+                        end
                     end
                 else
                     local old=self._props[key];self._props[key]=value
@@ -196,6 +200,9 @@ return function(sources,width,height,localeId)
         for i=#scheduled,1,-1 do if scheduled[i].at==math.huge then table.insert(work,table.remove(scheduled,i).callback) end end
         for _,callback in ipairs(work) do callback() end
     end
+    local bootRequests=#requests
+    advance(3.1);advance(3.1)
+    assert(#requests>=bootRequests+2 and requests[#requests][1]=='Sync','A missing initial snapshot leaves the client stuck')
     local Engine=load(shared.Engine);local Config=load(shared.Config)
     local engine=Engine.new(Config)
     local roster={{id=1,name="Avery"},{id=2,name="Riley"},{id=3,name="Jamie"},{id=4,name="Morgan"}}
@@ -205,7 +212,7 @@ return function(sources,width,height,localeId)
     local members={};for i,p in ipairs(roster) do table.insert(members,{id=p.id,name=p.name,colorIndex=i,ready=true}) end
     local data={lobby=members,hostId=1,lobbyConfig={seats=4,fillBots=true,attackMode="destroy"},
         matchmaking={mode="lobby",queued=false,status="Studio local matchmaking",studio=true},club={styleId="classic",ownsPass=false,loading=false,studio=true,passId=0,effects=true,status=""},
-        styles={},deadline=155,handoffAt=0,serverTime=100,revision=0,visitors={}}
+        styles={},deadline=now+55,handoffAt=0,serverTime=now,revision=0,visitors={}}
     local function publish()
         data=table.clone(data)
         data.revision=data.revision+1;data.game=engine:view(1)
@@ -235,15 +242,37 @@ return function(sources,width,height,localeId)
     assert(engine.state==originalState and engine:player(1).cash==originalCash,'Language switching changed the match')
     nativeParts[1]:Destroy()
     rawWorldName:Destroy();input:Destroy()
+    local nativeScene=load(shared.Scene)
+    local nativeNew=env.Instance.new
+    local staged
+    env.Instance.new=function(class) local object=nativeNew(class);if class=='Model' then staged=object end;return object end
+    local ok=pcall(nativeScene.model,{{name='GoodPart',size={2,2,2},position={0,0,0},color='FFFFFF'},{name='BadPart',size={2,2,2},color='FFFFFF'}},'IncompleteHouse',board)
+    env.Instance.new=nativeNew
+    assert(not ok and staged and not staged.Parent and #staged:GetChildren()==0 and not board:FindFirstChild('IncompleteHouse'),'A failed model leaves a partial house in the world')
+    local complete=nativeScene.model({{name='CompleteSign',size={2,2,2},position={0,2,0},color='FFFFFF',text='CITY NEWS'}},'CompleteHouse',board)
+    assert(complete.CompleteSign.Caption.TextLabel.Text==t('CITY NEWS'),'A staged model misses per-player localization')
+    complete:Destroy()
     probe:Destroy()
     local nameProbe=node("TextLabel","NameProbe");nameProbe.Text="Ready";nameProbe:SetAttribute("PlayerName",true);nameProbe.Parent=root
     assert(nameProbe.Text=="Ready","A player name was translated as a menu command");nameProbe:Destroy()
     local function visible(o) while o do if o.Visible==false or o.Enabled==false then return false end;o=o.Parent end;return true end
     local untranslated={}
+    local function luminance(c)
+        local function linear(v) return v<=0.04045 and v/12.92 or ((v+0.055)/1.055)^2.4 end
+        return linear(c.R)*0.2126+linear(c.G)*0.7152+linear(c.B)*0.0722
+    end
     local function findText(text)
         text=t(text)
         local found
         for _,object in ipairs(gui:GetDescendants()) do if visible(object) and object.Text then
+            if object.Text~='' and (object.TextTransparency or 0)<0.05 then
+                local background=object
+                while background and (background.BackgroundTransparency or 0)>0.1 do background=background.Parent end
+                if background and background.BackgroundColor3 then
+                    local a,b=luminance(object.TextColor3),luminance(background.BackgroundColor3)
+                    assert((math.max(a,b)+0.05)/(math.min(a,b)+0.05)>=4.5,'Unreadable text contrast: '..object.Text)
+                end
+            end
             local remainder=object.Text
             for _,allowed in ipairs({'Avery','Riley','Jamie','Morgan','Roblox','Robux','Studio'}) do remainder=string.gsub(remainder,allowed,'') end
             if expected.locale=='th-th' and string.find(remainder,'%a%a%a+') then untranslated[object.Text]=true end
@@ -649,6 +678,9 @@ return function(sources,width,height,localeId)
     serverCheckout(true)
     assert(shop.ClubCheckout.Text~=t("Verifying with Roblox…"),"A late completion hides an already verified purchase")
     assert(priceCalls>=3,"The retry did not request fresh Roblox product information")
+    local staleRequests=#requests;advance(13)
+    assert(#requests>staleRequests and requests[#requests][1]=='Sync','A stale client never refreshes the authoritative snapshot')
+    publish()
     local missing={};for value in pairs(untranslated) do table.insert(missing,value) end;table.sort(missing)
     if #missing>0 then for _,value in ipairs(missing) do print('UNTRANSLATED: '..value) end end
     assert(#missing==0,"Untranslated game captions: "..#missing)

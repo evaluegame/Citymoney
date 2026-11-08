@@ -150,6 +150,7 @@ function Boutique:render(data)
     ui.dieA.BackgroundColor3,ui.dieB.BackgroundColor3=Color3.fromHex(equipped.dice),Color3.fromHex(equipped.dice)
     ui.dieTextA.TextColor3,ui.dieTextB.TextColor3=Color3.fromHex(equipped.pip),Color3.fromHex(equipped.pip)
     ui.mark.BackgroundColor3=Color3.fromHex(equipped.accent)
+    ui.logo.TextColor3=ui.foreground(ui.mark.BackgroundColor3)
     ui.header:FindFirstChildOfClass("UIStroke").Color=equipped.premium and Color3.fromHex(equipped.accent) or C.line
     ui.strap.Text=equipped.premium and ("CLUB MEMBER · "..equipped.label) or "BUILD YOUR CITY"
     if not self.shade.Visible then return end
@@ -179,7 +180,7 @@ function Boutique:render(data)
     ui.available(self.primary,action~=nil,C.green)
     ui.available(self.restore,not profile.loading and not profile.studio and profile.passId>0,C.paper)
     self.status.Text=self.error or (profile.loading and "Loading your collection…" or (profile.studio and "STUDIO PREVIEW · no purchases or permanent unlocks" or (profile.ownsPass and "CLUB MEMBER · all three collections unlocked" or "Preview any collection before purchasing.")))
-    self.status.TextColor3=self.error and C.red or C.green
+    self.status.TextColor3=self.error and C.red or C.accent
     self.note.Text=self.error and "Roblox handles checkout and verifies ownership. Game cash cannot buy Club." or (profile.status~="" and profile.status or "House finishes · Dice skins · Aura + trail. Cosmetics only.")
 end
 function Boutique:celebrate()

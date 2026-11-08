@@ -12,7 +12,7 @@ function Goal.new(ui)
  self.name=ui.text(self.button,"",10,22,134,34,14,C.ink,true)
  self.detail=ui.text(self.button,"",10,58,134,14,11,C.muted)
  self.track=ui.frame(self.button,10,73,134,3,C.paper)
- self.fill=Instance.new("Frame");self.fill.Size,self.fill.BackgroundColor3,self.fill.BorderSizePixel,self.fill.Parent=UDim2.fromScale(0,1),C.green,0,self.track
+ self.fill=Instance.new("Frame");self.fill.Size,self.fill.BackgroundColor3,self.fill.BorderSizePixel,self.fill.Parent=UDim2.fromScale(0,1),C.accent,0,self.track
  return self
 end
 function Goal:activate()
@@ -44,6 +44,9 @@ function Goal:render(data,layout,rosterHeight,walking)
  for _,kind in ipairs(self.ui.config.cardTypes) do if (me.cards[kind] or 0)<self.ui.config.cardLimit then cardSpace=true end end
  local ratio=math.clamp(goal.progress/math.max(1,goal.target),0,1)
  self.button.BackgroundColor3=ready and C.gold or C.card
+ self.tag.TextColor3=ready and C.darkInk or C.accent
+ self.name.TextColor3=ready and C.darkInk or C.ink
+ self.detail.TextColor3=ready and C.darkInk or C.muted
  self.button.Active=workspace:GetServerTimeNow()>=(data.journeyUntil or 0) and not self.pending
  self.tag.Text=ready and (myTurn and "TAP TO CLAIM" or "REWARD READY") or "YOUR NEXT GOAL"
  self.name.Text=ready and ("Claim $"..goal.reward..(cardSpace and " + card" or "")) or goal.name

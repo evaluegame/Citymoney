@@ -48,8 +48,12 @@ function Scene.populate(entries, parent, preview)
 end
 function Scene.model(entries, name, parent, preview)
     local model = Instance.new("Model")
-    model.Name, model.Parent = name, parent
-    Scene.populate(entries, model, preview)
+    model.Name = name
+    local ok,message=pcall(function()
+        Scene.populate(entries,model,preview)
+        model.Parent=parent
+    end)
+    if not ok then model:Destroy();error(message,0) end
     return model
 end
 return Scene

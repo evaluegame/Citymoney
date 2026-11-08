@@ -1,19 +1,21 @@
-# Citymoney 1.3 — release verification
+# Citymoney 1.4 — release verification
 
 This report distinguishes the automated checks from Roblox account tests.
 
 | Area | Automated result |
 | --- | --- |
 | Rules and full matches | 600 complete simulated matches; purchases, chosen starting levels, upgrades, rent tiers, insolvency, victory, events and tactical cards pass. |
-| Named cases | 300 cases across the engine, plans, strategy, parties, matchmaking, cosmetics, dice timelines, layout, city geometry, avatars, Thai translation, per-player language and Robux checkout. |
+| Named cases | 318 cases across the engine, plans, strategy, parties, matchmaking, cosmetics, dice timelines, layout, city geometry, avatars, translation, Robux checkout and recovery. |
+| Dark theme | Dark navy panels, light text, readable gold actions and stronger city colors. Actual visible UI text retains at least 4.5:1 contrast during the eight integration runs; player initials, premium logos, ready goals, disabled options and card icons are included. |
+| Recovery | Eight publication cases and seven actual World/clock adapter cases cover render failure, preserved houses, staged-model cleanup, retry backoff, latest-state recovery, recipient failure, missing models, effect retries, isolated property failure and a continuing automatic clock. |
 | Per-player language | Roblox English/Thai selection, English fallback, account language taking precedence over device language, independent client contexts, canonical shared English, language changes and fresh/updated world signs pass. Player names, text input, currency and game state are preserved. |
 | Readable view | All 24 slots fit the aligned 64-degree view with a 28-degree field of view; zoom/follow remain disabled. Thai marks and UTF-8 initials remain supported. |
-| Desktop and phone UI | Eight client runs: both English and Thai at 1440×900, 1192×642, 800×560 and 390×760. Menu/world switching, shop controls, prices, cancellation, server confirmation, restoration, automatic equipping and lookup/prompt outages are included. |
+| Desktop and phone UI | Eight client runs: both English and Thai at 1440×900, 1192×642, 800×560 and 390×760. Contrast, repeated bootstrap/stale snapshot requests, staged-model cleanup/localization, shop controls, confirmation, restoration and lookup/prompt outages are included. |
 | Physical card spaces | Two marked card plots, all five card types, no purchases/home bonuses, full hands, bots, skips, AFK recovery, duplicate/stale requests and post-arrival collection pass. |
 | Dice and automatic turns | Both dice settle before the 0.4-second result hold and step-by-step movement. Late completion shifts movement and decision deadlines together. Automatic handoffs and stale requests pass. |
 | Homes and city | All 16 purchasable parcels, four home levels, 256 plot/style/level combinations, doors, furniture, ownership markers, empty plots and contained deed labels pass. |
 | Avatar lifecycle | Actual World methods pass R6/R15 placement, board/home scaling, loading/replacement, spectator cleanup and removed bot tests through controlled native-service adapters. |
-| Online matchmaking | Actual Matchmaker methods start the real Engine with 2 or 4 humans; readiness, unique colors, admission tickets, outsiders, departures and incomplete-arrival retries pass. Pure cross-server claim/reservation cases also pass. |
+| Online matchmaking | Ten actual Matchmaker cases cover 2-/4-player games, readiness, tickets, outsiders, departures, incomplete arrivals, cancellation-write failure, a claim racing with cancellation, and retried departure cleanup. Pure cross-server claim/reservation cases also pass. |
 | Robux cosmetics | Server-owned pass verification and checkout outcomes, delayed ownership, failures, cancellation, duplicate events, stale responses and departure/rejoin behavior pass. Premium access cannot be granted by a local completion event. |
 | Source and Studio file | Luau analysis and compilation pass. The serialized place is checked against every current script and scene part. The final ZIP is checked byte-for-byte against the place, source, guides and previews. |
 

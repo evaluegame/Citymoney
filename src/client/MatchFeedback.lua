@@ -23,6 +23,7 @@ function Feedback:show(title,detail,badge,tint,seconds,celebrate)
  self.ui.hideToast()
  self.title.Text,self.detail.Text,self.badge.Text=title,detail,badge
  self.icon.BackgroundColor3=tint or self.ui.colors.green
+ self.badge.TextColor3=self.ui.foreground(self.icon.BackgroundColor3)
  self.badge.TextSize=#badge<=2 and 30 or 17
  self.untilTime=workspace:GetServerTimeNow()+(seconds or 3)
  self.card.Visible=true

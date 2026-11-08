@@ -38,4 +38,4 @@ for locale, prefix, name, width, height in ((locale,prefix,*layout) for locale,p
         if view!="main":
             (ROOT / "build" / f"{prefix}{view}-{name}.json").write_text(json.dumps({"width":width,"height":height,**snapshot}, indent=2))
     (ROOT / "build" / f"{prefix}hud-{name}.json").write_text(json.dumps(data, indent=2))
-    print(f"PASS client UI adapter: {locale} {name} {width}×{height}; Roblox language preference, reversible UI/world translations, protected names, fixed camera, dice, free cards, goals, homes, matchmaking and Robux cosmetics.")
+    print(f"PASS client UI adapter: {locale} {name} {width}×{height}; dark-theme text contrast, bootstrap/stale snapshot retries, atomic model cleanup, Roblox language, fixed camera, dice, cards, goals, homes, matchmaking and Robux cosmetics.")

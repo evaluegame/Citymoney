@@ -34,7 +34,7 @@ function Menus.new(ui)
     self.colorButtons={}
     for index,hex in ipairs(config.playerColors) do
         local choose=button(self.lobbyCard,tostring(index),24+(index-1)*78,205,66,42,Color3.fromHex(hex),function() ui.send("Color",index) end)
-        choose.TextColor3=C.ink;table.insert(self.colorButtons,choose)
+        choose.TextColor3=ui.foreground(Color3.fromHex(hex));table.insert(self.colorButtons,choose)
     end
     self.ready=button(self.lobbyCard,"Ready",24,404,230,48,C.green,function() self:toggleReady() end)
     self.invite=button(self.lobbyCard,"INVITE FRIENDS",266,404,230,48,C.paper,function()

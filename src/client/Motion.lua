@@ -1,5 +1,6 @@
 local Tween=game:GetService("TweenService")
 local Motion={}
+local P=require(game:GetService("ReplicatedStorage"):WaitForChild("Citymoney").Presentation)
 local Dice=require(game:GetService("ReplicatedStorage"):WaitForChild("Citymoney").Dice)
 function Motion.face(button,value,color)
     local layer=button:FindFirstChild("Pips")
@@ -49,7 +50,7 @@ function Motion.delta(parent,value,color,root)
     local label=Instance.new("TextLabel")
     local y=parent.Parent.Size.Y.Offset+12
     label.Name,label.Size,label.Position,label.BackgroundTransparency="CashChange",UDim2.fromOffset(130,24),UDim2.fromOffset(parent.Position.X.Offset,y),0.05
-    label.BackgroundColor3,label.BorderSizePixel=Color3.fromHex("FFFFFF"),0
+    label.BackgroundColor3,label.BorderSizePixel=Color3.fromHex(P.colors.card),0
     label.Text,label.TextColor3,label.TextSize,label.Font=(value>0 and "+$" or "-$")..math.abs(value),color,17,Enum.Font.GothamBold
     label.ZIndex,label.Parent=20,parent.Parent
     local corner=Instance.new("UICorner");corner.CornerRadius,corner.Parent=UDim.new(0,10),label

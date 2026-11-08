@@ -30,10 +30,17 @@ test("play opens on an aligned overhead board that shows resident bodies",functi
     check(cityYaw~=yaw and cityElevation<elevation)
     for rotation=0,3 do local y,e=P.viewAngles("table",rotation);check(math.abs(y-rotation*math.pi/2-yaw)<1e-6 and e==elevation) end
 end)
-test("primary controls and text have strong light-theme contrast",function()
-    check(contrast(P.colors.gold,P.colors.ink)>7)
-    check(contrast(P.colors.green,P.colors.white)>4)
-    check(contrast(P.colors.card,P.colors.muted)>4)
+test("dark panels, gold actions and player colors retain readable contrast",function()
+    check(luminance(P.colors.card)<0.03 and luminance(P.colors.paper)<0.06)
+    check(contrast(P.colors.gold,P.colors.darkInk)>7)
+    check(contrast(P.colors.green,P.colors.white)>=4.5)
+    for _,background in ipairs({P.colors.card,P.colors.paper,P.colors.mint}) do
+        for _,foreground in ipairs({P.colors.ink,P.colors.muted,P.colors.accent,P.colors.red}) do check(contrast(background,foreground)>=4.5,"Text loses contrast on a dark panel") end
+    end
+    for _,hex in ipairs(Config.playerColors) do
+        local r,g,b=tonumber(string.sub(hex,1,2),16)/255,tonumber(string.sub(hex,3,4),16)/255,tonumber(string.sub(hex,5,6),16)/255
+        check(contrast(hex,P.colors[P.foregroundRGB(r,g,b)])>=4.5,"Player initials are not readable")
+    end
 end)
 test("the menu and turn dock do not overlap on desktop or portrait screens",function()
     for _,screen in ipairs(screens) do

@@ -1,10 +1,16 @@
 -- Shared art direction and HUD geometry for the game and visual-review tools.
 local P={
-    colors={card="FFFFFF",paper="F0F5FC",ink="1B2C48",muted="687B94",line="D9E4F2",green="386BF0",gold="FFC34D",mint="E9F1FF",red="ED627B",white="FFFFFF"},
-    board={water="59CBE8",deepWater="3895D2",sand="F5DDA0",grass="70D594",path="F7FAFE",navy="3555A5",gold="FFC34D"},
+    colors={card="0F1D33",paper="1B2F4D",ink="F4F7FF",muted="B8C7DC",line="526D91",green="2563EB",accent="8FC3FF",gold="FFC04D",mint="203E60",red="FF8BA0",white="FFFFFF",darkInk="10213A",overlay="030B16"},
+    boardColors={water="177FA3",deepWater="225C8C",sand="E4BD62",grass="39B777",path="E4EBF5",navy="214975",gold="FFC04D",road="526D96",tray="2458C7"},
     defaultView="table",defaultYaw=0,defaultElevation=math.rad(64),
     cityYaw=math.rad(18),cityElevation=math.rad(46),
 }
+local function linear(value) return value<=0.04045 and value/12.92 or ((value+0.055)/1.055)^2.4 end
+function P.foregroundRGB(r,g,b)
+    local luminance=linear(r)*0.2126+linear(g)*0.7152+linear(b)*0.0722
+    local dark=linear(0x10/255)*0.2126+linear(0x21/255)*0.7152+linear(0x3a/255)*0.0722
+    return (luminance+0.05)/(dark+0.05)>1.05/(luminance+0.05) and "darkInk" or "white"
+end
 function P.viewAngles(mode,rotate)
     local city=mode=="city"
     return (rotate or 0)*math.pi/2+(city and P.cityYaw or P.defaultYaw),city and P.cityElevation or P.defaultElevation

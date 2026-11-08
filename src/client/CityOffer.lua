@@ -15,7 +15,7 @@ function View.new(ui)
  for index=1,3 do
   local button=ui.button(self.card,"",24,170+(index-1)*145,472,132,C.paper,function() self:choose(index) end)
   local icon=ui.frame(button,16,29,66,66,index==1 and C.gold or C.green)
-  local glyph=ui.text(icon,index==1 and "$" or "CARD",0,0,66,66,index==1 and 34 or 17,index==1 and C.ink or C.white,true)
+  local glyph=ui.text(icon,index==1 and "$" or "CARD",0,0,66,66,index==1 and 34 or 17,index==1 and C.darkInk or C.white,true)
   glyph.TextXAlignment=Enum.TextXAlignment.Center
   local title=ui.text(button,"",104,14,346,32,23,C.ink,true)
   local detail=ui.text(button,"",104,52,346,45,16,C.muted)
@@ -85,11 +85,11 @@ function View:render(data)
    row.glyph.TextSize=cardSpace and 17 or (index==1 and 34 or 17)
    row.hint.Text=allowed and (cardSpace and "COLLECT CARD >" or "CHOOSE THIS >") or (cardSpace and "HAND FULL · CHOOSE ANOTHER OR CONTINUE" or "HAND FULL · TAKE CASH INSTEAD")
    row.hint.TextSize=cardSpace and 11 or 14
-   row.hint.TextColor3=allowed and C.green or C.red
+   row.hint.TextColor3=allowed and C.accent or C.red
   end
  end
  local seconds=math.max(0,math.ceil(data.deadline-workspace:GetServerTimeNow()))
  self.status.Text=self.error or (self.pending and "Confirming your reward..." or ("Your choice · "..seconds.." seconds left"))
- self.status.TextColor3=self.error and C.red or C.green
+ self.status.TextColor3=self.error and C.red or C.accent
 end
 return View

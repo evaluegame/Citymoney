@@ -237,78 +237,88 @@ end
 function World:sync(state)
     self.state = state
     if self.festivalLabel and state.turnCount~=self.festivalTurn then
-        self.festivalTurn=state.turnCount
         local event=Plaza.festival(self.config,state)
         self.festivalLabel.TextLabel.Text="FESTIVAL\n$"..event.cost
+        self.festivalTurn=state.turnCount
     end
     local newRoll=self.dice:sync(state,self.club)
     if newRoll then self.moveReadyAt=workspace:GetServerTimeNow()+Journey.beforeMove(self.config)
     elseif not state.lastRoll then self.moveReadyAt=0 end
     -- Buying immediately constructs a complete home, including its owner's sign.
+    local propertyError
     for index, view in pairs(self.propertyViews) do
-        local property = state.properties[index]
-        local plate=self.root:FindFirstChild("DeedPlate"..index)
-        local caption=plate and plate:FindFirstChild("Caption")
-        if caption then
-            local text=caption:FindFirstChildOfClass("TextLabel")
-            if text then text.Text=Board.caption(self.config,index,state) end
-        end
-        local styleId=self.club and self.club:visual(property.ownerId) or "classic"
-        local key = tostring(property.ownerId)..":"..property.level..":"..(property.paint or 0)..":"..styleId
-        if key ~= view.key then
-            local previousOwner,previousLevel=view.ownerId,view.level
-            view.key = key
-            view.ownerId,view.level=property.ownerId,property.level
-            if view.model then view.model:Destroy() end
-            local owner
-            for _, resident in ipairs(state.players) do if resident.id==property.ownerId then owner=resident end end
-            local entries = Architecture.property(self.config,index,owner and owner.name or false,
-                owner and self.config.playerColors[owner.colorIndex] or "A6B4A0",property.level,property.paint or 0,nil,styleId)
-            view.model = Scene.model(entries,"Property"..index,self.root)
-            view.model:SetAttribute("TileIndex",index)
-            view.model:SetAttribute("OwnerId",owner and owner.id or false)
-            view.model:SetAttribute("OwnerName",owner and owner.name or "For sale")
-            view.model:SetAttribute("OwnerColor",owner and self.config.playerColors[owner.colorIndex] or "DCC098")
-            view.model:SetAttribute("ClubStyle",styleId)
-            view.effectsKey=nil
-            if owner then
-                self:wireDoor(view.model,owner.id)
-                if previousOwner~=owner.id or property.level>(previousLevel or 0) then
-                    local p=Architecture.site(index)
-                    local animated=true
-                    if self.club then local _,effects=self.club:visual(owner.id);animated=effects end
-                    Effects.reveal(view.model,Vector3.new(table.unpack(p)),self.config.playerColors[owner.colorIndex],property.level,previousOwner==owner.id,animated)
+        local ok,message=pcall(function()
+            local property = state.properties[index]
+            local plate=self.root:FindFirstChild("DeedPlate"..index)
+            local caption=plate and plate:FindFirstChild("Caption")
+            if caption then
+                local text=caption:FindFirstChildOfClass("TextLabel")
+                if text then text.Text=Board.caption(self.config,index,state) end
+            end
+            local styleId=self.club and self.club:visual(property.ownerId) or "classic"
+            local key = tostring(property.ownerId)..":"..property.level..":"..(property.paint or 0)..":"..styleId
+            if key ~= view.key or not view.model or not view.model.Parent then
+                local previousOwner,previousLevel=view.ownerId,view.level
+                local owner
+                for _, resident in ipairs(state.players) do if resident.id==property.ownerId then owner=resident end end
+                local entries = Architecture.property(self.config,index,owner and owner.name or false,
+                    owner and self.config.playerColors[owner.colorIndex] or "A6B4A0",property.level,property.paint or 0,nil,styleId)
+                local model=Scene.model(entries,"Property"..index,nil)
+                local ok,message=pcall(function()
+                    model:SetAttribute("TileIndex",index)
+                    model:SetAttribute("OwnerId",owner and owner.id or false)
+                    model:SetAttribute("OwnerName",owner and owner.name or "For sale")
+                    model:SetAttribute("OwnerColor",owner and self.config.playerColors[owner.colorIndex] or "DCC098")
+                    model:SetAttribute("ClubStyle",styleId)
+                    if owner then self:wireDoor(model,owner.id) end
+                    model.Parent=self.root
+                end)
+                if not ok then model:Destroy();error(message,0) end
+                local oldModel=view.model
+                view.model,view.key,view.ownerId,view.level=model,key,property.ownerId,property.level
+                if oldModel then oldModel:Destroy() end
+                view.effectsKey=nil
+                if owner then
+                    pcall(function()
+                        if previousOwner~=owner.id or property.level>(previousLevel or 0) then
+                            local p=Architecture.site(index)
+                            local animated=true
+                            if self.club then local _,effects=self.club:visual(owner.id);animated=effects end
+                            Effects.reveal(view.model,Vector3.new(table.unpack(p)),self.config.playerColors[owner.colorIndex],property.level,previousOwner==owner.id,animated)
+                        end
+                        local glow=Instance.new("Highlight")
+                        glow.FillTransparency,glow.OutlineColor,glow.OutlineTransparency=1,Color3.fromHex(self.config.playerColors[owner.colorIndex]),0.1
+                        glow.Adornee,glow.Parent=view.model,view.model
+                        TweenService:Create(glow,TweenInfo.new(1.1),{OutlineTransparency=1}):Play()
+                        task.delay(1.2,function() glow:Destroy() end)
+                    end)
                 end
-                local glow=Instance.new("Highlight")
-                glow.FillTransparency,glow.OutlineColor,glow.OutlineTransparency=1,Color3.fromHex(self.config.playerColors[owner.colorIndex]),0.1
-                glow.Adornee,glow.Parent=view.model,view.model
-                TweenService:Create(glow,TweenInfo.new(1.1),{OutlineTransparency=1}):Play()
-                task.delay(1.2,function() glow:Destroy() end)
-            end
-            for id, visitingIndex in pairs(self.visiting) do
-                if visitingIndex==index then
-                    local visitor=Players:GetPlayerByUserId(id)
-                    if owner and owner.id==id and visitor then self:visit(visitor,index) else self:endVisit(id) end
+                for id, visitingIndex in pairs(self.visiting) do
+                    if visitingIndex==index then
+                        local visitor=Players:GetPlayerByUserId(id)
+                        if owner and owner.id==id and visitor then self:visit(visitor,index) else self:endVisit(id) end
+                    end
                 end
             end
-        end
-        local effectsKey=tostring(property.shield)..":"..(property.boost or 0)..":"..(property.rentTier or 1)
-        if view.model and view.effectsKey~=effectsKey then
-            view.effectsKey=effectsKey
-            for _,name in ipairs({"ProtectionSign","RentBoostSign","RentRateSign"}) do
-                local sign=view.model:FindFirstChild(name)
-                if sign then sign:Destroy() end
-            end
-            local owner
-            for _,entry in ipairs(state.players) do if entry.id==property.ownerId then owner=entry end end
-            if owner then
-                local effects={}
-                for _,entry in ipairs(Architecture.property(self.config,index,owner.name,self.config.playerColors[owner.colorIndex],property.level,property.paint or 0,property)) do
-                    if entry.name=="ProtectionSign" or entry.name=="RentBoostSign" or entry.name=="RentRateSign" then table.insert(effects,entry) end
+            local effectsKey=tostring(property.shield)..":"..(property.boost or 0)..":"..(property.rentTier or 1)
+            if view.model and view.effectsKey~=effectsKey then
+                for _,name in ipairs({"ProtectionSign","RentBoostSign","RentRateSign"}) do
+                    local sign=view.model:FindFirstChild(name)
+                    if sign then sign:Destroy() end
                 end
-                Scene.populate(effects,view.model)
+                local owner
+                for _,entry in ipairs(state.players) do if entry.id==property.ownerId then owner=entry end end
+                if owner then
+                    local effects={}
+                    for _,entry in ipairs(Architecture.property(self.config,index,owner.name,self.config.playerColors[owner.colorIndex],property.level,property.paint or 0,property)) do
+                        if entry.name=="ProtectionSign" or entry.name=="RentBoostSign" or entry.name=="RentRateSign" then table.insert(effects,entry) end
+                    end
+                    Scene.populate(effects,view.model)
+                end
+                view.effectsKey=effectsKey
             end
-        end
+        end)
+        if not ok and not propertyError then propertyError=message end
     end
     local present = {}
     for seat, resident in ipairs(state.players) do
@@ -435,6 +445,7 @@ function World:sync(state)
             self:releaseToken(id)
         end
     end
+    if propertyError then error(propertyError,0) end
     local event=state.lastAction
     if not event then self.lastActionSeq=0
     elseif event.seq~=self.lastActionSeq then

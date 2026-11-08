@@ -12,6 +12,7 @@ local flow=TurnFlow.new(Config)
 local Matchmaker = require(script.Matchmaker)
 local ClubService = require(script.ClubService)
 local World = require(script.World)
+local Publisher=require(script.Publisher)
 local random = Random.new()
 local engine = Engine.new(Config, function(low, high) return random:NextInteger(low, high) end)
 local world = World.new(Config)
@@ -41,14 +42,16 @@ local function payload(id)
         club=club and club:snapshot(id) or nil, styles=club and club:styles() or {},
         deadline = deadline, handoffAt=flow.handoffAt,journeyUntil=flow.journeyUntil,diceEndsAt=flow.diceEndsAt,moveAt=flow.moveAt,serverTime = workspace:GetServerTimeNow(), revision = revision, visitors = world:visitorList() }
 end
+local publisher=Publisher.new({clock=os.clock,sync=function(state) world:sync(state) end,
+    send=function(recipient,message) snapshot:FireClient(recipient,message) end,
+    report=function(kind) warn("[Citymoney] Retrying "..kind.." after a temporary failure.") end})
 
 local function publish(resetTimer)
     revision = revision + 1
     flow:observe(engine.state,workspace:GetServerTimeNow())
     deadline=flow.deadline
     if resetTimer or botReadyAt == 0 then botReadyAt = math.max(workspace:GetServerTimeNow()+2.1,flow.journeyUntil+0.35) end
-    world:sync(engine.state)
-    for _,recipient in ipairs(Players:GetPlayers()) do snapshot:FireClient(recipient,payload(recipient.UserId)) end
+    publisher:publish(engine.state,Players:GetPlayers(),payload)
 end
 world.onDiceSettled=function(sequence,at)
     if flow:diceSettled(engine.state,sequence,at) then
@@ -248,49 +251,53 @@ end)
 task.spawn(function()
     while true do
         task.wait(0.5)
-        if engine.state.status == "playing" then
-            local current = engine:current()
-            local now = workspace:GetServerTimeNow()
-            local automatic,argument=flow:due(engine.state,now)
-            if automatic then
-                perform(current.id,automatic,argument)
-            elseif current.bot and now >= botReadyAt then
-                local handled=false
-                if current.bot and current.alive then
-                    if current.challenge.ready and not engine.state.challengeClaimed then
-                        handled=perform(current.id,"Claim",nil,nil,engine.state.turnCount)
-                    elseif not engine.state.actionUsed then
-                        local move=Tactics.botMove(engine,current.id)
-                        if move then
-                            handled=engine:playCard(current.id,move.kind,move.tile,move.targetId,move.turn)
-                            if handled then publish(false) end
+        local ok=pcall(function()
+            publisher:retry(engine.state)
+            if engine.state.status == "playing" then
+                local current = engine:current()
+                local now = workspace:GetServerTimeNow()
+                local automatic,argument=flow:due(engine.state,now)
+                if automatic then
+                    perform(current.id,automatic,argument)
+                elseif current.bot and now >= botReadyAt then
+                    local handled=false
+                    if current.bot and current.alive then
+                        if current.challenge.ready and not engine.state.challengeClaimed then
+                            handled=perform(current.id,"Claim",nil,nil,engine.state.turnCount)
+                        elseif not engine.state.actionUsed then
+                            local move=Tactics.botMove(engine,current.id)
+                            if move then
+                                handled=engine:playCard(current.id,move.kind,move.tile,move.targetId,move.turn)
+                                if handled then publish(false) end
+                            end
                         end
+                        if handled then botReadyAt=now+1.2 end
                     end
-                    if handled then botReadyAt=now+1.2 end
-                end
-                local phase = engine.state.phase
-                if handled then
-                    -- The next tick resumes the normal decision after its card/goal animation.
-                elseif phase == "roll" then
-                    local offer=Plaza.botMove(engine,current.id)
-                    local target,value=nil,-1
-                    for index,property in ipairs(engine.state.properties) do
-                        local tile=Config.tiles[index]
-                        if property.ownerId==current.id and property.level<Config.maxLevel and current.cash>=tile.upgrade+350 and tile.rent>value then target,value=index,tile.rent end
+                    local phase = engine.state.phase
+                    if handled then
+                        -- The next tick resumes the normal decision after its card/goal animation.
+                    elseif phase == "roll" then
+                        local offer=Plaza.botMove(engine,current.id)
+                        local target,value=nil,-1
+                        for index,property in ipairs(engine.state.properties) do
+                            local tile=Config.tiles[index]
+                            if property.ownerId==current.id and property.level<Config.maxLevel and current.cash>=tile.upgrade+350 and tile.rent>value then target,value=index,tile.rent end
+                        end
+                        if offer then perform(current.id,"Plaza",offer);botReadyAt=now+0.7
+                        elseif target then perform(current.id,"Upgrade",target);botReadyAt=now+0.7
+                        else perform(current.id,"Roll") end
+                    elseif phase == "offer" then
+                        perform(current.id,"Offer",Offers.botChoice(engine,current.id))
+                    elseif phase == "buy" then
+                        local tile = Config.tiles[engine.state.pendingTile]
+                        local buy = current.bot and current.cash >= tile.price + 180
+                        local level=current.bot and current.cash>=tile.price+tile.upgrade+350 and 1 or 0
+                        perform(current.id, buy and "Buy" or "Skip",nil,level)
                     end
-                    if offer then perform(current.id,"Plaza",offer);botReadyAt=now+0.7
-                    elseif target then perform(current.id,"Upgrade",target);botReadyAt=now+0.7
-                    else perform(current.id,"Roll") end
-                elseif phase == "offer" then
-                    perform(current.id,"Offer",Offers.botChoice(engine,current.id))
-                elseif phase == "buy" then
-                    local tile = Config.tiles[engine.state.pendingTile]
-                    local buy = current.bot and current.cash >= tile.price + 180
-                    local level=current.bot and current.cash>=tile.price+tile.upgrade+350 and 1 or 0
-                    perform(current.id, buy and "Buy" or "Skip",nil,level)
                 end
             end
-        end
+        end)
+        if not ok then publisher:report("clock") end
     end
 end)
 

@@ -1,8 +1,8 @@
-CITYMONEY 1.3.0 — AUTOMATED TEST OUTPUT
+CITYMONEY 1.4.0 — AUTOMATED TEST OUTPUT
 
-300 named cases, 600 simulated matches, eight headless client runs
-(English and Thai across four screen sizes). Per-player Roblox language,
-canonical shared signs, reversible updates and protected names/input checked.
+318 named cases, 600 simulated matches, eight bilingual client runs.
+Dark-theme text contrast, startup/stale snapshots, world construction recovery,
+clock continuity and backend cancellation failures are checked.
 Controlled Roblox service adapters are used; this is not a live Studio,
 purchase, teleport, or DataStore playtest. See RELEASE-CHECKS.md.
 
@@ -187,7 +187,7 @@ PASS bots choose a valid affordable festival target and respect the plaza allowa
 
 31 tabletop/camera/dice/automatic-turn/plaza tests passed, including 200 automatic matches.
 PASS play opens on an aligned overhead board that shows resident bodies
-PASS primary controls and text have strong light-theme contrast
+PASS dark panels, gold actions and player colors retain readable contrast
 PASS the menu and turn dock do not overlap on desktop or portrait screens
 PASS all HUD regions remain inside the safe area
 PASS direct shortcuts fit below the roster and leave the board and turn controls clear
@@ -281,6 +281,16 @@ PASS equivalent locale notifications do not trigger redundant language changes
 PASS locale changes leave turn state, cards, money and configuration unchanged
 
 13 per-player language cases passed.
+PASS a world failure still delivers the authoritative state to every player
+PASS a departing snapshot recipient cannot block other players
+PASS one failed player payload does not discard the remaining snapshots
+PASS visual retries back off instead of rebuilding on every request
+PASS a recovered renderer uses the latest state rather than replaying an old action
+PASS healthy worlds do not rebuild between publications
+PASS repeated failures produce bounded diagnostics without exposing raw errors
+PASS publication failure cannot charge a home purchase twice or rewind its turn
+
+8 publication recovery cases passed.
 PASS all six resident positions stay separated and within each rotated space
 PASS residents face their actual movement direction on every side and corner
 PASS travel holds exact centers, crosses City Gate and reaches event destinations
@@ -313,14 +323,14 @@ PASS board scene: closed 24-tile path, deterministic geometry, labels, sizes, an
 PASS homes: all 16 parcels, four building levels, walkable doors, furniture, stairs, rotation matrices and visit arrival points.
 PASS responsive layout: screenshot size, short Studio windows, desktop and portrait safe areas.
 All Roblox source files compiled successfully.
-PASS client UI adapter: th-th desktop 1440×900; Roblox language preference, reversible UI/world translations, protected names, fixed camera, dice, free cards, goals, homes, matchmaking and Robux cosmetics.
-PASS client UI adapter: th-th studio 1192×642; Roblox language preference, reversible UI/world translations, protected names, fixed camera, dice, free cards, goals, homes, matchmaking and Robux cosmetics.
-PASS client UI adapter: th-th short 800×560; Roblox language preference, reversible UI/world translations, protected names, fixed camera, dice, free cards, goals, homes, matchmaking and Robux cosmetics.
-PASS client UI adapter: th-th mobile 390×760; Roblox language preference, reversible UI/world translations, protected names, fixed camera, dice, free cards, goals, homes, matchmaking and Robux cosmetics.
-PASS client UI adapter: en-us desktop 1440×900; Roblox language preference, reversible UI/world translations, protected names, fixed camera, dice, free cards, goals, homes, matchmaking and Robux cosmetics.
-PASS client UI adapter: en-us studio 1192×642; Roblox language preference, reversible UI/world translations, protected names, fixed camera, dice, free cards, goals, homes, matchmaking and Robux cosmetics.
-PASS client UI adapter: en-us short 800×560; Roblox language preference, reversible UI/world translations, protected names, fixed camera, dice, free cards, goals, homes, matchmaking and Robux cosmetics.
-PASS client UI adapter: en-us mobile 390×760; Roblox language preference, reversible UI/world translations, protected names, fixed camera, dice, free cards, goals, homes, matchmaking and Robux cosmetics.
+PASS client UI adapter: th-th desktop 1440×900; dark-theme text contrast, bootstrap/stale snapshot retries, atomic model cleanup, Roblox language, fixed camera, dice, cards, goals, homes, matchmaking and Robux cosmetics.
+PASS client UI adapter: th-th studio 1192×642; dark-theme text contrast, bootstrap/stale snapshot retries, atomic model cleanup, Roblox language, fixed camera, dice, cards, goals, homes, matchmaking and Robux cosmetics.
+PASS client UI adapter: th-th short 800×560; dark-theme text contrast, bootstrap/stale snapshot retries, atomic model cleanup, Roblox language, fixed camera, dice, cards, goals, homes, matchmaking and Robux cosmetics.
+PASS client UI adapter: th-th mobile 390×760; dark-theme text contrast, bootstrap/stale snapshot retries, atomic model cleanup, Roblox language, fixed camera, dice, cards, goals, homes, matchmaking and Robux cosmetics.
+PASS client UI adapter: en-us desktop 1440×900; dark-theme text contrast, bootstrap/stale snapshot retries, atomic model cleanup, Roblox language, fixed camera, dice, cards, goals, homes, matchmaking and Robux cosmetics.
+PASS client UI adapter: en-us studio 1192×642; dark-theme text contrast, bootstrap/stale snapshot retries, atomic model cleanup, Roblox language, fixed camera, dice, cards, goals, homes, matchmaking and Robux cosmetics.
+PASS client UI adapter: en-us short 800×560; dark-theme text contrast, bootstrap/stale snapshot retries, atomic model cleanup, Roblox language, fixed camera, dice, cards, goals, homes, matchmaking and Robux cosmetics.
+PASS client UI adapter: en-us mobile 390×760; dark-theme text contrast, bootstrap/stale snapshot retries, atomic model cleanup, Roblox language, fixed camera, dice, cards, goals, homes, matchmaking and Robux cosmetics.
 PASS native dice finish both models before any waiting mover is released
 PASS reduced motion settles exact faces before its completion callback
 PASS a superseding native roll cancels the old mover and completion
@@ -345,10 +355,23 @@ PASS a departed buyer cannot overwrite a fresh profile during verification
 PASS unconfigured and Studio passes never perform real entitlement verification
 7 native Club purchase cases passed.
 PASS native two-player matchmaking starts the real engine with exactly two humans
+PASS a failed cancellation stays queued until the backend acknowledges it
+PASS a match claimed during cancellation cannot be cancelled using a stale read
+PASS forced departures retry a failed queue cancellation before matching new groups
 PASS native four-player matchmaking keeps two parties together with distinct colors
 PASS native queues reject unready party members and players already in an active match
 PASS reserved matches require each player to present the validated match ticket
 PASS a stranger cannot join a reserved match by copying its match identifier
 PASS an incomplete match retries failed lobby returns and cannot start after cancellation
 PASS departures remove a reserved admission before a player can rejoin
-7 native matchmaking cases passed.
+10 native matchmaking cases passed.
+PASS a failed home rebuild preserves its previous model and leaves the change retryable
+PASS failed home configuration destroys the staged model without deleting the old home
+PASS a missing physical model is rebuilt even when ownership and level are unchanged
+PASS failed shield and rent signs retry without rebuilding or charging the house
+PASS a failed festival label does not cache an update that never appeared
+PASS a broken home cannot prevent another property from updating
+PASS a temporary clock error cannot stop future automatic turns
+7 native world/clock recovery cases passed.
+
+Post-review: brighter progress/selection indicators pass the eight UI runs.

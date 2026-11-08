@@ -1,6 +1,6 @@
 -- Original Citymoney rules and districts. Money is in-game currency, never Robux.
 local Config = {
-    releaseVersion = "1.3.0",
+    releaseVersion = "1.4.0",
     startingCash = 1500,
     startBonus = 200,
     turnSeconds = 55,
@@ -66,14 +66,14 @@ local Config = {
     },
     playerColors = { "FFBE55", "6BDDC3", "AA9FFF", "FF8C9F", "71BDFF", "E6E984" },
     groups = {
-        old = { name = "Old Town", color = "F7B55E" },
-        sunset = { name = "Sunset District", color = "FF8B72" },
-        harbor = { name = "Harbor District", color = "5ECBDC" },
-        metro = { name = "Metro District", color = "A994F4" },
-        garden = { name = "Garden District", color = "78D4A0" },
-        neon = { name = "Rose District", color = "F08FB6" },
-        sky = { name = "Sky District", color = "80BCFA" },
-        crown = { name = "Crown District", color = "FFD166" },
+        old = { name = "Old Town", color = "D99520" },
+        sunset = { name = "Sunset District", color = "E35E47" },
+        harbor = { name = "Harbor District", color = "259BB6" },
+        metro = { name = "Metro District", color = "8061D8" },
+        garden = { name = "Garden District", color = "2CA36C" },
+        neon = { name = "Rose District", color = "D95A96" },
+        sky = { name = "Sky District", color = "438DD8" },
+        crown = { name = "Crown District", color = "E6AE29" },
     },
     tiles = {
         { name = "CITY GATE", kind = "start" },

@@ -7,6 +7,7 @@ local Districts=runtimeScript and require(runtimeScript.Parent.CityDistricts) or
 local Scenery=runtimeScript and require(runtimeScript.Parent.CityScenery) or require("./CityScenery")
 local Spaces=runtimeScript and require(runtimeScript.Parent.BoardSpaces) or require("./BoardSpaces")
 local Plans=runtimeScript and require(runtimeScript.Parent.PropertyPlans) or require("./PropertyPlans")
+local Palette=(runtimeScript and require(runtimeScript.Parent.Presentation) or require("./Presentation")).boardColors
 local Board={spacing=Architecture.spacing}
 Board.position=Architecture.position
 function Board.caption(config,index,state)
@@ -28,25 +29,25 @@ function Board.generate(config)
     local function rounded(name,size,position,radius,color,extra)
         for _,entry in ipairs(Art.rounded(name,size,position,radius,color,extra)) do table.insert(parts,entry) end
     end
-    add("Sea",{1400,3,1400},{0,-7,0},"56C9E6",{reflectance=0.08,canCollide=false})
-    rounded("IslandBody",{195,5,195},{0,-2,0},14,"3F9DD4")
-    rounded("IslandBeach",{193,0.7,193},{0,0.75,0},13,"F8DE9D")
-    rounded("TableSurface",{191,0.4,191},{0,1.22,0},11,"DFECFA")
-    rounded("EventPlaza",{99,0.28,99},{0,1.5,0},8,"74D6A0")
-    add("CityRoad",{10,0.12,97},{0,1.75,0},"8FA9CB")
-    add("CityRoad",{97,0.12,10},{0,1.75,0},"8FA9CB")
+    add("Sea",{1400,3,1400},{0,-7,0},Palette.water,{reflectance=0.08,canCollide=false})
+    rounded("IslandBody",{195,5,195},{0,-2,0},14,Palette.deepWater)
+    rounded("IslandBeach",{193,0.7,193},{0,0.75,0},13,Palette.sand)
+    rounded("TableSurface",{191,0.4,191},{0,1.22,0},11,Palette.path)
+    rounded("EventPlaza",{99,0.28,99},{0,1.5,0},8,Palette.grass)
+    add("CityRoad",{10,0.12,97},{0,1.75,0},Palette.road)
+    add("CityRoad",{97,0.12,10},{0,1.75,0},Palette.road)
     for offset=-43,43,8.6 do
         add("RoadMark",{0.3,0.06,3},{0,1.84,offset},"FFFFFF")
         add("RoadMark",{3,0.06,0.3},{offset,1.84,0},"FFFFFF")
     end
-    rounded("DiceTray",{40,0.45,28},{0,1.95,0},3,"386BF0",{interaction="dice"})
+    rounded("DiceTray",{40,0.45,28},{0,1.95,0},3,Palette.tray,{interaction="dice"})
     for _,x in ipairs({-20,20}) do add("DiceRail",{0.55,0.65,23},{x,2.5,0},"FFFFFF",{interaction="dice"}) end
     for _,z in ipairs({-14,14}) do add("DiceRail",{34,0.65,0.55},{0,2.5,z},"FFFFFF",{interaction="dice"}) end
-    add("DiceInstructions",{30,0.08,4.7},{0,2.23,9},"386BF0",{text="LET'S ROLL!",textColor="FFFFFF",textSize=60,interaction="dice"})
+    add("DiceInstructions",{30,0.08,4.7},{0,2.23,9},Palette.tray,{text="LET'S ROLL!",textColor="FFFFFF",textSize=60,interaction="dice"})
     for side,value in ipairs({1,6}) do for _,entry in ipairs(Dice.preview(value,side)) do table.insert(parts,entry) end end
     for _,entry in ipairs(Districts.generate()) do table.insert(parts,entry) end
     for _,entry in ipairs(Scenery.generate()) do table.insert(parts,entry) end
-    add("CityTitle",{26,0.1,3.5},{0,1.75,-44},"74D6A0",{text="CITYMONEY",textSize=40,textColor="FFFFFF"})
+    add("CityTitle",{26,0.1,3.5},{0,1.75,-44},Palette.grass,{text="CITYMONEY",textSize=40,textColor="173E35"})
     local function car(x,z,color)
         rounded("CityCar",{3.8,1.2,6.4},{x,2.7,z},0.8,color)
         rounded("CarCabin",{3.2,1.4,3.1},{x,3.75,z+0.25},0.6,"C8EDFA")

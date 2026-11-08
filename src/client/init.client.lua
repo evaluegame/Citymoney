@@ -57,16 +57,17 @@ local function round(object,radius)
     local value=Instance.new("UICorner");value.CornerRadius,value.Parent=UDim.new(0,radius or 15),object
 end
 local function place(object,x,y,w,h) object.Position,object.Size=UDim2.fromOffset(x,y),UDim2.fromOffset(w,h) end
+local function foreground(tint) return C[Presentation.foregroundRGB(tint.R,tint.G,tint.B)] end
 local function frame(parent,x,y,w,h,tint)
     local object=Instance.new("Frame");place(object,x,y,w,h)
     object.BackgroundColor3,object.BorderSizePixel,object.Parent=tint or C.card,0,parent
     round(object,16)
-    local stroke=Instance.new("UIStroke");stroke.Color,stroke.Transparency,stroke.Parent=C.line,0.42,object
+    local stroke=Instance.new("UIStroke");stroke.Color,stroke.Transparency,stroke.Parent=C.line,0.2,object
     return object
 end
 local function text(parent,value,x,y,w,h,size,tint,bold,playerName)
     local object=Instance.new("TextLabel");place(object,x,y,w,h)
-    object.BackgroundTransparency,object.Text,object.TextColor3=1,value,tint or C.ink
+    object.BackgroundTransparency,object.Text,object.TextColor3=1,value,tint==C.green and C.accent or (tint or C.ink)
     object.TextSize,object.Font=size or 16,bold and Enum.Font.GothamBold or Enum.Font.Gotham
     object.TextXAlignment,object.TextYAlignment,object.TextWrapped=Enum.TextXAlignment.Left,Enum.TextYAlignment.Center,true
     if playerName then object:SetAttribute("PlayerName",true) end
@@ -75,7 +76,7 @@ end
 local function button(parent,value,x,y,w,h,tint,callback,playerName)
     local object=Instance.new("TextButton");place(object,x,y,w,h)
     object.Text,object.TextSize,object.Font=value,14,Enum.Font.GothamBold
-    object.BackgroundColor3,object.TextColor3,object.BorderSizePixel=tint or C.green,(tint==C.paper or tint==C.card or tint==C.gold) and C.ink or C.white,0
+    object.BackgroundColor3,object.TextColor3,object.BorderSizePixel=tint or C.green,foreground(tint or C.green),0
     if playerName then object:SetAttribute("PlayerName",true) end
     object.Parent=parent;round(object,11)
     object.Activated:Connect(function() if object.Active then callback() end end)
@@ -85,10 +86,11 @@ end
 local function available(object,enabled,tint)
     object.Active,object.AutoButtonColor=enabled,enabled
     object.BackgroundColor3=enabled and tint or C.paper
-    object.TextColor3=enabled and ((tint==C.paper or tint==C.card or tint==C.gold) and C.ink or C.white) or C.muted
+    object.TextColor3=enabled and foreground(tint) or C.muted
 end
 local function truncate(object) object.TextWrapped,object.TextTruncate=false,Enum.TextTruncate.AtEnd end
 local data,selected,focusIndex,mainCommand,visitIndex,layout
+local lastSnapshotAt=workspace:GetServerTimeNow()
 local inspectorOpen,portfolioOpen,rolling,locked=false,false,false,false
 local notify,render,requestSale,openPlans,renderPlans,mainAction,menus,boutique,city,openCity,commandMenu,hover,opportunity,goals,moments
 local journeyActive=false
@@ -177,7 +179,7 @@ local actionDepth=frame(control,574,21,220,54,Color3.fromHex("DCA031"));actionBu
 local passButton=button(control,"SKIP",500,79,75,26,C.paper,function() send("Skip") end)
 local timeText=text(control,"",16,81,400,18,10,C.muted)
 local timeTrack=frame(control,16,104,778,3,C.paper)
-local timeFill=Instance.new("Frame");timeFill.Size,timeFill.BackgroundColor3,timeFill.BorderSizePixel,timeFill.Parent=UDim2.fromScale(1,1),C.green,0,timeTrack
+local timeFill=Instance.new("Frame");timeFill.Size,timeFill.BackgroundColor3,timeFill.BorderSizePixel,timeFill.Parent=UDim2.fromScale(1,1),C.accent,0,timeTrack
 local cameraBar=frame(root,24,510,188,84)
 cameraBar.Name,cameraBar.ZIndex="CameraDock",2
 button(cameraBar,"City view",6,6,100,30,C.paper,function() focusIndex=nil;root:SetAttribute("ViewMode",(root:GetAttribute("ViewMode") or Presentation.defaultView)=="city" and "table" or "city");render() end).Name="TableView"
@@ -198,7 +200,7 @@ notify=function(message)
     task.delay(4,function() if toastVersion==version then toast.Visible=false end end)
 end
 local function overlay(w,h)
-    local shade=Instance.new("Frame");shade.Size,shade.BackgroundColor3,shade.BackgroundTransparency=UDim2.fromScale(1,1),C.ink,0.35
+    local shade=Instance.new("Frame");shade.Size,shade.BackgroundColor3,shade.BackgroundTransparency=UDim2.fromScale(1,1),C.overlay,0.25
     shade.Active,shade.ZIndex,shade.Visible,shade.Parent=true,30,false,root
     local card=frame(shade,0,0,w,h);card.AnchorPoint,card.Position,card.ZIndex=Vector2.new(0.5,0.5),UDim2.fromScale(0.5,0.5),31
     card.DescendantAdded:Connect(function(object) if object:IsA("GuiObject") then object.ZIndex=32 end end)
@@ -352,7 +354,7 @@ renderPlans=function()
         local row=planCards[option.level+1]
         local active=option.level==planLevel
         row.button.BackgroundColor3=active and C.mint or C.paper
-        row.border.Color,row.border.Thickness=active and C.green or C.line,active and 2 or 1
+        row.border.Color,row.border.Thickness=active and C.accent or C.line,active and 2 or 1
         row.name.Text=planMode=="rent" and option.name or ("L"..option.level.." · "..option.name)
         row.price.Text=(option.available and ("$"..option.cost..(planMode=="buy" and " total" or (planMode=="rent" and " fee" or " to upgrade"))) or "Included already").." · $"..option.rent.." rent"
         row.status.Text=option.current and (planMode=="rent" and "CURRENT RATE" or "YOUR CURRENT HOME") or (not option.available and "CHOOSE A HIGHER OPTION" or (option.affordable and (active and "SELECTED" or "TAP TO PREVIEW") or ("Need $"..(-option.remaining).." more")))
@@ -370,7 +372,7 @@ renderPlans=function()
     local currentRent=planMode~="buy" and rent(state,planIndex) or 0
     planTotal.Text=chosen.available and ((planMode=="buy" and "Total price: $" or (planMode=="rent" and "Rental fee: $" or "Upgrade cost: $"))..chosen.cost.."   ·   Rent $"..currentRent.." → $"..chosen.rent) or "Choose a higher option. Your current one is included."
     planBalance.Text=chosen.available and (chosen.affordable and ("Balance after: $"..chosen.remaining) or ("Need $"..(-chosen.remaining).." more. Choose a lower option, or go back.")) or "Your current investment is already included."
-    planBalance.TextColor3=chosen.available and not chosen.affordable and C.red or C.green
+    planBalance.TextColor3=chosen.available and not chosen.affordable and C.red or C.accent
     planNote.Text=planError or (planMode=="rent" and "The multiplier stays on this property for future payments." or ("No district pair required. "..(planMode=="buy" and "Land + all selected building levels are included." or "You pay only for the levels you add.")))
     planNote.TextColor3=planError and C.red or C.muted
     local enabled=chosen.affordable and not planPending and not rolling
@@ -407,8 +409,8 @@ mainAction=function()
     elseif mainCommand then send(mainCommand) end
 end
 do
-    local ui={config=Config,colors=C,root=root,id=player.UserId,frame=frame,text=text,button=button,overlay=overlay,available=available,send=send,notify=notify,data=function() return data end,rent=rent,
-        header=header,mark=mark,strap=strap,dieA=dieA,dieB=dieB,dieTextA=dieTextA,dieTextB=dieTextB,cameraBar=cameraBar,closePanels=closePanels,
+    local ui={config=Config,colors=C,root=root,id=player.UserId,frame=frame,text=text,button=button,overlay=overlay,available=available,foreground=foreground,send=send,notify=notify,data=function() return data end,rent=rent,
+        header=header,mark=mark,logo=logo,strap=strap,dieA=dieA,dieB=dieB,dieTextA=dieTextA,dieTextB=dieTextB,cameraBar=cameraBar,closePanels=closePanels,
         hideToast=function()
             toast.Visible=false
             for _,child in ipairs(header:GetChildren()) do if child.Name=="CashChange" then child:Destroy() end end
@@ -463,7 +465,7 @@ render=function()
         local tint=Color3.fromHex(Config.playerColors[entry.colorIndex or seat] or "DCC098")
         local dot=frame(row,0,7,5,34,tint);round(dot,3)
         local avatar=frame(row,8,10,30,30,tint);round(avatar,15)
-        local initial=text(avatar,Thai.initial(entry.name),0,0,30,30,16,C.white,true,true);initial.TextXAlignment=Enum.TextXAlignment.Center
+        local initial=text(avatar,Thai.initial(entry.name),0,0,30,30,16,foreground(tint),true,true);initial.TextXAlignment=Enum.TextXAlignment.Center
         if type(entry.id)=="number" and entry.id>0 and portraits[entry.id]==nil then
             portraits[entry.id]=false
             task.spawn(function()
@@ -697,6 +699,7 @@ local function diceAnimation()
 end
 snapshot.OnClientEvent:Connect(function(incoming)
     if data and incoming.revision<data.revision then return end
+    lastSnapshotAt=workspace:GetServerTimeNow()
     local old=data
     local before=old and resident(old.game,player.UserId)
     local after=resident(incoming.game,player.UserId)
@@ -711,7 +714,7 @@ snapshot.OnClientEvent:Connect(function(incoming)
     end
     if after and before and after.cash~=before.cash then
         local delta=after.cash-before.cash
-        if not layout or not layout.compact then Motion.delta(cashLabel,delta,delta>0 and C.green or C.red,root) end
+        if not layout or not layout.compact then Motion.delta(cashLabel,delta,delta>0 and C.accent or C.red,root) end
     end
     if state.status=="playing" and state.phase=="buy" and state.players[state.turn].id==player.UserId then
         if not old or old.game.phase~="buy" or old.game.pendingTile~=state.pendingTile then
@@ -812,7 +815,7 @@ RunService.RenderStepped:Connect(function(dt)
             local tile=Config.tiles[planIndex]
             planNote.Text=(planMode=="buy" and ("Land $"..tile.price.." + building $"..planLevel*tile.upgrade) or (planMode=="rent" and "This multiplier applies to future rent payments." or "Only the added levels are charged.")).."  ·  "..math.ceil(seconds).."s left"
         end
-        timeFill.Size,timeFill.BackgroundColor3=UDim2.fromScale(math.clamp(seconds/(handing and Config.autoAdvanceSeconds or Config.turnSeconds),0,1),1),not handing and seconds<10 and C.red or C.green
+        timeFill.Size,timeFill.BackgroundColor3=UDim2.fromScale(math.clamp(seconds/(handing and Config.autoAdvanceSeconds or Config.turnSeconds),0,1),1),not handing and seconds<10 and C.red or C.accent
         if journeyActive then timeFill.Size,timeFill.BackgroundColor3=UDim2.fromScale(Journey.progress(Config,data.game.lastRoll,data.journeyUntil-workspace:GetServerTimeNow()),1),C.gold end
     else timeText.Text="2 / 4 players · online queues or practice with bots";timeFill.Size=UDim2.fromScale(0,1) end
 end)
@@ -822,4 +825,9 @@ RunService:BindToRenderStep("CitymoneyAvatarVisibility",Enum.RenderPriority.Came
     if not visitIndex then boardView:revealCharacter(player.Character) end
 end)
 action:FireServer("Sync")
-task.delay(3,function() if not data then action:FireServer("Sync") end end)
+local function refreshConnection()
+    if not gui.Parent then return end
+    if not data or workspace:GetServerTimeNow()-lastSnapshotAt>=10 then action:FireServer("Sync") end
+    task.delay(3,refreshConnection)
+end
+task.delay(3,refreshConnection)

@@ -5,7 +5,7 @@ import json
 import subprocess
 
 root = Path(__file__).resolve().parents[1]
-sources = list((root / "src/shared").glob("*.lua")) + [root / "src/server/DiceWorld.lua", root / "src/server/World.lua", root / "src/server/ClubService.lua", root / "src/server/Matchmaker.lua", root / "src/server/init.server.lua"]
+sources = list((root / "src/shared").glob("*.lua")) + [root / "src/server/DiceWorld.lua", root / "src/server/World.lua", root / "src/server/ClubService.lua", root / "src/server/Matchmaker.lua", root / "src/server/Publisher.lua", root / "src/server/init.server.lua"]
 def literal(value):
     equals = "="
     while "]" + equals + "]" in value:
@@ -25,3 +25,6 @@ subprocess.run([str(root / ".tools/luau"), str(club_runner)], cwd=root, check=Tr
 match_runner = root / "build/match-server-smoke.luau"
 match_runner.write_text("local run=require('../tests/matchmaker_mock')\nlocal sources={" + table + "}\nprint(run(sources)..' native matchmaking cases passed.')\n")
 subprocess.run([str(root / ".tools/luau"), str(match_runner)], cwd=root, check=True)
+recovery_runner = root / "build/recovery-server-smoke.luau"
+recovery_runner.write_text("local run=require('../tests/world_recovery_mock')\nlocal sources={" + table + "}\nprint(run(sources)..' native world/clock recovery cases passed.')\n")
+subprocess.run([str(root / ".tools/luau"), str(recovery_runner)], cwd=root, check=True)

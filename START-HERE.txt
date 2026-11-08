@@ -1,4 +1,8 @@
-CITYMONEY 1.3 — AUTOMATIC ENGLISH / THAI
+CITYMONEY 1.4 — DARK THEME AND RECOVERY
+
+Dark navy UI, light text, gold actions and stronger city colors. Home models
+are staged before display; failed renders retry without stopping game turns.
+Client snapshot requests retry, and queue cancellation waits for backend success.
 
 The game follows each player's Roblox language setting. English Roblox uses
 English; Thai Roblox uses Thai; unsupported languages fall back to English.

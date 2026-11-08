@@ -10,7 +10,7 @@ local Protocol=require(game:GetService("ReplicatedStorage"):WaitForChild("Citymo
 local Matchmaker={}
 Matchmaker.__index=Matchmaker
 function Matchmaker.new(config,callbacks)
-    local self=setmetatable({config=config,callbacks=callbacks,groups={},byPlayer={},errors={},admitted={},ticket=nil,arrivalDeadline=nil,matchStarted=false},Matchmaker)
+    local self=setmetatable({config=config,callbacks=callbacks,groups={},byPlayer={},errors={},admitted={},cancelPending={},ticket=nil,arrivalDeadline=nil,matchStarted=false},Matchmaker)
     self.localMode=RunService:IsStudio() or game.PlaceId==0
     self.reserved=not self.localMode and game.PrivateServerId~="" and game.PrivateServerOwnerId==0
     if not self.localMode then
@@ -73,12 +73,20 @@ function Matchmaker:cancel(id,force)
         if record and (record.matchId or ((record.claimUntil or 0)>os.time())) and not force and not group.failed then
             return false,"Your match is connecting. Please wait for the teleport."
         end
-        pcall(function()
+        local blocked=false
+        local updated=pcall(function()
             self.maps[group.seats]:UpdateAsync(group.id,function(current,sort)
-                if current then current.cancelled=true;return current,sort end
+                blocked=false
+                if current then
+                    if not force and not group.failed and (current.matchId or (current.claimUntil or 0)>os.time()) then blocked=true;return nil end
+                    current.cancelled=true;return current,sort
+                end
                 return nil
             end,10)
         end)
+        if not updated and not force then return false,"Could not reach the queue. Try cancel again." end
+        if blocked then return false,"Your match is connecting. Please wait for the teleport." end
+        if not updated then self.cancelPending[group.id]={seats=group.seats,expires=os.time()+90} end
     end
     group.cancelled=true;self:clear(group);self.callbacks.changed();return true
 end
@@ -134,6 +142,15 @@ function Matchmaker:teleportGroup(group,ticket)
     end
 end
 function Matchmaker:tickLive()
+    for id,pending in pairs(self.cancelPending) do
+        if os.time()<pending.expires then
+            self.maps[pending.seats]:UpdateAsync(id,function(current,sort)
+                if current then current.cancelled=true;return current,sort end
+                return nil
+            end,10)
+        end
+        self.cancelPending[id]=nil
+    end
     for id,group in pairs(self.groups) do
         if not group.cancelled and not group.teleporting then
             local record=self.maps[group.seats]:GetAsync(id)
