@@ -1,6 +1,7 @@
 CITYMONEY 1.4.0 — AUTOMATED TEST OUTPUT
 
 318 named cases, 600 simulated matches, eight bilingual client runs.
+Rechecked for the publishing package on 2026-11-09.
 Dark-theme text contrast, startup/stale snapshots, world construction recovery,
 clock continuity and backend cancellation failures are checked.
 Controlled Roblox service adapters are used; this is not a live Studio,
@@ -373,5 +374,3 @@ PASS a failed festival label does not cache an update that never appeared
 PASS a broken home cannot prevent another property from updating
 PASS a temporary clock error cannot stop future automatic turns
 7 native world/clock recovery cases passed.
-
-Post-review: brighter progress/selection indicators pass the eight UI runs.

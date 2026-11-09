@@ -15,13 +15,22 @@ CITYMONEY — BUILD YOUR CITY
 Thai instructions: START-HERE-TH.txt
 
 OPEN IN ROBLOX STUDIO
-1. Extract Citymoney-Waterfront.zip.
+1. Right-click Citymoney-Publish-Ready.zip > Extract All...
 2. Install Roblox Studio on Windows or macOS and sign in.
 3. Choose File > Open from File (Ctrl+O / Cmd+O).
-4. Open Citymoney/build/Citymoney.rbxlx from the extracted ZIP.
+4. Open Citymoney/build/Citymoney.rbxl from the extracted folder.
 5. Press Play (F5). Click PLAY NOW or MENU > Play Together, choose 2 or 4 players,
    then click PRACTICE WITH BOTS. Optional practice rules are under SETTINGS.
 Studio: https://create.roblox.com/
+
+PUBLISH AND ENABLE ROBUX
+Read PUBLISH-FIRST.md for the seven-step setup. Publish privately first, create
+a cosmetic pass under the same experience, put it on sale and copy its Asset ID.
+Stop Play. Open ReplicatedStorage > Citymoney > Config and replace clubPassId = 0
+with your actual numeric pass ID. Republish to the same experience and join a new
+server. Test queues, invites, saving and real checkout in the Roblox app before
+opening public access. Studio previews do not verify a real Robux transaction.
+Full instructions, account requirements and live checks: docs/PUBLISHING.md.
 
 BRIGHT CITY VIEW AND INTERACTIVE DICE
 The colorful city board has empty lots, card-space displays, a festival stage,

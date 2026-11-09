@@ -2,6 +2,8 @@
 
 This report distinguishes the automated checks from Roblox account tests.
 
+The complete automated suite was rerun for this publishing package on **2026-11-09**: all 318 named cases, 600 simulated matches and eight bilingual client runs passed. The package includes an English/Thai publishing guide, native binary place, editable XML place, source, pass icon and listing text. It is ready to upload for a private playtest; live account checks below remain required before public launch.
+
 | Area | Automated result |
 | --- | --- |
 | Rules and full matches | 600 complete simulated matches; purchases, chosen starting levels, upgrades, rent tiers, insolvency, victory, events and tactical cards pass. |

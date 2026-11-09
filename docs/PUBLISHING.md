@@ -7,8 +7,8 @@ The ZIP contains a ready-to-open place and its source. Publishing it and creatin
 ## 1. Open and try the place
 
 1. Install [Roblox Studio](https://create.roblox.com/) on Windows or macOS and sign in.
-2. Extract **Citymoney-Waterfront.zip**.
-3. In Studio, choose **File → Open from File**. Open **Citymoney/build/Citymoney.rbxlx** from the extracted folder.
+2. Right-click **Citymoney-Publish-Ready.zip → Extract All…** to save its contents to a normal folder.
+3. In Studio, choose **File → Open from File**. Open **Citymoney/build/Citymoney.rbxl** from the extracted folder. A direct download of **Citymoney.rbxl** also opens without a ZIP; it is the same game in native binary format.
 4. Press **Play (F5)**. Open **เมนู → เล่นกับเพื่อน**, select **2 คน / 4 คน**, click **ฝึกกับบอต**. Optional practice rules are under **ตั้งค่า**.
 5. Open **MENU → Cosmetic Shop** to preview/equip all three paid collections in Studio. Studio labels this as a preview and never opens a payment prompt or grants a real pass.
 6. Click **Stop** before editing scripts or publishing, so you edit the saved place rather than a temporary Play session.
@@ -18,7 +18,7 @@ For local multiplayer, use **Server & Clients** with 2 or 4 clients. On each cli
 ## 2. Publish to your account
 
 1. Choose **File → Publish**. Some Studio versions label this **Publish to Roblox**. For an existing experience, select the intended start place when using **Publish As / Publish to Roblox As**.
-2. Give the game a name such as **Citymoney — Build Your City**, add a description, choose supported devices, and save/publish. This uploads the place to Roblox; it does not necessarily make it public yet.
+2. Give the game a name such as **Citymoney — Build Your City**, add a description, choose supported devices, and save/publish. Keep access private for the first playtest and grant your testers playtest access. This uploads the place to Roblox; it does not necessarily make it public yet.
 3. Open [Creator Dashboard → Creations](https://create.roblox.com/dashboard/creations) and select that game.
 4. In its start-place settings, a **Maximum Player Count of 12** is recommended for the public lobby. Each reserved Citymoney match still admits exactly 2 or 4 matched people.
 5. Open **Publish settings → Manage Audience → Manage access**. Choose the appropriate audience, and enable **Public** access when ready. Disable the **Friends** restriction if you want everyone eligible to join. Dashboard labels can change; use the game's audience/access settings shown in your account.
@@ -78,7 +78,8 @@ Citymoney uses Roblox's own MemoryStore, TeleportService, DataStore, and Marketp
 
 | Symptom | What to check |
 | --- | --- |
-| Download opens XML | Use the ZIP, extract it, then open the `.rbxlx` in Studio. Do not import it as a model/image. |
+| Download opens XML | Use the binary **Citymoney.rbxl** download, or Extract All on the ZIP and open **Citymoney/build/Citymoney.rbxl** in Studio. |
+| Studio cannot read a ZIP/Temp path | Extract All to a normal folder first, then use File → Open from File. The direct binary download can be saved and opened without a ZIP. |
 | Friends cannot join | Confirm audience/access, playtest permissions, and Roblox's account/age requirements for every tester. |
 | Queue waits | Match size must agree. Every party member must be ready; online queues wait for exactly 2 or 4 humans. Use Practice for bots. |
 | Teleports fail in Studio | Expected: Studio uses the local queue. Test live reserved teleports in the Roblox app. |

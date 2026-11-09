@@ -10,7 +10,7 @@ The game follows each player's **Roblox language setting**. English settings sho
 
 [English desktop preview](docs/English-play-preview.png) · [English phone preview](docs/English-phone-preview.png) · [Thai preview](docs/Play-screen-preview.png)
 
-Open **Citymoney/build/Citymoney.rbxlx** in Studio, then **Play → PLAY NOW → 2 / 4 PLAYERS → PRACTICE WITH BOTS**. Thai Roblox settings show **เริ่มเล่น → 2 คน / 4 คน → ฝึกกับบอต**. [คู่มือภาษาไทย](START-HERE-TH.txt) · [Publishing and pass setup](PUBLISH-FIRST.md)
+Extract the ZIP and open **Citymoney/build/Citymoney.rbxl** in Studio, then **Play → PLAY NOW → 2 / 4 PLAYERS → PRACTICE WITH BOTS**. Thai Roblox settings show **เริ่มเล่น → 2 คน / 4 คน → ฝึกกับบอต**. [คู่มือภาษาไทย](START-HERE-TH.txt) · [Publishing and pass setup](PUBLISH-FIRST.md)
 
 ![เกมภาษาไทยและมุมกระดานใหม่ — ภาพตรวจจากซอร์ส ไม่ใช่ภาพจาก Studio](docs/Play-screen-preview.png)
 
@@ -113,7 +113,7 @@ Festivals rotate every **eight total turns**. The festival screen shows the curr
 
 1. Install [Roblox Studio](https://create.roblox.com/) on Windows or macOS and sign in.
 2. Download and extract **Citymoney-Waterfront.zip**.
-3. Choose **File → Open from File** (Ctrl+O / Cmd+O) and open **Citymoney/build/Citymoney.rbxlx**.
+3. Choose **File → Open from File** (Ctrl+O / Cmd+O) and open **Citymoney/build/Citymoney.rbxl** from the extracted folder.
 4. Press **Play (F5)** → **เริ่มเล่น** → **2 คน / 4 คน** → **ฝึกกับบอต**. Optional bot and demolition settings are under **ตั้งค่า**.
 
 The neighborhood is visible in the editor; menus appear during Play. The place contains its models and scripts. No paid assets, API keys, plugins, or HTTP access are needed to play it.

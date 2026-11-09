@@ -18,9 +18,9 @@
 - ถ้าเพิ่งเปลี่ยนภาษาในบัญชี ให้เข้าเกมใหม่เพื่อรับค่าล่าสุด
 
 เปิดเกม
-1. แตกไฟล์ Citymoney-Publish-Ready.zip
+1. คลิกขวา Citymoney-Publish-Ready.zip > Extract All... เพื่อแตกไฟล์ลงเครื่อง
 2. เปิด Roblox Studio > File > Open from File
-3. เลือก Citymoney/build/Citymoney.rbxlx
+3. เลือก Citymoney/build/Citymoney.rbxl จากโฟลเดอร์ที่แตกไฟล์แล้ว
 4. กด Play > เริ่มเล่น > เลือก 2 คน หรือ 4 คน > ฝึกกับบอต
 
 มุมมองใหม่
