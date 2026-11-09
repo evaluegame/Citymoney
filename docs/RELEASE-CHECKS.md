@@ -17,7 +17,7 @@ This report distinguishes the automated checks from Roblox account tests.
 | Avatar lifecycle | Actual World methods pass R6/R15 placement, board/home scaling, loading/replacement, spectator cleanup and removed bot tests through controlled native-service adapters. |
 | Online matchmaking | Ten actual Matchmaker cases cover 2-/4-player games, readiness, tickets, outsiders, departures, incomplete arrivals, cancellation-write failure, a claim racing with cancellation, and retried departure cleanup. Pure cross-server claim/reservation cases also pass. |
 | Robux cosmetics | Server-owned pass verification and checkout outcomes, delayed ownership, failures, cancellation, duplicate events, stale responses and departure/rejoin behavior pass. Premium access cannot be granted by a local completion event. |
-| Source and Studio file | Luau analysis and compilation pass. The serialized place is checked against every current script and scene part. The final ZIP is checked byte-for-byte against the place, source, guides and previews. |
+| Source and Studio file | Luau analysis and compilation pass. The serialized place is checked against every current script and scene part. The binary `.rbxl` export preserves the complete XML property/reference graph, with verified native header, instance/class counts and chunk boundaries. The final ZIP is checked byte-for-byte against both places, source, guides and previews. |
 
 ## Roblox account checks still required
 

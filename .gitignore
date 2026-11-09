@@ -1,6 +1,7 @@
 .tools/
 build/
 *.rbxl
+!/Citymoney.rbxl
 *.rbxl.lock
 *.rbxlx.lock
 .DS_Store

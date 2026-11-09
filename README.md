@@ -24,7 +24,9 @@ The **Cosmetic Shop** keeps server-confirmed Robux checkout for visual collectio
 
 Includes an optional **Waterfront Club cosmetic game pass** with three luxury collections, a 3D showroom, styled dice, player auras, walking trails, saved preferences, and reduced motion. **[Publishing and pass setup guide](docs/PUBLISHING.md)**.
 
-**[Download the Studio game ZIP](https://github.com/evaluegame/Citymoney/raw/refs/heads/main/Citymoney-Publish-Ready.zip)** · **[Studio place file](https://github.com/evaluegame/Citymoney/blob/main/Citymoney-Waterfront.rbxlx)**
+**[DOWNLOAD GAME — Citymoney.rbxl](https://raw.githubusercontent.com/evaluegame/Citymoney/main/Citymoney.rbxl)** · **[Full source ZIP](https://github.com/evaluegame/Citymoney/raw/refs/heads/main/Citymoney-Publish-Ready.zip)**
+
+The `.rbxl` link downloads the binary Roblox place. Save it to your computer, then use **Roblox Studio → File → Open from File → Citymoney.rbxl**. No ZIP extraction or saving an XML text page is needed. For the source ZIP, use Windows **Extract All…** before opening `Citymoney/build/Citymoney.rbxl`.
 
 For the final bundle, start with **[PUBLISH-FIRST.md](PUBLISH-FIRST.md)**. The release includes a **[test report](docs/RELEASE-CHECKS.md)** and **[copy-ready Roblox listing](docs/ROBLOX-LISTING.txt)**.
 
@@ -235,7 +237,7 @@ bash scripts/test.sh
 bash scripts/build.sh
 ```
 
-The Linux x86_64 bootstrap installs **Rojo 7.7.1** and **Luau 0.727** into ignored `.tools/` from official releases with verified publisher SHA-256 digests. `build.sh` creates **build/Citymoney.rbxlx** and **build/Citymoney-Studio.zip**, verifies the bundle against current source, and refreshes the root download copies.
+The Linux x86_64 bootstrap installs **Rojo 7.7.1** and **Luau 0.727** into ignored `.tools/` from official releases with verified publisher SHA-256 digests. `build.sh` creates **build/Citymoney.rbxl**, **build/Citymoney.rbxlx** and **build/Citymoney-Studio.zip**, verifies the bundle against current source, and refreshes the root download copies.
 
 For source editing alongside Studio, use `rojo serve default.project.json --address 127.0.0.1 --port 34872` and the [official Rojo Studio plugin](https://rojo.space/docs/v7/getting-started/installation/). A source-only build creates the scene at runtime. The packaged place also includes an editor preview.
 

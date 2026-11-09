@@ -4,7 +4,7 @@
 
 รุ่นนี้ใช้ธีมสีน้ำเงินเข้ม เพิ่มความชัดของตัวหนังสือและปุ่ม พร้อมการลองใหม่เมื่อสร้างบ้านหรือส่งข้อมูลพลาด และแก้การยกเลิกคิวเมื่อบริการ Roblox ตอบกลับไม่สำเร็จ การทดสอบอัตโนมัติไม่สามารถรับประกันว่าระบบออนไลน์จะไม่มีปัญหาได้ทั้งหมด
 
-1. แตกไฟล์ **Citymoney-Publish-Ready.zip** เปิด Roblox Studio → **File → Open from File** → **Citymoney/build/Citymoney.rbxlx**
+1. ดาวน์โหลด **[Citymoney.rbxl](https://raw.githubusercontent.com/evaluegame/Citymoney/main/Citymoney.rbxl)** บันทึกลง Desktop แล้วเปิด Roblox Studio → **File → Open from File** → **Citymoney.rbxl** หากใช้ **Citymoney-Publish-Ready.zip** ให้คลิกขวา **Extract All…** ก่อน แล้วเลือก **Citymoney/build/Citymoney.rbxl** จากโฟลเดอร์ที่แตกไฟล์แล้ว
 2. กด **Play** → **เริ่มเล่น (PLAY NOW)** → เลือก **2 คน / 4 คน (2 / 4 PLAYERS)** → **ฝึกกับบอต (PRACTICE WITH BOTS)** เพื่อทดลองเล่น
 3. หยุด Play แล้วเลือก **File → Publish to Roblox** เพื่อบันทึกเกมในบัญชีของคุณ
 4. เข้า [Creator Dashboard](https://create.roblox.com/dashboard/creations) เลือกเกมนี้ → **Monetization → Passes → Create pass** ใช้ภาพ **docs/Club-pass-icon.png** และชื่อ/คำอธิบายใน [ROBLOX-LISTING.txt](docs/ROBLOX-LISTING.txt) ตั้งราคา Robux และเปิดขาย

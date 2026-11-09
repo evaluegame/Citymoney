@@ -9,4 +9,5 @@ python3 scripts/make_place_project.py
 .tools/rojo build build/Citymoney.project.json --output build/Citymoney.rbxlx
 python3 scripts/set_editor_camera.py
 python3 scripts/check_place.py
+python3 scripts/build_binary_place.py
 python3 scripts/package.py
