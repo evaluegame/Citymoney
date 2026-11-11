@@ -30,7 +30,7 @@ function Feedback:show(title,detail,badge,tint,seconds,celebrate)
  if self.animation then self.animation:Cancel() end
  if self.basePosition then self.card.Position=self.basePosition end
  self.animation=Motion.pop(self.card,self.ui.root)
- if celebrate then Motion.burst(self.card,self.ui.root,self.icon.BackgroundColor3) end
+ if celebrate then Motion.burst(self.card,self.ui.root,self.icon.BackgroundColor3);self.ui.audio:celebrate() end
 end
 function Feedback:hide()
  self.untilTime=0;self.card.Visible=false

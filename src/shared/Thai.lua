@@ -13,6 +13,31 @@ local function add(source,target)
     table.insert(templates,{pattern=pattern..escape(string.sub(source,last)).."$",keys=keys,target=target,weight=#string.gsub(source,"{[%w]+}","")})
 end
 local catalogue=[=[
+1  ROLL	1  ทอย
+2  MOVE	2  เดิน
+3  CHOOSE	3  เลือก
+4  NEXT	4  ตาถัดไป
+Watch the city, or join your next match.	ชมเมือง หรือเข้าร่วมเกมถัดไป
+Keep cash for rent. Sell a home if you need funds.	เก็บเงินไว้จ่ายค่าเช่า ขายบ้านได้หากต้องการเงิน
+Your first home starts on an empty property.	เดินถึงที่ดินว่างเพื่อสร้างบ้านหลังแรก
+Cards and upgrades are optional before you roll.	ใช้การ์ดหรืออัปเกรดบ้านก่อนทอยได้
+Complete a district pair to double its base rent.	ซื้อที่ดินให้ครบคู่ในย่าน เพื่อเพิ่มค่าเช่าพื้นฐานเป็นสองเท่า
+CITY COMPLETE	เมืองของเราสร้างสำเร็จแล้ว
+YOUR MATCH	ผลงานของคุณ
+WINNER'S MATCH	ผลงานของผู้ชนะ
+HOMES	บ้านที่มี
+RENT EARNED	ค่าเช่าที่ได้รับ
+GOALS COMPLETE	เป้าหมายที่สำเร็จ
+THE FINAL STANDINGS	อันดับเมื่อจบเกม
+CITY BUILDER · {1}	นักสร้างเมือง · {1}
+RENT LEADER · {1}	เจ้าพ่อค่าเช่า · {1}
+STRATEGIST · {1}	นักวางกลยุทธ์ · {1}
+{n1} homes · {n2} goals	บ้าน {n1} หลัง · สำเร็จ {n2} เป้าหมาย
+A fresh city is waiting. Play again with your friends.	เมืองใหม่กำลังรอคุณ เล่นกับเพื่อนอีกครั้งได้เลย
+SOUND: ON	เสียง: เปิด
+SOUND: OFF	เสียง: ปิด
+Quiet game sounds. Change any time.	เสียงเบา ๆ ในเกม เปิดหรือปิดได้ทุกเมื่อ
+WAITING	ยังไม่พร้อม
 citymoney	ซิตี้มันนี่
 CITYMONEY	ซิตี้มันนี่
 BUILD YOUR CITY	สร้างเมืองในแบบคุณ

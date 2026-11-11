@@ -1,11 +1,11 @@
-CITYMONEY 1.4.0 — AUTOMATED TEST OUTPUT
+CITYMONEY 1.5.0 — AUTOMATED TEST OUTPUT
 
-318 named cases, 600 simulated matches, eight bilingual client runs.
-Rechecked for the publishing package on 2026-11-09.
-Dark-theme text contrast, startup/stale snapshots, world construction recovery,
-clock continuity and backend cancellation failures are checked.
-Controlled Roblox service adapters are used; this is not a live Studio,
-purchase, teleport, or DataStore playtest. See RELEASE-CHECKS.md.
+334 named cases, 600 simulated matches, eight bilingual client runs.
+Rechecked for the City Showcase release on 2026-11-11.
+Turn guidance, contextual advice, 4/6-player recaps, bounded/muted/failing audio,
+text contrast, world recovery, automatic clocks, matchmaking and cosmetics pass.
+Controlled Roblox service adapters are used; this is not a live Studio, native
+audio, purchase, teleport or DataStore playtest. See RELEASE-CHECKS.md.
 
 PASS starts with equal cash and reset ownership
 PASS rejects invalid rosters without changing lobby
@@ -292,6 +292,26 @@ PASS repeated failures produce bounded diagnostics without exposing raw errors
 PASS publication failure cannot charge a home purchase twice or rewind its turn
 
 8 publication recovery cases passed.
+PASS the guide stays inactive outside a running match
+PASS rolling and the settled result stay in the dice stage until movement starts
+PASS the guide does not invite a purchase before the pawn arrives
+PASS both buying and free card collection use the choice stage
+PASS a stale previous-turn journey cannot hide the new players roll
+PASS new residents receive a first-home hint and low cash takes priority
+PASS card and district hints follow the residents real inventory
+PASS all new guidance is translated while spectators get a safe hint
+
+8 guided-turn cases passed.
+PASS the declared winner remains first even when another player has more cash
+PASS equal net worth follows match seats rather than chosen cosmetic colors
+PASS the recap uses the actual home and rent-tier investment value
+PASS sold and demolished homes do not remain in the final home count
+PASS an eliminated resident does not outrank an active rival
+PASS awards come from recorded rent, construction and card statistics
+PASS empty and early matches cannot fabricate a winner or an award
+PASS a six-player recap preserves private names, inventories and money
+
+8 match-recap cases passed.
 PASS all six resident positions stay separated and within each rotated space
 PASS residents face their actual movement direction on every side and corner
 PASS travel holds exact centers, crosses City Gate and reaches event destinations
@@ -324,14 +344,14 @@ PASS board scene: closed 24-tile path, deterministic geometry, labels, sizes, an
 PASS homes: all 16 parcels, four building levels, walkable doors, furniture, stairs, rotation matrices and visit arrival points.
 PASS responsive layout: screenshot size, short Studio windows, desktop and portrait safe areas.
 All Roblox source files compiled successfully.
-PASS client UI adapter: th-th desktop 1440×900; dark-theme text contrast, bootstrap/stale snapshot retries, atomic model cleanup, Roblox language, fixed camera, dice, cards, goals, homes, matchmaking and Robux cosmetics.
-PASS client UI adapter: th-th studio 1192×642; dark-theme text contrast, bootstrap/stale snapshot retries, atomic model cleanup, Roblox language, fixed camera, dice, cards, goals, homes, matchmaking and Robux cosmetics.
-PASS client UI adapter: th-th short 800×560; dark-theme text contrast, bootstrap/stale snapshot retries, atomic model cleanup, Roblox language, fixed camera, dice, cards, goals, homes, matchmaking and Robux cosmetics.
-PASS client UI adapter: th-th mobile 390×760; dark-theme text contrast, bootstrap/stale snapshot retries, atomic model cleanup, Roblox language, fixed camera, dice, cards, goals, homes, matchmaking and Robux cosmetics.
-PASS client UI adapter: en-us desktop 1440×900; dark-theme text contrast, bootstrap/stale snapshot retries, atomic model cleanup, Roblox language, fixed camera, dice, cards, goals, homes, matchmaking and Robux cosmetics.
-PASS client UI adapter: en-us studio 1192×642; dark-theme text contrast, bootstrap/stale snapshot retries, atomic model cleanup, Roblox language, fixed camera, dice, cards, goals, homes, matchmaking and Robux cosmetics.
-PASS client UI adapter: en-us short 800×560; dark-theme text contrast, bootstrap/stale snapshot retries, atomic model cleanup, Roblox language, fixed camera, dice, cards, goals, homes, matchmaking and Robux cosmetics.
-PASS client UI adapter: en-us mobile 390×760; dark-theme text contrast, bootstrap/stale snapshot retries, atomic model cleanup, Roblox language, fixed camera, dice, cards, goals, homes, matchmaking and Robux cosmetics.
+PASS client UI adapter: th-th desktop 1440×900; guided turns, 4/6-player recaps, muted/bounded/failing audio, text contrast, snapshot recovery, fixed camera, dice, cards, homes, matchmaking and Robux cosmetics.
+PASS client UI adapter: th-th studio 1192×642; guided turns, 4/6-player recaps, muted/bounded/failing audio, text contrast, snapshot recovery, fixed camera, dice, cards, homes, matchmaking and Robux cosmetics.
+PASS client UI adapter: th-th short 800×560; guided turns, 4/6-player recaps, muted/bounded/failing audio, text contrast, snapshot recovery, fixed camera, dice, cards, homes, matchmaking and Robux cosmetics.
+PASS client UI adapter: th-th mobile 390×760; guided turns, 4/6-player recaps, muted/bounded/failing audio, text contrast, snapshot recovery, fixed camera, dice, cards, homes, matchmaking and Robux cosmetics.
+PASS client UI adapter: en-us desktop 1440×900; guided turns, 4/6-player recaps, muted/bounded/failing audio, text contrast, snapshot recovery, fixed camera, dice, cards, homes, matchmaking and Robux cosmetics.
+PASS client UI adapter: en-us studio 1192×642; guided turns, 4/6-player recaps, muted/bounded/failing audio, text contrast, snapshot recovery, fixed camera, dice, cards, homes, matchmaking and Robux cosmetics.
+PASS client UI adapter: en-us short 800×560; guided turns, 4/6-player recaps, muted/bounded/failing audio, text contrast, snapshot recovery, fixed camera, dice, cards, homes, matchmaking and Robux cosmetics.
+PASS client UI adapter: en-us mobile 390×760; guided turns, 4/6-player recaps, muted/bounded/failing audio, text contrast, snapshot recovery, fixed camera, dice, cards, homes, matchmaking and Robux cosmetics.
 PASS native dice finish both models before any waiting mover is released
 PASS reduced motion settles exact faces before its completion callback
 PASS a superseding native roll cancels the old mover and completion
@@ -374,3 +394,6 @@ PASS a failed festival label does not cache an update that never appeared
 PASS a broken home cannot prevent another property from updating
 PASS a temporary clock error cannot stop future automatic turns
 7 native world/clock recovery cases passed.
+
+Post-visual review: personal recap statistics are explicitly labelled.
+All eight English/Thai client layouts passed again after this UI refinement.

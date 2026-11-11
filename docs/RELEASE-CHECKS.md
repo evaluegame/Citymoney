@@ -1,13 +1,16 @@
-# Citymoney 1.4 — release verification
+# Citymoney 1.5 — release verification
 
 This report distinguishes the automated checks from Roblox account tests.
 
-The complete automated suite was rerun for this publishing package on **2026-11-09**: all 318 named cases, 600 simulated matches and eight bilingual client runs passed. The package includes an English/Thai publishing guide, native binary place, editable XML place, source, pass icon and listing text. It is ready to upload for a private playtest; live account checks below remain required before public launch.
+The complete automated suite was rerun for this publishing package on **2026-11-11**: all 334 named cases, 600 simulated matches and eight bilingual client runs passed. The package includes an English/Thai publishing guide, native binary place, editable XML place, source, pass icon and listing text. It is ready to upload for a private playtest; live account checks below remain required before public launch.
 
 | Area | Automated result |
 | --- | --- |
 | Rules and full matches | 600 complete simulated matches; purchases, chosen starting levels, upgrades, rent tiers, insolvency, victory, events and tactical cards pass. |
-| Named cases | 318 cases across the engine, plans, strategy, parties, matchmaking, cosmetics, dice timelines, layout, city geometry, avatars, translation, Robux checkout and recovery. |
+| Named cases | 334 cases across the engine, plans, strategy, parties, matchmaking, cosmetics, dice timelines, layout, city geometry, avatars, translation, Robux checkout and recovery. |
+| Showcase and guidance | Four event courtyards, enamel/brass board layers, detailed roofs/porch lighting and a clearer party lobby. Eight guided-turn cases cover roll/result/movement/choice/handoff ordering, stale journeys and contextual advice. |
+| Match recap | Eight cases cover declared winner priority, ties, true investment values, sold/demolished homes, elimination, recorded awards, empty matches and state privacy. Actual client layouts exercise four and six residents. |
+| Optional sound | Actual client sound adapter tests cover four bounded voices, rapid input, muting active/queued notes and an unavailable sound API. Native audibility and mix still require a Roblox app playtest. |
 | Dark theme | Dark navy panels, light text, readable gold actions and stronger city colors. Actual visible UI text retains at least 4.5:1 contrast during the eight integration runs; player initials, premium logos, ready goals, disabled options and card icons are included. |
 | Recovery | Eight publication cases and seven actual World/clock adapter cases cover render failure, preserved houses, staged-model cleanup, retry backoff, latest-state recovery, recipient failure, missing models, effect retries, isolated property failure and a continuing automatic clock. |
 | Per-player language | Roblox English/Thai selection, English fallback, account language taking precedence over device language, independent client contexts, canonical shared English, language changes and fresh/updated world signs pass. Player names, text input, currency and game state are preserved. |
@@ -23,7 +26,7 @@ The complete automated suite was rerun for this publishing package on **2026-11-
 
 ## Roblox account checks still required
 
-This workspace cannot run Roblox Studio or log into your Creator Dashboard. No live Robux purchase, native rendering playtest, cross-server teleport or published DataStore test was performed here. The automated service adapters do not replace those tests.
+This workspace cannot run Roblox Studio or log into your Creator Dashboard. No live Robux purchase, native audio/rendering playtest, cross-server teleport or published DataStore test was performed here. The automated service adapters do not replace those tests.
 
 The package ships with **`clubPassId = 0`**, because the creator has not created the pass yet. Free play is available; live cosmetic purchases remain disabled until you create the pass under your published experience, set its ID and republish. The R$149 shop preview is an example test fixture, not an active sale.
 

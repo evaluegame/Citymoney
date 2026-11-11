@@ -27,6 +27,8 @@ jobs = [
     ("opportunity-desktop", "opportunity-desktop", "Opportunity-screen-preview"),
     ("events-desktop", "events-desktop", "Events-screen-preview"),
     ("lobby-desktop", "lobby-desktop", "Start-menu-preview"),
+    ("recap-desktop", "recap-desktop", "Match-recap-preview"),
+    ("recap-mobile", "recap-mobile", "Match-recap-phone-preview"),
 ]
 
 
@@ -61,3 +63,13 @@ if __name__ == "__main__":
     image.save(root / "docs/Neighborhood-preview.png")
     for view, output in [("shop-robux-desktop", "docs/Robux-shop-preview.png"), ("shop-robux-mobile", "docs/Robux-shop-phone-preview.png")]:
         subprocess.run(["python3", "scripts/render_shop_preview.py", view, output], cwd=root, check=True)
+    for mode, name in [("home", "House-preview"), ("clubhome", "Club-home-preview")]:
+        result = subprocess.run([str(root / ".tools/luau"), "scripts/export_board.luau", "-a", mode, "en-us"], cwd=root, text=True, capture_output=True, check=True)
+        source = root / "build" / f"review-{mode}.json"
+        source.write_text(result.stdout)
+        background = f"build/Review-{mode}.png"
+        render(str(source), "", background)
+        model = Image.open(root / background).convert("RGB")
+        ImageDraw.Draw(model).text((16, model.height - 24), "MODEL PREVIEW · Shared game geometry · Not a Studio screenshot", font=ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", 12), fill=(35, 65, 100))
+        model.save(root / "docs" / f"{name}.png")
+        print("READY", name, flush=True)

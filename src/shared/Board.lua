@@ -31,15 +31,25 @@ function Board.generate(config)
     end
     add("Sea",{1400,3,1400},{0,-7,0},Palette.water,{reflectance=0.08,canCollide=false})
     rounded("IslandBody",{195,5,195},{0,-2,0},14,Palette.deepWater)
+    rounded("EnamelEdge",{195,1.1,195},{0,-0.15,0},14,"183D6B")
+    rounded("BrassBoardRim",{194,0.18,194},{0,1.08,0},13,"E8BC64",{material="Metal"})
     rounded("IslandBeach",{193,0.7,193},{0,0.75,0},13,Palette.sand)
     rounded("TableSurface",{191,0.4,191},{0,1.22,0},11,Palette.path)
     rounded("EventPlaza",{99,0.28,99},{0,1.5,0},8,Palette.grass)
+    for _,square in ipairs({{-27,-27,"DEE5FF"},{27,-27,"D9F3F8"},{-27,27,"FFF0DE"},{27,27,"FCE1EF"}}) do
+        rounded("EventCourtyard",{38,0.07,38},{square[1],1.69,square[2]},4,square[3])
+        for _,side in ipairs({-1,1}) do
+            add("CourtyardInlay",{31,0.035,0.18},{square[1],1.75,square[2]+side*16.3},"B1C7DD",{canCollide=false})
+        end
+    end
     add("CityRoad",{10,0.12,97},{0,1.75,0},Palette.road)
     add("CityRoad",{97,0.12,10},{0,1.75,0},Palette.road)
     for offset=-43,43,8.6 do
         add("RoadMark",{0.3,0.06,3},{0,1.84,offset},"FFFFFF")
         add("RoadMark",{3,0.06,0.3},{offset,1.84,0},"FFFFFF")
     end
+    rounded("DiceTrayBase",{44,0.45,32},{0,1.78,0},4,"173D72",{interaction="dice"})
+    rounded("DiceTrayRim",{42,0.24,30},{0,1.99,0},3.5,"E8BC64",{interaction="dice",material="Metal"})
     rounded("DiceTray",{40,0.45,28},{0,1.95,0},3,Palette.tray,{interaction="dice"})
     for _,x in ipairs({-20,20}) do add("DiceRail",{0.55,0.65,23},{x,2.5,0},"FFFFFF",{interaction="dice"}) end
     for _,z in ipairs({-14,14}) do add("DiceRail",{34,0.65,0.55},{0,2.5,z},"FFFFFF",{interaction="dice"}) end
@@ -48,17 +58,20 @@ function Board.generate(config)
     for _,entry in ipairs(Districts.generate()) do table.insert(parts,entry) end
     for _,entry in ipairs(Scenery.generate()) do table.insert(parts,entry) end
     add("CityTitle",{26,0.1,3.5},{0,1.75,-44},Palette.grass,{text="CITYMONEY",textSize=40,textColor="173E35"})
-    local function car(x,z,color)
-        rounded("CityCar",{3.8,1.2,6.4},{x,2.7,z},0.8,color)
-        rounded("CarCabin",{3.2,1.4,3.1},{x,3.75,z+0.25},0.6,"C8EDFA")
-        for _,dx in ipairs({-1.7,1.7}) do for _,dz in ipairs({-1.9,1.9}) do add("CarWheel",{0.55,1.25,1.25},{x+dx,2.3,z+dz},"355079",{shape="Cylinder"}) end end
+    local function car(x,z,color,horizontal)
+        rounded("CityCar",horizontal and {6.4,1.2,3.8} or {3.8,1.2,6.4},{x,2.7,z},0.8,color)
+        rounded("CarCabin",horizontal and {3.1,1.4,3.2} or {3.2,1.4,3.1},{x+(horizontal and 0.25 or 0),3.75,z+(horizontal and 0 or 0.25)},0.6,"C8EDFA")
+        for _,dx in ipairs({-1.7,1.7}) do for _,dz in ipairs({-1.9,1.9}) do
+            add("CarWheel",{0.55,1.25,1.25},{x+(horizontal and dz or dx),2.3,z+(horizontal and dx or dz)},"355079",{shape="Cylinder",rotation=Architecture.rotation(horizontal and math.pi/2 or 0)})
+        end end
     end
-    car(-44,17,"FFC34D");car(44,-17,"FF8B9B")
+    car(-1.6,43,"FFC34D");car(43,1.6,"FF8B9B",true)
     for index,tile in ipairs(config.tiles) do
         local position=Board.position(index)
         local _,yaw=Architecture.site(index)
         local tint=tile.group and config.groups[tile.group].color or tile.color or "7DC8F1"
         local caption=Board.caption(config,index)
+        add("RoutePlinth",{19.2,0.22,19.2},{position[1],1.36,position[3]},"9DAFCB",{rotation=Architecture.rotation(yaw),tileIndex=index,boardSpace=true})
         add("Tile"..index,{Spaces.size,0.4,Spaces.size},position,"FFFFFF",{rotation=Architecture.rotation(yaw),tileIndex=index,boardSpace=true})
         local c,s=math.cos(yaw),math.sin(yaw)
         add("WalkingLane",{18.3,0.04,8.6},{position[1]-s*4.8,1.62,position[3]-c*4.8},"E8F3FF",{tileIndex=index,boardSpace=true,rotation=Architecture.rotation(yaw)})

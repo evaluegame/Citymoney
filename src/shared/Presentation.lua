@@ -20,7 +20,7 @@ function P.layout(width,height)
     local scale=compact and math.min(width/560,height/860) or math.min(height/720,1.3)
     scale=math.max(0.25,scale)
     local w,h=width/scale,height/scale
-    local toolbarHeight=compact and 224 or 112
+    local toolbarHeight=compact and 252 or 140
     local toolbarWidth=compact and math.min(528,w-36) or math.min(760,w-352)
     return {scale=scale,width=w,height=h,compact=compact,headerHeight=compact and 84 or 56,
         toolbar={(w-toolbarWidth)/2,h-toolbarHeight-18,toolbarWidth,toolbarHeight},

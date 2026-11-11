@@ -114,6 +114,12 @@ function Districts.generate()
             add(name,{height,width,width},x,y,z,color,{shape="Cylinder",rotation=A.rotation(0,0,math.pi/2)})
         end
         for _,p in ipairs(Art.rounded("StationPlatform",{23,0.6,21},{station.x,1.9,station.z},3,"F9FCFF",{interaction=station.id})) do table.insert(entries,p) end
+        for _,side in ipairs({-1,1}) do
+            add("StationEdging",{0.22,0.12,14},side*10.4,2.25,0,station.color)
+            add("StationBollard",{0.6,1.4,0.6},side*9.4,2.8,7.2,"24476E")
+            add("StationBollardLight",{0.65,0.16,0.65},side*9.4,3.55,7.2,"FFE3A0",{material="Neon",canCollide=false})
+        end
+        add("StationStep",{14,0.16,1.5},0,2.05,10.7,station.color)
         add("StationLabel",{20,0.09,5},0,2.25,7.2,station.color,{text=station.title,textColor="FFFFFF",textSize=48})
         if station.id=="market" then
             add("MarketShop",{16,5.4,8},0,4.9,-2.2,"FFF6DF")
@@ -142,6 +148,11 @@ function Districts.generate()
             cylinder("FestivalCrown",11,0.5,0,10.5,-1,"FFFFFF")
             cylinder("FestivalMast",0.3,4,0,12.2,-1,"FFC34D")
             add("FestivalFlag",{3,1.5,0.2},1.3,13.6,-1,"FFBA4C")
+            for _,side in ipairs({-1,1}) do
+                add("FestivalSpeaker",{1.8,3.1,1.6},side*7.8,3.9,3.8,"284768")
+                add("SpeakerCone",{1.2,1.2,0.12},side*7.8,4.3,2.95,"73D8DE",{shape="Ball",canCollide=false})
+                add("FestivalBanner",{1.4,2.4,0.2},side*5,6.2,-6.3,side<0 and "FFC34D" or "73D8DE",{canCollide=false})
+            end
         elseif station.id=="contracts" then
             add("HallBody",{14,7,10},0,5.8,-1,"A7B3FF")
             add("HallGlass",{12,4.7,0.15},0,5.4,-6.1,"6CCDE5",{material="Glass"})

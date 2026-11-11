@@ -1,6 +1,8 @@
-# Citymoney 1.4 — publish and connect Robux
+# Citymoney 1.5 — publish and connect Robux
 
 **Ready to upload for a private playtest.** The automated checks pass; native Studio rendering, live multiplayer, saved preferences and real Robux checkout still need testing in your Roblox account. The package includes both place formats, all source, English/Thai guides, the pass icon and test results.
+
+**Updating an existing game:** keep your current cosmetic pass Asset ID and enter it in the new Config before publishing to the same experience. See **[docs/PUBLISHING.md](docs/PUBLISHING.md)** for the full update and live-test steps.
 
 1. Right-click **Citymoney-Publish-Ready.zip → Extract All…**. In Roblox Studio choose **File → Open from File → Citymoney/build/Citymoney.rbxl** from the extracted folder. The direct **[Citymoney.rbxl download](https://raw.githubusercontent.com/evaluegame/Citymoney/main/Citymoney.rbxl)** also opens without extracting a ZIP.
 2. Press **Play → PLAY NOW → 2 / 4 PLAYERS → PRACTICE WITH BOTS**. Try buying a starting house level, upgrading, rent settings, card collection/use, dice movement and automatic next turns. Stop Play before editing or publishing.
@@ -12,7 +14,7 @@
 
 The pass unlocks house/dice styles, aura and trails only. Game cash, cards, rent and dice results are unaffected. The full walkthrough and live checks are in **[docs/PUBLISHING.md](docs/PUBLISHING.md)**; the automated evidence is in **[docs/RELEASE-CHECKS.md](docs/RELEASE-CHECKS.md)**. Suggested listing text is in **[docs/ROBLOX-LISTING.txt](docs/ROBLOX-LISTING.txt)**.
 
-# ซิตี้มันนี่ 1.4 — เปิดเกมและเผยแพร่บน Roblox
+# ซิตี้มันนี่ 1.5 — เปิดเกมและเผยแพร่บน Roblox
 
 เกมเลือกภาษาตามการตั้งค่า Roblox ของผู้เล่นแต่ละคน: English แสดงอังกฤษ และภาษาไทยแสดงไทย ผู้เล่นต่างภาษาเล่นห้องเดียวกันได้ ชื่อผู้เล่นและกติกาเหมือนกันทุกภาษา มุมกระดานและกล้องนิ่งยังเหมือนเดิม ไม่ต้องติดตั้งปลั๊กอินเพื่อเปิดไฟล์เกม
 

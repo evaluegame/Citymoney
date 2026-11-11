@@ -129,6 +129,8 @@ return function(sources,width,height,localeId)
     function methods:GetServerTimeNow() return now end
     function methods:GetMouse() return pointer end
     function methods:FireServer(...) table.insert(requests,{...}) end
+    function methods:Play() if self._props.SoundFailure then error('Sound unavailable') end;self._props.PlayCount=(self._props.PlayCount or 0)+1;self._props.Playing=true end
+    function methods:Stop() self._props.Playing=false end
     function methods:ScreenPointToRay(x,y) local t=math.tan(math.rad(self.FieldOfView or 36)/2);return {Origin=self.CFrame.Position,Direction=self.CFrame:VectorToWorldSpace(vector((2*x/width-1)*t*width/height,(1-2*y/height)*t,-1)).Unit} end
     function methods:WorldToScreenPoint(point)
         local p=self.CFrame:VectorToObjectSpace(point-self.CFrame.Position)
@@ -423,6 +425,29 @@ return function(sources,width,height,localeId)
     assert(root:GetAttribute("ViewMode")=="table","Play did not start in top view")
     checkDeeds()
     capture("main")
+    for index=1,4 do inside(root.TurnDock:WaitForChild('TurnStep'..index)) end
+    findText('1  ROLL');findText('2  MOVE');findText('3  CHOOSE');findText('4  NEXT')
+    -- Execute the real sound adapter: bounded voices, muted delayed rewards and
+    -- an unavailable audio API must not interrupt a game action.
+    local Audio=load(main:WaitForChild('Soundscape'))
+    local sound=Audio.new(gui,function() return now end);sound.bank.Name='AudioProbe'
+    assert(sound:play('tap') and not sound:play('tap'),'Sound cues are not rate limited')
+    for _=1,12 do advance(0.1);sound:play('tap') end
+    assert(#sound.bank:GetChildren()==4,'Sound feedback leaks voices')
+    sound:celebrate();sound:setMuted(true)
+    local played=0;for _,voice in ipairs(sound.pool) do played=played+(voice.PlayCount or 0);assert(not voice.Playing) end
+    advance(0.4)
+    local afterMuted=0;for _,voice in ipairs(sound.pool) do afterMuted=afterMuted+(voice.PlayCount or 0) end
+    assert(played==afterMuted and not sound:play('success'),'Muted delayed notes still play')
+    sound:setMuted(false);advance(0.1)
+    for _,voice in ipairs(sound.pool) do voice._props.SoundFailure=true end
+    assert(not sound:play('tap'),'Sound API failure escapes the feedback adapter')
+    sound.bank:Destroy()
+    local beforeSoundToggle=#requests
+    root.CityMenuButton.Activated:Fire();click('SOUND: ON');findText('SOUND: OFF')
+    for _,voice in ipairs(gui.CitymoneyAudio:GetChildren()) do assert(not voice.Playing,'Mute did not stop active sounds') end
+    click('SOUND: OFF');findText('SOUND: ON');click('HOW TO PLAY');click("Let's build a neighborhood")
+    assert(#requests==beforeSoundToggle,'Sound preferences sent an authoritative game action')
     local figure=node("Model","Figure_2");figure.Parent=board
     local head=node("Part","Head");head.Parent=figure
     local spot=load(shared.BoardSpaces).label(3);head.Position=vector(table.unpack(spot))
@@ -598,6 +623,17 @@ return function(sources,width,height,localeId)
     findText("RENT CARDS");findText("Rent demand");findText("Rent boost");capture("rent-card-space")
     click("Rent boost");request=requests[#requests];assert(engine:act(1,"Offer",request[2]));publish();advance(0.3)
     assert(engine:player(1).cards.boost==2)
+    engine.state.status='finished';engine.state.winnerId=2;data.journeyUntil=0
+    engine:player(1).stats.rent=240;engine:player(1).completedChallenges=2
+    engine:player(2).stats.upgrades=3;engine:player(2).cash=3000
+    publish();findText('THE FINAL STANDINGS');findText('CITY COMPLETE')
+    local recap=root:FindFirstChild('MatchRecap',true);inside(recap);capture('recap')
+    for i=5,6 do
+        local extra=table.clone(engine:player(1));extra.id=i;extra.name=i==5 and 'Avery' or 'Riley';extra.colorIndex=i
+        table.insert(engine.state.players,extra)
+    end
+    publish();inside(recap);findText('THE FINAL STANDINGS')
+    click('Keep looking')
     engine=Engine.new(Config);data.lobby={members[1]};data.lobbyConfig.seats=2;publish()
     assert(root.QuickActions.Visible==false,"Match shortcuts appear before a game starts")
     click("PLAY NOW");click("4 PLAYERS")

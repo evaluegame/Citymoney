@@ -25,6 +25,9 @@ local CityOffer=require(script:WaitForChild("CityOffer"))
 local GoalDisplay=require(script:WaitForChild("GoalDisplay"))
 local MatchFeedback=require(script:WaitForChild("MatchFeedback"))
 local Journey=require(shared.Journey)
+local TurnGuide=require(shared.TurnGuide)
+local MatchRecap=require(shared.MatchRecap)
+local Soundscape=require(script:WaitForChild("Soundscape"))
 local boardView=BoardView.new(language)
 local remotes=shared:WaitForChild("Remotes")
 local action,snapshot,feedback=remotes:WaitForChild("Action"),remotes:WaitForChild("Snapshot"),remotes:WaitForChild("Feedback")
@@ -43,6 +46,7 @@ for key,hex in pairs(Presentation.colors) do C[key]=Color3.fromHex(hex) end
 local gui=Instance.new("ScreenGui")
 gui.Name,gui.ResetOnSpawn,gui.IgnoreGuiInset,gui.ZIndexBehavior="Citymoney",false,false,Enum.ZIndexBehavior.Sibling
 gui.Parent=player:WaitForChild("PlayerGui")
+local audio=Soundscape.new(gui,function() return workspace:GetServerTimeNow() end)
 local safe=Instance.new("Frame")
 safe.Size,safe.BackgroundTransparency,safe.Parent=UDim2.fromScale(1,1),1,gui
 local root=Instance.new("Frame")
@@ -79,7 +83,9 @@ local function button(parent,value,x,y,w,h,tint,callback,playerName)
     object.BackgroundColor3,object.TextColor3,object.BorderSizePixel=tint or C.green,foreground(tint or C.green),0
     if playerName then object:SetAttribute("PlayerName",true) end
     object.Parent=parent;round(object,11)
-    object.Activated:Connect(function() if object.Active then callback() end end)
+    local edge=Instance.new("UIStroke")
+    edge.ApplyStrokeMode,edge.Color,edge.Thickness,edge.Transparency,edge.Parent=Enum.ApplyStrokeMode.Border,C.line,1,0.5,object
+    object.Activated:Connect(function() if object.Active then audio:play("tap");callback() end end)
     Motion.button(object,root)
     return object
 end
@@ -180,6 +186,13 @@ local passButton=button(control,"SKIP",500,79,75,26,C.paper,function() send("Ski
 local timeText=text(control,"",16,81,400,18,10,C.muted)
 local timeTrack=frame(control,16,104,778,3,C.paper)
 local timeFill=Instance.new("Frame");timeFill.Size,timeFill.BackgroundColor3,timeFill.BorderSizePixel,timeFill.Parent=UDim2.fromScale(1,1),C.accent,0,timeTrack
+local turnSteps={}
+for index,label in ipairs(TurnGuide.labels) do
+    local chip=frame(control,16+(index-1)*194,110,186,22,C.paper)
+    chip.Name="TurnStep"..index
+    local caption=text(chip,label,0,0,186,22,10,C.muted,true);caption.TextXAlignment=Enum.TextXAlignment.Center
+    table.insert(turnSteps,{chip=chip,caption=caption})
+end
 local cameraBar=frame(root,24,510,188,84)
 cameraBar.Name,cameraBar.ZIndex="CameraDock",2
 button(cameraBar,"City view",6,6,100,30,C.paper,function() focusIndex=nil;root:SetAttribute("ViewMode",(root:GetAttribute("ViewMode") or Presentation.defaultView)=="city" and "table" or "city");render() end).Name="TableView"
@@ -232,15 +245,29 @@ requestSale=function(index)
     saleText.Text=tile.name.." returns to the city for $"..math.floor(Plans.investment(Config,index,property.level,property.rentTier)/2)..". Its house will be removed, and you may lose your district bonus."
     sale.Visible=true
 end
-local results,resultCard=overlay(520,430)
-local resultTitle=text(resultCard,"A neighborhood well built.",26,22,468,44,26,C.ink,true)
-local resultSubtitle=text(resultCard,"",26,73,468,30,15,C.green)
-local resultRows=Instance.new("Frame");place(resultRows,26,121,468,212);resultRows.BackgroundTransparency,resultRows.Parent=1,resultCard
-local replay=button(resultCard,"Play again",26,360,292,44,C.green,function()
+local results,resultCard=overlay(560,646)
+resultCard.Name="MatchRecap"
+text(resultCard,"CITY COMPLETE",26,19,508,25,12,C.accent,true)
+local champion=frame(resultCard,26,67,70,70,C.gold)
+local championLetter=text(champion,"C",0,0,70,70,34,C.darkInk,true,true);championLetter.TextXAlignment=Enum.TextXAlignment.Center
+local resultTitle=text(resultCard,"A neighborhood well built.",114,63,420,52,25,C.ink,true)
+local resultSubtitle=text(resultCard,"",114,117,420,25,15,C.accent)
+local resultStatsTitle=text(resultCard,"YOUR MATCH",26,144,508,16,10,C.accent,true)
+local resultStats={}
+for index,label in ipairs({"HOMES","RENT EARNED","GOALS COMPLETE"}) do
+    local stat=frame(resultCard,26+(index-1)*174,164,160,78,C.paper)
+    local value=text(stat,"0",12,7,136,34,25,C.ink,true)
+    text(stat,label,12,47,136,20,10,C.muted,true)
+    table.insert(resultStats,value)
+end
+text(resultCard,"THE FINAL STANDINGS",26,256,508,22,12,C.accent,true)
+local resultRows=Instance.new("Frame");place(resultRows,26,288,508,264);resultRows.BackgroundTransparency,resultRows.Parent=1,resultCard
+local resultAward=text(resultCard,"",26,554,508,24,12,C.muted)
+local replay=button(resultCard,"Play again",26,590,318,40,C.gold,function()
     results.Visible=false
     send(data and data.matchmaking and data.matchmaking.mode=="match" and "BackLobby" or "Start")
 end)
-button(resultCard,"Keep looking",330,360,164,44,C.paper,function() results.Visible=false end)
+button(resultCard,"Keep looking",356,590,178,40,C.paper,function() results.Visible=false end)
 local chooser,chooserCard=overlay(Layout.homeChooserWidth,Layout.homeChooserHeight)
 local chooserTitle=text(chooserCard,"Choose your home level",24,15,418,36,25,C.ink,true)
 local chooserSubtitle=text(chooserCard,"",24,52,472,24,15,C.muted)
@@ -409,7 +436,7 @@ mainAction=function()
     elseif mainCommand then send(mainCommand) end
 end
 do
-    local ui={config=Config,colors=C,root=root,id=player.UserId,frame=frame,text=text,button=button,overlay=overlay,available=available,foreground=foreground,send=send,notify=notify,data=function() return data end,rent=rent,
+    local ui={config=Config,colors=C,root=root,id=player.UserId,frame=frame,text=text,button=button,overlay=overlay,available=available,foreground=foreground,audio=audio,send=send,notify=notify,data=function() return data end,rent=rent,
         header=header,mark=mark,logo=logo,strap=strap,dieA=dieA,dieB=dieB,dieTextA=dieTextA,dieTextB=dieTextB,cameraBar=cameraBar,closePanels=closePanels,
         hideToast=function()
             toast.Visible=false
@@ -463,6 +490,10 @@ render=function()
     for seat,entry in ipairs(entries) do
         local row=frame(seats,0,(seat-1)*54,134,48,(current and state.status=="playing" and current.id==entry.id) and C.mint or C.card)
         local tint=Color3.fromHex(Config.playerColors[entry.colorIndex or seat] or "DCC098")
+        if current and state.status=="playing" and current.id==entry.id then
+            local outline=row:FindFirstChildOfClass("UIStroke")
+            outline.Color,outline.Thickness,outline.Transparency=tint,2,0.12
+        end
         local dot=frame(row,0,7,5,34,tint);round(dot,3)
         local avatar=frame(row,8,10,30,30,tint);round(avatar,15)
         local initial=text(avatar,Thai.initial(entry.name),0,0,30,30,16,foreground(tint),true,true);initial.TextXAlignment=Enum.TextXAlignment.Center
@@ -497,7 +528,7 @@ render=function()
         turnTitle.Text=myTurn and "YOUR TURN" or ((current and current.name or "A resident").."'s turn")
         if state.phase=="end" then turnTitle.Text=myTurn and "Turn complete." or ((current and current.name or "A resident").." has finished.") end
         turnHint.Text=state.notice or "A new address is waiting."
-        if myTurn then turnHint.Text=state.phase=="roll" and "Roll to move. Events are optional." or (state.phase=="buy" and "Choose a home level, or skip this lot." or (state.phase=="offer" and (state.pendingOffer and state.pendingOffer.kind=="cardSpace" and "Choose a free card from this space." or "Choose cash or a tactical card.") or "Next player starts automatically.")) end
+        if myTurn then turnHint.Text=state.phase=="roll" and TurnGuide.tip(Config,state,player.UserId) or (state.phase=="buy" and "Choose a home level, or skip this lot." or (state.phase=="offer" and (state.pendingOffer and state.pendingOffer.kind=="cardSpace" and "Choose a free card from this space." or "Choose cash or a tactical card.") or "Next player starts automatically.")) end
         if myTurn then
             if state.phase=="roll" then mainCommand="Roll";actionButton.Text=mine.detained and "Serve detention" or "ROLL DICE"
             elseif state.phase=="buy" then
@@ -528,6 +559,12 @@ render=function()
         end
     end
     dieA.Active,dieB.Active=mainCommand=="Roll",mainCommand=="Roll"
+    local step=TurnGuide.stage(Config,data,workspace:GetServerTimeNow())
+    for index,item in ipairs(turnSteps) do
+        item.chip.BackgroundColor3=index==step and C.gold or (index<step and C.mint or C.paper)
+        item.caption.TextColor3=index==step and C.darkInk or (index<step and C.ink or C.muted)
+        item.chip.Visible=state.status=="playing"
+    end
     dieA:SetAttribute("RollReady",dieA.Active);dieB:SetAttribute("RollReady",dieB.Active)
     dieA.AutoButtonColor,dieB.AutoButtonColor=dieA.Active,dieB.Active
     available(actionButton,mainCommand~=nil,C.gold)
@@ -586,19 +623,31 @@ render=function()
     replay.Visible=isHost or (data.matchmaking and data.matchmaking.mode=="match")
     replay.Text=data.matchmaking and data.matchmaking.mode=="match" and "Return to matchmaking" or "Play again"
     if state.status=="finished" then
+        local recap=MatchRecap.build(Config,state)
         local winner=resident(state,state.winnerId)
         resultTitle.Text=winner and (winner.name.." wins the neighborhood.") or "A neighborhood well built."
         resultSubtitle.Text=winner and ("$"..worth(state,winner).." net worth. Home, sweet home.") or "Time for a fresh start."
+        local tint=winner and Color3.fromHex(Config.playerColors[winner.colorIndex]) or C.gold
+        champion.BackgroundColor3,championLetter.Text,championLetter.TextColor3=tint,winner and Thai.initial(winner.name) or "C",foreground(tint)
+        local personal=recap.winner
+        for _,entry in ipairs(recap.rows) do if entry.id==player.UserId then personal=entry end end
+        resultStatsTitle.Text=mine and "YOUR MATCH" or "WINNER'S MATCH"
+        resultStats[1].Text=tostring(personal and personal.homes or 0)
+        resultStats[2].Text="$"..(personal and personal.rent or 0)
+        resultStats[3].Text=tostring(personal and personal.goals or 0)
         resultRows:ClearAllChildren()
-        local standings=table.clone(state.players)
-        table.sort(standings,function(a,b)
-            if a.alive~=b.alive then return a.alive end
-            local aw,bw=worth(state,a),worth(state,b)
-            return aw>bw or (aw==bw and a.colorIndex<b.colorIndex)
-        end)
-        for rank,entry in ipairs(standings) do
-            text(resultRows,rank.."   "..entry.name.."     $"..worth(state,entry),0,(rank-1)*33,468,30,16,rank==1 and C.green or C.muted,rank==1)
+        local rowHeight=#recap.rows>4 and 42 or 60
+        for rank,entry in ipairs(recap.rows) do
+            local row=frame(resultRows,0,(rank-1)*rowHeight,508,rowHeight-6,entry.id==state.winnerId and C.mint or C.paper)
+            local tint=Color3.fromHex(Config.playerColors[entry.colorIndex])
+            local medal=frame(row,10,7,28,rowHeight-20,tint)
+            local number=text(medal,tostring(rank),0,0,28,rowHeight-20,15,foreground(tint),true);number.TextXAlignment=Enum.TextXAlignment.Center
+            local name=text(row,entry.name,50,4,272,rowHeight>42 and 24 or 28,16,C.ink,true,true);truncate(name)
+            local cash=text(row,"$"..entry.netWorth,335,4,160,28,19,C.ink,true);cash.TextXAlignment=Enum.TextXAlignment.Right
+            if rowHeight>42 then text(row,entry.homes.." homes · "..entry.goals.." goals",50,30,440,18,12,C.muted) end
         end
+        local award=recap.awards[1]
+        resultAward.Text=award and (award.title.." · "..award.name) or "A fresh city is waiting. Play again with your friends."
     end
     renderPlans()
     menus:render(data)
@@ -670,6 +719,11 @@ local function updateLayout()
     turnHint.TextWrapped=true
     place(dieTextA,0,0,48,48);place(dieTextB,0,0,48,48)
     actionDepth.Position,actionDepth.Size=actionButton.Position+UDim2.fromOffset(0,4),actionButton.Size
+    for index,item in ipairs(turnSteps) do
+        local width=(t[3]-44)/4
+        place(item.chip,16+(index-1)*(width+4),t[4]-31,width,21)
+        place(item.caption,0,0,width,21);item.caption.TextSize=layout.compact and 13 or 10
+    end
     place(timeTrack,16,t[4]-5,t[3]-32,3)
     place(toast,(w-400)/2,86,400,45)
     place(visitBanner,(w-440)/2,86,440,58)
@@ -705,6 +759,7 @@ snapshot.OnClientEvent:Connect(function(incoming)
     local after=resident(incoming.game,player.UserId)
     data=incoming
     local state=data.game
+    if old and state.lastRoll and state.lastRoll.seq>(old.game.lastRoll and old.game.lastRoll.seq or 0) then audio:play("roll") end
     if old and state.status=="playing" and old.game.status~="playing" then
         results.Visible=false;focusIndex=nil;inspectorOpen=false;portfolioOpen=false
         chooser.Visible=false;planPending=false;planIndex=nil;planTurn=nil
@@ -741,9 +796,11 @@ snapshot.OnClientEvent:Connect(function(incoming)
         for index,property in ipairs(state.properties) do
             if property.ownerId==player.UserId and old.game.properties[index].ownerId~=player.UserId then
                 selected=index
+                audio:celebrate()
                 notify("Your level "..property.level.." "..homeNames[property.level+1].." at "..Config.tiles[index].name.." is ready.")
             elseif property.ownerId==player.UserId and old.game.properties[index].ownerId==player.UserId and property.level>old.game.properties[index].level then
                 selected=index
+                audio:celebrate()
                 notify(Config.tiles[index].name.." is now a level "..property.level.." "..homeNames[property.level+1].."!")
             elseif property.ownerId==player.UserId and (property.rentTier or 1)>(old.game.properties[index].rentTier or 1) then
                 notify(Config.tiles[index].name.." now charges "..Config.rentTiers[property.rentTier].."× rent on future visits.")
@@ -759,6 +816,7 @@ snapshot.OnClientEvent:Connect(function(incoming)
         city.shade.Visible=false;commandMenu.shade.Visible=false
         opportunity.shade.Visible=false
         boutique:celebrate()
+        audio:celebrate()
     end
     moments:observe(data,old)
     render()

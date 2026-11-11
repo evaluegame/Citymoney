@@ -10,12 +10,14 @@ function Menus.new(ui)
     local C,config=ui.colors,ui.config
     local frame,text,button,overlay=ui.frame,ui.text,ui.button,ui.overlay
     self.lobby,self.lobbyCard=overlay(520,676)
+    self.lobbyCard.Name="MatchLobby"
+    frame(self.lobbyCard,24,8,58,4,C.gold)
     text(self.lobbyCard,"Play together",24,16,436,36,26,C.ink,true)
     text(self.lobbyCard,"Choose 2 or 4 players, then start playing.",24,58,472,28,16,C.muted)
     self.leaveParty=button(self.lobbyCard,"Leave party",334,18,108,36,C.paper,function() ui.send("LeaveParty") end)
     button(self.lobbyCard,"×",452,17,44,44,C.paper,function() self.lobby.Visible=false end)
-    self.two=button(self.lobbyCard,"2 PLAYERS",24,101,230,56,C.green,function() ui.send("Seats",2) end)
-    self.four=button(self.lobbyCard,"4 PLAYERS",266,101,230,56,C.paper,function() ui.send("Seats",4) end)
+    self.two=button(self.lobbyCard,"2 PLAYERS",24,101,230,64,C.green,function() ui.send("Seats",2) end)
+    self.four=button(self.lobbyCard,"4 PLAYERS",266,101,230,64,C.paper,function() ui.send("Seats",4) end)
     self.practiceSettings,self.settingsCard=overlay(480,340)
     text(self.settingsCard,"Practice settings",24,20,386,36,25,C.ink,true)
     button(self.settingsCard,"×",412,17,44,44,C.paper,function() self.practiceSettings.Visible=false;self.lobby.Visible=true end)
@@ -36,8 +38,8 @@ function Menus.new(ui)
         local choose=button(self.lobbyCard,tostring(index),24+(index-1)*78,205,66,42,Color3.fromHex(hex),function() ui.send("Color",index) end)
         choose.TextColor3=ui.foreground(Color3.fromHex(hex));table.insert(self.colorButtons,choose)
     end
-    self.ready=button(self.lobbyCard,"Ready",24,404,230,48,C.green,function() self:toggleReady() end)
-    self.invite=button(self.lobbyCard,"INVITE FRIENDS",266,404,230,48,C.paper,function()
+    self.ready=button(self.lobbyCard,"Ready",24,398,230,56,C.green,function() self:toggleReady() end)
+    self.invite=button(self.lobbyCard,"INVITE FRIENDS",266,398,230,56,C.paper,function()
         task.spawn(function()
             if RunService:IsStudio() or game.PlaceId==0 then self.error="Publish the place, then invite friends from a live Roblox server.";self:render(ui.data());return end
             local data=ui.data()
@@ -52,7 +54,7 @@ function Menus.new(ui)
         end)
     end)
     self.lobbyStatus=text(self.lobbyCard,"",24,465,472,36,15,C.muted)
-    self.queue=button(self.lobbyCard,"PLAY ONLINE",24,514,472,64,C.green,function()
+    self.queue=button(self.lobbyCard,"PLAY ONLINE",24,514,472,64,C.gold,function()
         local data=ui.data()
         if data and data.matchmaking and data.matchmaking.mode=="match" then ui.send("BackLobby")
         elseif data and data.matchmaking and data.matchmaking.queued then ui.send("QueueCancel")
@@ -170,10 +172,15 @@ function Menus:render(data)
     ui.available(self.destroy,editable,settings.attackMode=="destroy" and C.green or C.paper)
     self.members:ClearAllChildren()
     for index,entry in ipairs(data.lobby) do
-        local name=ui.text(self.members,(entry.ready and "READY · " or "WAITING · ")..entry.name..(entry.id==data.hostId and " · host" or ""),8,(index-1)*32,450,30,16,C.ink,entry.id==ui.id)
+        local row=ui.frame(self.members,0,(index-1)*46,466,40,C.paper)
+        local tint=Color3.fromHex(config.playerColors[entry.colorIndex or index])
+        ui.frame(row,7,8,4,24,tint)
+        local name=ui.text(row,entry.name,22,5,278,30,16,C.ink,entry.id==ui.id,true)
         name.TextWrapped,name.TextTruncate=false,Enum.TextTruncate.AtEnd
+        local status=ui.text(row,entry.ready and "READY" or "WAITING",310,6,144,28,12,entry.ready and C.accent or C.muted,true)
+        status.TextXAlignment=Enum.TextXAlignment.Right
     end
-    self.members.CanvasSize=UDim2.fromOffset(0,#data.lobby*32)
+    self.members.CanvasSize=UDim2.fromOffset(0,#data.lobby*46)
     for index,button in ipairs(self.colorButtons) do
         local taken=false
         for _,entry in ipairs(data.lobby) do if entry.id~=ui.id and entry.colorIndex==index then taken=true end end
@@ -183,7 +190,7 @@ function Menus:render(data)
     end
     self.ready.Text=mine and mine.ready and "READY · tap to unready" or "I'M READY TO PLAY"
     self.ready.Visible=#data.lobby>1 or not (mine and mine.ready)
-    self.invite.Position,self.invite.Size=UDim2.fromOffset(self.ready.Visible and 266 or 24,404),UDim2.fromOffset(self.ready.Visible and 230 or 472,48)
+    self.invite.Position,self.invite.Size=UDim2.fromOffset(self.ready.Visible and 266 or 24,398),UDim2.fromOffset(self.ready.Visible and 230 or 472,56)
     ui.available(self.ready,mine~=nil and not queue.queued and queue.mode~="match",mine and mine.ready and C.green or C.paper)
     local enough=readyCount>=settings.seats or settings.fillBots
     self.lobbyStatus.Text=self.error or ((queue.queued or queue.mode=="match") and queue.status or (readyCount<#data.lobby and "Waiting for your friends to tap Ready." or (#data.lobby==1 and "Play online, or try a quick practice game." or "Everyone is ready. The host can start!")))
@@ -191,7 +198,7 @@ function Menus:render(data)
     ui.available(self.start,editable and state.status~="playing" and mine~=nil and mine.ready and enough,C.paper)
     self.start.Text=settings.fillBots and "PRACTICE WITH BOTS" or "PRACTICE WITH PARTY"
     local partyReady=readyCount==#data.lobby and #data.lobby<=settings.seats
-    ui.available(self.queue,queue.mode=="match" or (queue.queued and not queue.connecting) or (host and not active and mine~=nil and mine.ready and partyReady),C.green)
+    ui.available(self.queue,queue.mode=="match" or (queue.queued and not queue.connecting) or (host and not active and mine~=nil and mine.ready and partyReady),C.gold)
     self.queue.Text=queue.mode=="match" and "RETURN TO LOBBY" or (queue.queued and (queue.connecting and "CONNECTING..." or "CANCEL SEARCH") or ("PLAY ONLINE · "..settings.seats.." PLAYERS"))
     self.leaveParty.Visible=#data.lobby>1 or queue.mode=="match"
     self.leaveParty.Text=queue.mode=="match" and "Leave match" or "Leave party"

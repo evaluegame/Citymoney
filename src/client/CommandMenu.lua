@@ -6,7 +6,7 @@ function Command.new(ui)
     local C=ui.colors
     self.button=ui.button(ui.root,"MENU",20,620,154,46,C.card,function() self.shade.Visible=not self.shade.Visible end)
     self.button.Name="CityMenuButton"
-    self.shade,self.card=ui.overlay(490,510)
+    self.shade,self.card=ui.overlay(490,548)
     ui.text(self.card,"CITYMONEY",24,19,260,20,12,C.green,true)
     ui.text(self.card,"Everything in one place.",24,46,420,40,26,C.ink,true)
     ui.button(self.card,"DAY / NIGHT",300,18,126,26,C.paper,function() self.shade.Visible=false;ui.switchLight() end).TextSize=10
@@ -26,7 +26,12 @@ function Command.new(ui)
         ui.text(tile,item[1],14,31,190,26,16,C.ink,true)
         ui.text(tile,item[2],14,62,190,29,13,C.muted)
     end
-    ui.text(self.card,"Turns move on automatically. Just roll, choose, and play.",24,456,442,30,13,C.muted)
+    self.sound=ui.button(self.card,"SOUND: ON",24,456,210,40,C.paper,function()
+        ui.audio:setMuted(not ui.audio.muted)
+        self.sound.Text=ui.audio.muted and "SOUND: OFF" or "SOUND: ON"
+    end)
+    ui.text(self.card,"Quiet game sounds. Change any time.",246,456,220,40,12,C.muted)
+    ui.text(self.card,"Turns move on automatically. Just roll, choose, and play.",24,507,442,28,12,C.muted)
     self.quick=ui.frame(ui.root,20,410,154,144,C.card)
     self.quick.Name="QuickActions"
     self.events=ui.button(self.quick,"EVENTS",8,8,138,40,C.green,function() ui.openCity() end)

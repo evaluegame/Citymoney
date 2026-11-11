@@ -1,4 +1,10 @@
-CITYMONEY 1.4 — DARK THEME AND RECOVERY
+CITYMONEY 1.5 — CITY SHOWCASE
+
+New: four-stage turn guidance, contextual hints, a detailed match recap,
+layered city materials, event courtyards, roof details and porch lights.
+MENU > SOUND: ON / OFF controls quiet session-only feedback sounds.
+The final standings show the declared winner first, then actual net worth.
+Keep your existing cosmetic pass ID when updating your published game.
 
 Dark navy UI, light text, gold actions and stronger city colors. Home models
 are staged before display; failed renders retry without stopping game turns.

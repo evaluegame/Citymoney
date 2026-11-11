@@ -43,6 +43,7 @@ function Architecture.house(origin, yaw, theme, level, tint, paint, owned, style
     local floors = level == 0 and 1 or (level == 3 and 3 or 2)
     local height, width, depth = floors * 6.5, ({12,13,14.2,14.8})[level+1], 9
     add("Foundation", { width+1, 0.5, depth+1 }, 0, 0.25, 0.8, style.stone, { material = style.premium and "Marble" or "Concrete" })
+    add("FoundationTrim",{width+1.15,0.12,depth+1.15},0,0.54,0.8,trim,{canCollide=false})
     add("Floor", { width, 0.25, depth }, 0, 0.65, 0.8, "C9AE89", { material = "WoodPlanks" })
     add("BackWall", { width, height, 0.4 }, 0, 0.7+height/2, 5.1, wall)
     add("LeftWall", { 0.4, height, depth }, -width/2, 0.7+height/2, 0.8, wall)
@@ -62,6 +63,11 @@ function Architecture.house(origin, yaw, theme, level, tint, paint, owned, style
     end
     add("PorchCanopy", { width+1, 0.35, 3.1 }, 0, 6.7, -5.1, roof)
     add("OwnerFascia", { width+1.05, 0.2, 0.25 }, 0, 6.65, -6.65, tint)
+    for _,x in ipairs({-2.2,2.2}) do
+        add("PorchLampBack",{0.3,0.95,0.18},x,5.1,-4.06,style.door,{canCollide=false})
+        add("PorchLamp",{0.22,0.62,0.22},x,5.1,-4.26,style.light,{material="Neon",canCollide=false})
+        add("PorchLampCap",{0.42,0.12,0.34},x,5.58,-4.23,trim,{canCollide=false})
+    end
     for _,x in ipairs({-width/2,width/2}) do
         add("FacadeCorner",{0.28,height,0.5},x,0.7+height/2,-3.9,trim)
         add("PorchRail",{0.2,1.4,2.1},x,1.8,-5.2,trim)
@@ -110,6 +116,10 @@ function Architecture.house(origin, yaw, theme, level, tint, paint, owned, style
         add("FrontRoof", { width+2, 0.5, 6.3 }, 0, roofY, -1.65, roof, { pitch = math.rad(-27), material = "Slate" })
         add("BackRoof", { width+2, 0.5, 6.3 }, 0, roofY, 3.25, roof, { pitch = math.rad(27), material = "Slate" })
         add("RoofRidge", { width+2.1, 0.4, 0.45 }, 0, roofY+1.4, 0.8, tint)
+        for seam=-2,2 do
+            add("RoofSeam",{0.075,0.055,6.1},seam*(width+1)/6,roofY+0.27,-1.65,trim,{pitch=math.rad(-27),canCollide=false})
+            add("RoofSeam",{0.075,0.055,6.1},seam*(width+1)/6,roofY+0.27,3.25,trim,{pitch=math.rad(27),canCollide=false})
+        end
         add("Chimney", { 1.1, 3.3, 1.1 }, width/2-1.2, height+2.2, 2, "B88B72", { material = "Brick" })
         add("ChimneyCap",{1.5,0.35,1.5},width/2-1.2,height+3.8,2,trim)
         for _,x in ipairs({-(width+1.6)/2,(width+1.6)/2}) do
@@ -132,6 +142,12 @@ function Architecture.house(origin, yaw, theme, level, tint, paint, owned, style
         end
         for z = -2.3, 3.7, 1 do
             add("PergolaSlat", { width*0.8, 0.2, 0.35 }, 0, height+4.5, z, "A38D70", { material = "Wood" })
+        end
+        add("RoofTable",{0.18,1.7,1.7},0,height+2.2,0.8,trim,{shape="Cylinder",roll=math.pi/2,canCollide=false})
+        add("RoofTableLeg",{0.18,0.85,0.18},0,height+1.7,0.8,style.door,{canCollide=false})
+        for _,x in ipairs({-2,2}) do
+            add("RoofChair",{1.2,0.2,1.4},x,height+1.8,0.8,tint,{canCollide=false})
+            add("RoofChairBack",{0.2,1.2,1.4},x+(x<0 and -0.5 or 0.5),height+2.25,0.8,trim,{canCollide=false})
         end
         add("Balcony", { width+0.6, 0.3, 2.3 }, 0, 7.1, -4.6, trim)
         add("BalconyGlass", { width+0.6, 1.9, 0.15 }, 0, 8.15, -5.65, glass, { transparency = 0.4, material = "Glass" })
